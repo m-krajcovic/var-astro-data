@@ -39,5 +39,26 @@ data class Star(
         var quality: Boolean = true,
         @Column(name = "TYPE", columnDefinition = "char") var type: String = "",
         @Column(name = "NOTE_ID", columnDefinition = "char") var noteId: String = "",
-        @Column(name = "user") var user: Int = -1
+        @Column(name = "user") var user: Int = -1,
+        @OneToMany
+        @JoinColumns(
+            JoinColumn(updatable=false, insertable=false, name = "STARNAME", referencedColumnName = "STARNAME"),
+            JoinColumn(updatable=false, insertable=false, name = "CONS", referencedColumnName = "CONS"),
+            JoinColumn(updatable=false, insertable=false, name = "COMP", referencedColumnName = "COMP")
+        )
+        var elements: List<StarElement>,
+        @OneToMany
+        @JoinColumns(
+                JoinColumn(updatable=false, insertable=false, name = "STARNAME", referencedColumnName = "STARNAME"),
+                JoinColumn(updatable=false, insertable=false, name = "CONS", referencedColumnName = "CONS"),
+                JoinColumn(updatable=false, insertable=false, name = "COMP", referencedColumnName = "COMP")
+        )
+        var brightness: List<StarBrightness>,
+        @OneToMany
+        @JoinColumns(
+                JoinColumn(updatable=false, insertable=false, name = "STARNAME", referencedColumnName = "STARNAME"),
+                JoinColumn(updatable=false, insertable=false, name = "CONS", referencedColumnName = "CONS"),
+                JoinColumn(updatable=false, insertable=false, name = "COMP", referencedColumnName = "COMP")
+        )
+        var minima: List<StarMinima>
 )
