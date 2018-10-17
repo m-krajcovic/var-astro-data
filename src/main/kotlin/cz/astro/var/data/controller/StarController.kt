@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 class StarController(private val starRepository: StarRepository) {
 
     @GetMapping("star")
-    fun getAll(): List<Star> = starRepository.findAll()
+    fun getAll(): List<StarListItem> = starRepository.findAll().map { t -> StarListItem(t.id, t.constellation, t.starName, t.minima.count()) }
 
     @GetMapping("star/{id}")
     fun getById(@PathVariable id: Int): Star = starRepository.getOne(id)
@@ -25,8 +25,6 @@ class StarController(private val starRepository: StarRepository) {
     fun getConstellations(): Set<ConstellationWithStarCount> = starRepository.findAllConstellationsWithStarCount()
 
     @GetMapping("constellation/{cons}/star")
-    fun getByConstellation(@PathVariable cons: String) = starRepository.findByConstellation(cons)
-
-
+    fun getByConstellation(@PathVariable cons: String): List<StarListItem> = starRepository.findByConstellation(cons).map { t -> StarListItem(t.id, t.constellation, t.starName, t.minima.count()) }
 
 }

@@ -13,4 +13,7 @@ interface StarRepository : JpaRepository<Star, Int> {
 
     @Query("select new cz.astro.var.data.repository.ConstellationWithStarCount(s.constellation, COUNT(s)) from Star s GROUP BY s.constellation")
     fun findAllConstellationsWithStarCount(): Set<ConstellationWithStarCount>
+
+    @Query("select m.cons, m.starname, m.comp count(m) from minima m group by m.cons, m.starname, m.comp", nativeQuery = true)
+    fun findAllWithMinimaCount(): List<StarMinimaSummary>
 }

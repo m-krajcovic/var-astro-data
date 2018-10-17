@@ -1,6 +1,7 @@
 package cz.astro.`var`.data.repository
 
 import cz.astro.`var`.data.repository.helper.BooleanToStringConverter
+import java.io.Serializable
 import java.time.LocalDate
 import javax.persistence.*
 
@@ -61,4 +62,4 @@ data class Star(
                 JoinColumn(updatable=false, insertable=false, name = "COMP", referencedColumnName = "COMP")
         )
         var minima: List<StarMinima>
-)
+) : Serializable
