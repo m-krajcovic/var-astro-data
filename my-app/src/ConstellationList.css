@@ -1,0 +1,12 @@
+ul {
+    list-style: none;
+    padding-left: 12px;
+}
+
+ul > li {
+    cursor: pointer;
+}
+
+ul > li.selected {
+    font-weight: bold;
+}
