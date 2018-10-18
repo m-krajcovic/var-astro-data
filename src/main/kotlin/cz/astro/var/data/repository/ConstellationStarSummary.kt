@@ -5,7 +5,7 @@ package cz.astro.`var`.data.repository
  * @version 1.0
  * @since 10/16/2018
  */
-data class ConstellationWithStarCount(
+data class ConstellationStarSummary(
         val name: String,
         val starCount: Long
 )

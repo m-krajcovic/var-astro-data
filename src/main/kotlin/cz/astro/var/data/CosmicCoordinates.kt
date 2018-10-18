@@ -1,4 +1,4 @@
-package cz.astro.`var`.data.repository
+package cz.astro.`var`.data
 
 data class CosmicCoordinates(
         var raHours: Int = 0,

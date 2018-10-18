@@ -2,6 +2,7 @@ package cz.astro.`var`.data.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 /**
  * @author Michal
@@ -11,9 +12,12 @@ import org.springframework.data.jpa.repository.Query
 interface StarRepository : JpaRepository<Star, Int> {
     fun findByConstellation(constellation: String): List<Star>
 
-    @Query("select new cz.astro.var.data.repository.ConstellationWithStarCount(s.constellation, COUNT(s)) from Star s GROUP BY s.constellation")
-    fun findAllConstellationsWithStarCount(): Set<ConstellationWithStarCount>
+    @Query("select new cz.astro.var.data.repository.ConstellationStarSummary(s.constellation, COUNT(s)) from Star s GROUP BY s.constellation")
+    fun findAllConstellationStarSummary(): Set<ConstellationStarSummary>
 
-    @Query("select m.cons, m.starname, m.comp count(m) from minima m group by m.cons, m.starname, m.comp", nativeQuery = true)
-    fun findAllWithMinimaCount(): List<StarMinimaSummary>
+    @Query("select new cz.astro.var.data.repository.StarMinimaSummary(s.id, m.constellation, m.starName, m.comp, COUNT(m)) from StarMinima m JOIN Star s ON m.constellation = s.constellation AND m.starName = s.starName AND s.comp = m.comp GROUP BY m.constellation, m.starName, m.comp")
+    fun findAllStarMinimaSummary(): List<StarMinimaSummary>
+
+    @Query("select new cz.astro.var.data.repository.StarMinimaSummary(s.id, m.constellation, m.starName, m.comp, COUNT(m)) from StarMinima m JOIN Star s ON m.constellation = s.constellation AND m.starName = s.starName AND s.comp = m.comp WHERE s.constellation = :constellation GROUP BY m.constellation, m.starName, m.comp")
+    fun findStarMinimaSummaryByConstellation(@Param("constellation") constellation: String): List<StarMinimaSummary>
 }

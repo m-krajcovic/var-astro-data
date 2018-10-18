@@ -1,8 +1,10 @@
 package cz.astro.`var`.data.controller
 
-import cz.astro.`var`.data.repository.ConstellationWithStarCount
-import cz.astro.`var`.data.repository.Star
+import cz.astro.`var`.data.repository.ConstellationStarSummary
 import cz.astro.`var`.data.repository.StarRepository
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
@@ -13,18 +15,23 @@ import org.springframework.web.bind.annotation.RestController
  * @since 10/15/2018
  */
 @RestController
+@CrossOrigin(origins = ["http://localhost:3000"])
 class StarController(private val starRepository: StarRepository) {
 
-    @GetMapping("star")
-    fun getAll(): List<StarListItem> = starRepository.findAll().map { t -> StarListItem(t.id, t.constellation, t.starName, t.minima.count()) }
+    private val logger: Logger = LoggerFactory.getLogger(StarController::class.java)
 
-    @GetMapping("star/{id}")
-    fun getById(@PathVariable id: Int): Star = starRepository.getOne(id)
+    @GetMapping("stars")
+    fun getAll(): List<StarListItemModel> =
+            starRepository.findAllStarMinimaSummary().asSequence().map { it.toListItemModel() }.toList()
 
-    @GetMapping("constellation")
-    fun getConstellations(): Set<ConstellationWithStarCount> = starRepository.findAllConstellationsWithStarCount()
+    @GetMapping("stars/{starId}")
+    fun getById(@PathVariable starId: Int): StarModel = starRepository.getOne(starId).toModel()
 
-    @GetMapping("constellation/{cons}/star")
-    fun getByConstellation(@PathVariable cons: String): List<StarListItem> = starRepository.findByConstellation(cons).map { t -> StarListItem(t.id, t.constellation, t.starName, t.minima.count()) }
+    @GetMapping("constellations")
+    fun getConstellations(): Set<ConstellationStarSummary> = starRepository.findAllConstellationStarSummary()
+
+    @GetMapping("constellations/{cons}/stars")
+    fun getByConstellation(@PathVariable cons: String): List<StarListItemModel> =
+            starRepository.findStarMinimaSummaryByConstellation(cons).asSequence().map { it.toListItemModel() }.toList()
 
 }

@@ -1,5 +1,6 @@
 package cz.astro.`var`.data.repository
 
+import cz.astro.`var`.data.CosmicCoordinates
 import cz.astro.`var`.data.repository.helper.BooleanToStringConverter
 import java.io.Serializable
 import java.time.LocalDate
