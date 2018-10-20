@@ -50,7 +50,7 @@ dependencies {
 
 // tag::mainClassName[]
 bootJar {
-    mainClassName = 'cz.astro.var.data.hello.App'
+    mainClassName = 'cz.astro.var.data.App'
 }
 compileKotlin {
     kotlinOptions {
