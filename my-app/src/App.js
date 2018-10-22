@@ -11,38 +11,37 @@ class App extends Component {
     }
 
     componentDidMount() {
+        this.setState({...this.state, constellationsLoading: true});
         fetch(BASE_URL + "/constellations").then(response => response.json())
-            .then(value => this.setState({constellations: value, stars: [], selectedStar: null}));
+            .then(value => this.setState({constellations: value, stars: [], selectedStar: null, constellationsLoading: false}));
     }
 
     onConstellationSelected(constellation) {
+        this.setState({...this.state, starsLoading: true});
         fetch(BASE_URL + "/constellations/" + constellation + "/stars").then(response => response.json())
-            .then(value => this.setState({...this.state, stars: value}));
+            .then(value => this.setState({...this.state, stars: value, starsLoading: false}));
     }
 
     onStarSelected(star) {
+        this.setState({...this.state, starLoading: true});
         fetch(BASE_URL + "/stars/" + star.starId).then(response => response.json()).then(value => {
-            this.setState({...this.state, selectedStar: value});
+            this.setState({...this.state, selectedStar: value, starLoading: false});
         });
     }
 
     render() {
         return (
             <div className="App">
-                {/*<header className="App-header">*/}
-                {/*<img src={logo} className="App-logo" alt="logo" />*/}
-                {/*<p>Edit <code>src/App.js</code> and save to reload.</p>*/}
-                {/*</header>*/}
                 <div className="sidebar-wrapper">
                     <div className="sidebar">
-                        <ConstellationList constellations={this.state.constellations} onSelected={constellation => this.onConstellationSelected(constellation)}/>
+                        <ConstellationList constellations={this.state.constellations} onSelected={constellation => this.onConstellationSelected(constellation)} loading={this.state.constellationsLoading}/>
                     </div>
                     <div className="sidebar">
-                        <StarList stars={this.state.stars} onSelected={star => this.onStarSelected(star)}/>
+                        <StarList stars={this.state.stars} onSelected={star => this.onStarSelected(star)} loading={this.state.starsLoading}/>
                     </div>
                 </div>
                 <div className="stars-detail-wrapper">
-                    <StarDetail star={this.state.selectedStar}/>
+                    <StarDetail star={this.state.selectedStar} loading={this.state.starLoading}/>
                 </div>
             </div>
         );

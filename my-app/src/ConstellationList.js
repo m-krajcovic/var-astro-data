@@ -8,6 +8,11 @@ class ConstellationList extends Component {
     }
 
     render() {
+        if (this.props.loading) {
+            return (
+                <span>Loading...</span>
+            );
+        }
         if (this.props.constellations) {
             return (
                 <ul>
@@ -38,7 +43,7 @@ class ConstellationList extends Component {
 class ConstellationListItem extends Component {
     render() {
         return (
-            <li style={[this.props.style]} className={this.props.className} onClick={() => this.onClick()}>{this.props.name} ({this.props.starCount})</li>
+            <li style={this.props.style} className={this.props.className} onClick={() => this.onClick()}>{this.props.name} ({this.props.starCount})</li>
         )
     }
 

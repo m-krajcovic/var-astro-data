@@ -10,6 +10,11 @@ class StarList extends Component {
     }
 
     render() {
+        if (this.props.loading) {
+            return (
+                <span>Loading...</span>
+            );
+        }
         if (this.props.stars) {
             return (
                 <ul>
@@ -42,7 +47,7 @@ class StarList extends Component {
 class StarListItem extends Component {
     render() {
         return (
-            <li style={[this.props.style]} className={this.props.className}
+            <li style={this.props.style} className={this.props.className}
                 onClick={() => this.onClick()}>{this.props.star.starName} ({this.props.star.minimaCount})</li>
         )
     }
@@ -55,48 +60,47 @@ class StarListItem extends Component {
 }
 
 class StarMinimaChart extends Component {
+    static methodValue(method) {
+        if (method === "pg") {
+            return "photographic";
+        } else if (method === "vis") {
+            return "visual";
+        } else {
+            return "CCD / photoelectric";
+        }
+    };
+
+    cValue(d) {
+        return d.kind + " - " + StarMinimaChart.methodValue(d.color);
+    };
+
+    static ocCalc(element, minima) {
+        let e = Math.round((minima.julianDate - element.minimum0) / element.period);
+        let oc = minima.julianDate - (element.minimum0 + element.period * e);
+        return oc;
+    };
 
     render() {
         if (this.props.minima) {
-            const methodValue = function (method) {
-                if (method === "pg") {
-                    return "photographic";
-                } else if (method === "vis") {
-                    return "visual";
-                } else {
-                    return "CCD / photoelectric";
-                }
-            };
-            const cValue = function (d) {
-                return d.kind + " - " + methodValue(d.color);
-            };
-            const groupCache = {};
-            let xMin = Number.MAX_SAFE_INTEGER, xMax = Number.MIN_SAFE_INTEGER, yMin = Number.MAX_SAFE_INTEGER,
-                yMax = Number.MIN_SAFE_INTEGER;
-            this.props.minima.forEach(minima => {
-                const cat = cValue(minima);
-                minima.type = cat;
-            });
-            const colors = {
-                "p - CCD / photoelectric": "#ba160c",
-                "p - visual": "#0038a8",
-                "s - CCD / photoelectric": "#d60270",
-                "p - photographic": "#eacc5d",
-                "s - visual": "#9494ff",
-                "s - photographic": "#00a8ff"
-            };
-            const margin = {
-                top: 20,
-                right: 20,
-                bottom: 50,
-                left: 60
-            };
 
+            this.props.minima.forEach(minima => {
+                minima.type = this.cValue(minima);
+                if (minima.kind === 'p' && this.props.primary) {
+                    minima.oc = StarMinimaChart.ocCalc(this.props.primary, minima)
+                }
+                if (minima.kind === 's' && this.props.secondary) {
+                    minima.oc = StarMinimaChart.ocCalc(this.props.secondary, minima)
+                }
+            });
             return (
-                <ReactEcharts
-                    option={this.getOption()}
-                    style={{overflow: 'hidden', height: '100%', width: '100%'}}
-                />
+                <div style={{height: 'calc(100% - 24px)', width: 'calc(100% - 12px)', marginTop: 12}}>
+                    <div className="panel" style={{height: '100%', width: '100%'}}>
+                        <ReactEcharts
+                            option={this.getOption()}
+                            style={{overflow: 'hidden', height: '100%', width: '100%'}}
+                        />
+                    </div>
+                </div>
             );
         }
 
@@ -107,8 +111,7 @@ class StarMinimaChart extends Component {
 
     getOption() {
         return {
-            title: {
-            },
+            title: {},
             tooltip: {},
             legend: {
                 orient: 'horizontal',
@@ -176,7 +179,7 @@ class StarMinimaChart extends Component {
                 left: 'center'
             },
             animation: false,
-            series : [{
+            series: [{
                 type: 'scatter',
                 symbolSize: 5,
                 itemStyle: {
@@ -193,9 +196,26 @@ class StarMinimaChart extends Component {
 }
 
 export class StarDetail extends Component {
+    static printKind(kind) {
+        return kind === 'p' ? 'Primary' : 'Secondary';
+    }
+
     render() {
+        if (this.props.loading) {
+            return (
+                <span>Loading...</span>
+            );
+        }
         if (this.props.star) {
             const star = this.props.star;
+            let primaryElement, secondaryElement;
+            star.elements.forEach(e => {
+                if (e.kind === 'p') {
+                    primaryElement = e;
+                } else if (e.kind === 's') {
+                    secondaryElement = e;
+                }
+            });
             return (
                 <div className="star-detail-container" style={{
                     display: "flex",
@@ -205,32 +225,36 @@ export class StarDetail extends Component {
                     paddingLeft: 12
                 }}>
                     <h3 style={{flex: "0 0 auto"}}>{star.starName} {star.constellation}</h3>
-                    <div style={{flex: "0 0 auto"}}><b>Coordinates: </b>{this.coordinatesToString(star.coordinates)}
+                    <div style={{display: 'flex', flex: "0 0 auto", marginBottom: 12}}>
+                        <div className="panel" style={{padding: 8}}>
+                            <div><b>Coordinates</b></div>
+                            <div>{this.coordinatesToString(star.coordinates)}</div>
+                        </div>
                     </div>
                     <div className="star-detail-wrapper">
                         {star.elements.map(el => {
                             return (
-                                <div className="star-detail" key={el.id}>
-                                    <div><b>Element {el.kind}</b></div>
-                                    <div><b>Minimum 0: </b>24{el.minimum0}</div>
-                                    <div><b>Minimum 9: </b>24{el.minimum9}</div>
+                                <div className="star-detail panel" key={el.id}>
+                                    <div><b>{StarDetail.printKind(el.kind)}</b></div>
+                                    <div><b>M0: </b>{el.minimum0}</div>
+                                    <div><b>M9: </b>{el.minimum9}</div>
                                     <div><b>Period: </b>{el.period}</div>
                                 </div>
                             )
                         })}
                         {star.brightness.map(bright => {
                             return (
-                                <div className="star-detail" key={bright.id}>
+                                <div className="star-detail panel" key={bright.id}>
                                     <div><b>Brightness</b></div>
-                                    <div><b>Max P: </b>24{bright.maxP}</div>
-                                    <div><b>Min P: </b>24{bright.minP}</div>
+                                    <div><b>Max P: </b>{bright.maxP}</div>
+                                    <div><b>Min P: </b>{bright.minP}</div>
                                     <div><b>Min S: </b>{bright.minS}</div>
                                 </div>
                             )
                         })}
                     </div>
                     <div style={{flex: "1"}}>
-                        <StarMinimaChart minima={star.minima}/>
+                        <StarMinimaChart minima={star.minima} primary={primaryElement} secondary={secondaryElement}/>
                     </div>
                 </div>
             );

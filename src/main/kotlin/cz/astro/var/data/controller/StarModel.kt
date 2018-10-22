@@ -3,7 +3,6 @@ package cz.astro.`var`.data.controller
 import cz.astro.`var`.data.CosmicCoordinates
 import cz.astro.`var`.data.repository.Star
 import cz.astro.`var`.data.repository.StarBrightness
-import cz.astro.`var`.data.repository.StarElement
 
 /**
  * @author Michal
@@ -16,11 +15,11 @@ data class StarModel(
     val starName: String,
     val comp: String,
     val coordinates: CosmicCoordinates,
-    val elements: List<StarElement>,
+    val elements: List<StarElementModel>,
     val brightness: List<StarBrightness>,
     val minima: List<StarMinimaModel>
 )
 
 fun Star.toModel() : StarModel {
-    return StarModel(id, constellation, starName, comp, coordinates, elements, brightness, minima.map {it.toModel()}.toList())
+    return StarModel(id, constellation, starName, comp, coordinates, elements.asSequence().map {it.toModel()}.toList(), brightness, minima.asSequence().map {it.toModel()}.toList())
 }

@@ -29,7 +29,7 @@ public class PersistanceJPAConfig {
         driverManagerDataSource.setDriverClassName("com.mysql.jdbc.Driver");
         URI dbUri = new URI(envVar);
         String[] userInfo = dbUri.getUserInfo().split(":");
-        driverManagerDataSource.setUrl("jdbc:mysql://" + dbUri.getHost() + dbUri.getPath());
+        driverManagerDataSource.setUrl("jdbc:mysql://" + dbUri.getHost() + ":" + dbUri.getPort() + dbUri.getPath() + "?" + dbUri.getQuery());
         driverManagerDataSource.setUsername(userInfo[0]);
         driverManagerDataSource.setPassword(userInfo[1]);
         return driverManagerDataSource;
