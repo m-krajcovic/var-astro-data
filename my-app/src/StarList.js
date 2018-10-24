@@ -99,7 +99,9 @@ class StarMinimaChart extends Component {
                     minima.oc = StarMinimaChart.ocCalc(this.props.secondary, minima)
                 }
                 if (minima.quality !== '?') {
-                    grouppedMinima[minima.type].push(minima);
+                    if (grouppedMinima[minima.type]) {
+                        grouppedMinima[minima.type].push(minima);
+                    }
                 }
             });
             return (
