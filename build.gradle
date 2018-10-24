@@ -95,6 +95,7 @@ task npmBuild(type: NpmTask) {
 }
 
 task moveNpmBuildToResources() {
+    outputs.upToDateWhen { false }
     copy {
         from "${project.projectDir}/my-app/build"
         into "${project.projectDir}/src/main/resources/static"
