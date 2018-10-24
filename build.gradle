@@ -94,12 +94,9 @@ task npmBuild(type: NpmTask) {
     args = ["run", "build"]
 }
 
-task moveNpmBuildToResources() {
-    outputs.upToDateWhen { false }
-    copy {
-        from "${project.projectDir}/my-app/build"
-        into "${project.projectDir}/src/main/resources/static"
-    }
+task moveNpmBuildToResources(type: Copy) {
+    from "${project.projectDir}/my-app/build"
+    into "${project.projectDir}/src/main/resources/static"
 }
 
 task stage(dependsOn: ['npmInstall','moveNpmBuildToResources','npmBuild','build', 'clean'])
