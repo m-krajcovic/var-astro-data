@@ -77,12 +77,19 @@ class StarMinimaChart extends Component {
     static ocCalc(element, minima) {
         let e = Math.round((minima.julianDate - element.minimum0) / element.period);
         let oc = minima.julianDate - (element.minimum0 + element.period * e);
-        return oc;
+        return oc.toFixed(5);
     };
 
     render() {
         if (this.props.minima) {
-
+            const grouppedMinima = {
+                "p - CCD / photoelectric": [],
+                "p - visual": [],
+                "p - photographic": [],
+                's - CCD / photoelectric': [],
+                "s - visual": [],
+                "s - photographic": []
+            };
             this.props.minima.forEach(minima => {
                 minima.type = this.cValue(minima);
                 if (minima.kind === 'p' && this.props.primary) {
@@ -91,12 +98,15 @@ class StarMinimaChart extends Component {
                 if (minima.kind === 's' && this.props.secondary) {
                     minima.oc = StarMinimaChart.ocCalc(this.props.secondary, minima)
                 }
+                if (minima.quality !== '?') {
+                    grouppedMinima[minima.type].push(minima);
+                }
             });
             return (
-                <div style={{height: 'calc(100% - 24px)', width: 'calc(100% - 12px)', marginTop: 12}}>
-                    <div className="panel" style={{height: '100%', width: '100%'}}>
+                <div style={{flex: '1 1 auto', paddingTop: 12, paddingBottom: 12, paddingRight: 12, overflow: 'hidden'}}>
+                    <div className="panel" style={{height: '100%', width: '100%', position: 'relative', overflow: 'hidden'}}>
                         <ReactEcharts
-                            option={this.getOption()}
+                            option={this.getOption(grouppedMinima)}
                             style={{overflow: 'hidden', height: '100%', width: '100%'}}
                         />
                     </div>
@@ -109,7 +119,58 @@ class StarMinimaChart extends Component {
         )
     }
 
-    getOption() {
+    getOption(grouppedMinima) {
+        const datasetIndexes = {
+            "p - CCD / photoelectric": 0,
+            "p - visual": 1,
+            "p - photographic": 2,
+            's - CCD / photoelectric': 3,
+            "s - visual": 4,
+            "s - photographic": 5
+        };
+        const colors = {
+            "p - CCD / photoelectric": "#ba160c",
+            "p - visual": "#0038a8",
+            "p - photographic": "#eacc5d",
+            's - CCD / photoelectric': "#ffffff",
+            "s - visual": "#ffffff",
+            "s - photographic": "#ffffff"
+        };
+        const borderWidths = {
+            "p - CCD / photoelectric": 0,
+            "p - visual": 0,
+            "p - photographic": 0,
+            's - CCD / photoelectric': 1,
+            "s - visual": 1,
+            "s - photographic": 1
+        };
+        const borderColors = {
+            "p - CCD / photoelectric": "#000000",
+            "p - visual": "#000000",
+            "p - photographic": "#000000",
+            's - CCD / photoelectric': "#ba160c",
+            "s - visual": "#0038a8",
+            "s - photographic": "#eacc5d"
+        };
+        const series = Object.keys(grouppedMinima).map(key => {
+            return {
+                name: key,
+                type: 'scatter',
+                symbolSize: 8,
+                itemStyle: {
+                    opacity: 0.8,
+                    color: colors[key],
+                    borderWidth: borderWidths[key],
+                    borderColor: borderColors[key]
+                },
+                datasetIndex: datasetIndexes[key],
+                encode: {
+                    x: 0,
+                    y: 1,
+                    tooltip: [0, 1, 2]
+                }
+            };
+        });
         return {
             title: {},
             tooltip: {},
@@ -117,10 +178,25 @@ class StarMinimaChart extends Component {
                 orient: 'horizontal',
                 bottom: 10,
             },
-            dataset: {
+            dataset: [{
                 dimensions: ['julianDate', 'oc', 'type'],
-                source: this.props.minima
-            },
+                source: grouppedMinima["p - CCD / photoelectric"]
+            },{
+                dimensions: ['julianDate', 'oc', 'type'],
+                source: grouppedMinima["p - visual"]
+            },{
+                dimensions: ['julianDate', 'oc', 'type'],
+                source: grouppedMinima["p - photographic"]
+            },{
+                dimensions: ['julianDate', 'oc', 'type'],
+                source: grouppedMinima['s - CCD / photoelectric']
+            },{
+                dimensions: ['julianDate', 'oc', 'type'],
+                source: grouppedMinima["s - visual"]
+            },{
+                dimensions: ['julianDate', 'oc', 'type'],
+                source: grouppedMinima["s - photographic"]
+            },],
             grid: [
                 {
                     right: 60, bottom: 110, left: 50, top: 30,
@@ -159,45 +235,62 @@ class StarMinimaChart extends Component {
                     filterMode: 'empty'
                 }
             ],
-            visualMap: {
-                type: 'piecewise',
-                categories: ['p - CCD / photoelectric', 'p - visual', 'p - photographic', 's - CCD / photoelectric', 's - visual', 's - photographic'],
-                inRange: {
-                    color: {
-                        "p - CCD / photoelectric": "#ba160c",
-                        "p - visual": "#0038a8",
-                        "p - photographic": "#eacc5d",
-                        's - CCD / photoelectric': "#d60270",
-                        "s - visual": "#9494ff",
-                        "s - photographic": "#00a8ff"
-                    },
-                    symbolSize: [5, 7, 10, 5, 7, 10],
-                    // symbol: ['circle', 'rect', 'diamond', 'circle', 'rect', 'diamond']
-                },
-                bottom: 10,
-                orient: 'horizontal',
-                left: 'center'
-            },
+            // visualMap: {
+            //     type: 'piecewise',
+            //     categories: ['p - CCD / photoelectric', 'p - visual', 'p - photographic', 's - CCD / photoelectric', 's - visual', 's - photographic'],
+            //     inRange: {
+            //         color: {
+            //             "p - CCD / photoelectric": "#ba160c",
+            //             "p - visual": "#0038a8",
+            //             "p - photographic": "#eacc5d",
+            //             's - CCD / photoelectric': "#ffffff",
+            //             "s - visual": "#ffffff",
+            //             "s - photographic": "#ffffff"
+            //         },
+            //         symbolSize: [5, 7, 10, 5, 7, 10],
+            //         // symbol: ['circle', 'circle', 'circle', 'path://M 100, 100 m -75, 0 a 75,75 0 1,0 150,0 a 75,75 0 1,0 -150,0','path://M 100, 100 m -75, 0 a 75,75 0 1,0 150,0 a 75,75 0 1,0 -150,0', 'path://M 100, 100 m -75, 0 a 75,75 0 1,0 150,0 a 75,75 0 1,0 -150,0'],
+            //         borderWidth: 1,
+            //         borderColor: 'black'
+            //     },
+            //     bottom: 10,
+            //     orient: 'horizontal',
+            //     left: 'center'
+            // },
             animation: false,
-            series: [{
-                type: 'scatter',
-                symbolSize: 5,
-                itemStyle: {
-                    opacity: 0.8
-                },
-                encode: {
-                    x: 0,
-                    y: 1,
-                    tooltip: [0, 1, 2]
-                }
-            }]
+            series: series
         };
     }
 }
 
 export class StarDetail extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {selectedPrimaryElement: null, selectedSecondaryElement: null};
+    }
+
+    componentDidMount() {
+        if (this.props.star) {
+            let primaryElement, secondaryElement;
+            this.props.star.elements.forEach(e => {
+                if (e.kind === 'p') {
+                    primaryElement = e;
+                } else if (e.kind === 's') {
+                    secondaryElement = e;
+                }
+            });
+            if (!primaryElement && secondaryElement) primaryElement = secondaryElement;
+            if (primaryElement && !secondaryElement) secondaryElement = primaryElement;
+            this.setState({...this.state, selectedPrimaryElement: primaryElement, selectedSecondaryElement: secondaryElement});
+        }
+    }
+
     static printKind(kind) {
-        return kind === 'p' ? 'Primary' : 'Secondary';
+        if (kind === 'p') {
+            return 'Primary';
+        } else if (kind === 's') {
+            return 'Secondary';
+        }
+        return kind;
     }
 
     render() {
@@ -208,14 +301,6 @@ export class StarDetail extends Component {
         }
         if (this.props.star) {
             const star = this.props.star;
-            let primaryElement, secondaryElement;
-            star.elements.forEach(e => {
-                if (e.kind === 'p') {
-                    primaryElement = e;
-                } else if (e.kind === 's') {
-                    secondaryElement = e;
-                }
-            });
             return (
                 <div className="star-detail-container" style={{
                     display: "flex",
@@ -226,22 +311,10 @@ export class StarDetail extends Component {
                 }}>
                     <h3 style={{flex: "0 0 auto"}}>{star.starName} {star.constellation}</h3>
                     <div style={{display: 'flex', flex: "0 0 auto", marginBottom: 12}}>
-                        <div className="panel" style={{padding: 8}}>
+                        <div className="panel star-detail">
                             <div><b>Coordinates</b></div>
                             <div>{this.coordinatesToString(star.coordinates)}</div>
                         </div>
-                    </div>
-                    <div className="star-detail-wrapper">
-                        {star.elements.map(el => {
-                            return (
-                                <div className="star-detail panel" key={el.id}>
-                                    <div><b>{StarDetail.printKind(el.kind)}</b></div>
-                                    <div><b>M0: </b>{el.minimum0}</div>
-                                    <div><b>M9: </b>{el.minimum9}</div>
-                                    <div><b>Period: </b>{el.period}</div>
-                                </div>
-                            )
-                        })}
                         {star.brightness.map(bright => {
                             return (
                                 <div className="star-detail panel" key={bright.id}>
@@ -253,8 +326,19 @@ export class StarDetail extends Component {
                             )
                         })}
                     </div>
-                    <div style={{flex: "1"}}>
-                        <StarMinimaChart minima={star.minima} primary={primaryElement} secondary={secondaryElement}/>
+                    <div className="star-detail-wrapper">
+                        {star.elements.filter(el => el.kind === 'p' || el.kind === 's').sort((a,b) => a.kind === 'p' ? -1 : 1).map(el => {
+                            return (
+                                <div className="star-detail panel" key={el.id}>
+                                    <div><b>{StarDetail.printKind(el.kind)}</b></div>
+                                    <div><b>M0: </b>{el.minimum0}</div>
+                                    <div><b>Period: </b>{el.period}</div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                    <div style={{flex: "1 1 auto", display: "flex"}}>
+                        <StarMinimaChart minima={star.minima} primary={this.state.selectedPrimaryElement} secondary={this.state.selectedSecondaryElement}/>
                     </div>
                 </div>
             );

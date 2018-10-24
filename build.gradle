@@ -11,6 +11,7 @@ plugins {
     id 'org.springframework.boot' version '2.0.5.RELEASE'
     id 'org.jetbrains.kotlin.jvm' version '1.2.71'
     id "org.jetbrains.kotlin.plugin.jpa" version "1.2.71"
+    id "com.moowork.node" version "1.2.0"
 }
 // end::plugins[]
 
@@ -77,3 +78,32 @@ compileTestKotlin {
 //    publishAlways()
 //}
 // end::buildScan[]
+node {
+    version = '8.11.2'
+    npmVersion = '5.6.0'
+    download = true
+
+    // Set the work directory for NPM
+    npmWorkDir = file("${project.buildDir}/npm")
+
+    // Set the work directory where node_modules should be located
+    nodeModulesDir = file("${project.projectDir}/my-app")
+}
+
+task npmBuild(type: NpmTask) {
+    args = ["run", "build"]
+}
+
+task moveNpmBuildToResources() {
+    copy {
+        from "${project.projectDir}/my-app/build"
+        into "${project.projectDir}/src/main/resources/static"
+    }
+}
+
+task stage(dependsOn: ['npmInstall','moveNpmBuildToResources','npmBuild','build', 'clean'])
+npmInstall.mustRunAfter clean
+npmBuild.mustRunAfter npmInstall
+moveNpmBuildToResources.mustRunAfter npmBuild
+build.mustRunAfter moveNpmBuildToResources
+

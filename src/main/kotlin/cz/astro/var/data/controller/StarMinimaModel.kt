@@ -12,11 +12,12 @@ data class StarMinimaModel(
         val julianDate: Double,
         val oc: Double,
         val color: String,
-        val kind: String
+        val kind: String,
+        val quality: String
 )
 
 fun StarMinima.toModel() : StarMinimaModel {
     val jdString = "${julianDatePrefix}${julianDate}"
     val ocString = "${ocSign}${oc}"
-    return StarMinimaModel(id, jdString.toDouble(), ocString.toDouble(), color, kind)
+    return StarMinimaModel(id, jdString.toDouble(), ocString.toDouble(), color, kind, quality)
 }

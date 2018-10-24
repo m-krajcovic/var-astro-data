@@ -13,16 +13,14 @@ import javax.persistence.Table
 @Entity
 @Table(name = "minima")
 data class StarMinima(
-//        @ManyToOne
-//        var star: Star,
         @Id var id: Int,
-        @Column (name="CONS", columnDefinition = "char") var constellation: String,
-        @Column (name="STARNAME", columnDefinition = "char") var starName: String,
-        @Column (name="COMP", columnDefinition = "char") var comp: String,
+        @Column(name = "NCONS") var constellationId: Int = -1,
+        @Column(name = "NSTAR") var starId: Int = -1,
         @Column(name="JC") var julianDatePrefix: Int,
         @Column(name="JD") var julianDate: Double,
         @Column(name="OC") var oc: Double,
         @Column(name="OCS", columnDefinition = "char") var ocSign: String,
         @Column(name="COL", columnDefinition = "char") var color: String,
-        @Column(name="KIND", columnDefinition = "char") var kind: String
+        @Column(name="KIND", columnDefinition = "char") var kind: String,
+        @Column(name="Q", columnDefinition = "char") var quality: String
 )

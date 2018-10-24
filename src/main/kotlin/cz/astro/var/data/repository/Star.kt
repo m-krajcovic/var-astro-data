@@ -20,8 +20,8 @@ data class Star(
         @Column(name = "STARNAME", columnDefinition = "char") var starName: String = "",
         @Column(name = "COMP", columnDefinition = "char") var comp: String = ".",
         @Column(name = "LOC", columnDefinition = "char") var loc: String = "",
-        @Column(name = "NCONS") var constellationNumber: Int = -1,
-        @Column(name = "NSTAR") var starNameNumber: Int = -1,
+        @Column(name = "NCONS") var constellationId: Int = -1,
+        @Column(name = "NSTAR") var starId: Int = -1,
         @Embedded
         @AttributeOverrides(
             AttributeOverride(name = "raHours", column = Column(name = "RH1")),
@@ -44,23 +44,20 @@ data class Star(
         @Column(name = "user") var user: Int = -1,
         @OneToMany
         @JoinColumns(
-            JoinColumn(updatable=false, insertable=false, name = "STARNAME", referencedColumnName = "STARNAME"),
-            JoinColumn(updatable=false, insertable=false, name = "CONS", referencedColumnName = "CONS"),
-            JoinColumn(updatable=false, insertable=false, name = "COMP", referencedColumnName = "COMP")
+                JoinColumn(updatable=false, insertable=false, name = "NCONS", referencedColumnName = "NCONS"),
+                JoinColumn(updatable=false, insertable=false, name = "NSTAR", referencedColumnName = "NSTAR")
         )
         var elements: List<StarElement>,
         @OneToMany
         @JoinColumns(
-                JoinColumn(updatable=false, insertable=false, name = "STARNAME", referencedColumnName = "STARNAME"),
-                JoinColumn(updatable=false, insertable=false, name = "CONS", referencedColumnName = "CONS"),
-                JoinColumn(updatable=false, insertable=false, name = "COMP", referencedColumnName = "COMP")
+                JoinColumn(updatable=false, insertable=false, name = "NCONS", referencedColumnName = "NCONS"),
+                JoinColumn(updatable=false, insertable=false, name = "NSTAR", referencedColumnName = "NSTAR")
         )
         var brightness: List<StarBrightness>,
         @OneToMany
         @JoinColumns(
-                JoinColumn(updatable=false, insertable=false, name = "STARNAME", referencedColumnName = "STARNAME"),
-                JoinColumn(updatable=false, insertable=false, name = "CONS", referencedColumnName = "CONS"),
-                JoinColumn(updatable=false, insertable=false, name = "COMP", referencedColumnName = "COMP")
+                JoinColumn(updatable=false, insertable=false, name = "NCONS", referencedColumnName = "NCONS"),
+                JoinColumn(updatable=false, insertable=false, name = "NSTAR", referencedColumnName = "NSTAR")
         )
         var minima: List<StarMinima>
 ) : Serializable

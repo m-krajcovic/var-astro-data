@@ -6,10 +6,9 @@ data class StarListItemModel(
         val starId: Int,
         val constellation: String,
         val starName: String,
-        val comp: String,
         val minimaCount: Long
 )
 
 fun StarMinimaSummary.toListItemModel(): StarListItemModel {
-    return StarListItemModel(starId, constellation, starName, comp, minimaCount)
+    return StarListItemModel(starId, constellation, starName, minimaCount)
 }
