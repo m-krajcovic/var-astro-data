@@ -1,9 +1,9 @@
 .star-detail-wrapper {
     display: flex;
     flex: 0 0 auto;
+    flex-wrap: wrap;
 }
 
 .star-detail {
     margin-right: 12px;
-    padding: 8px;
 }
