@@ -7,3 +7,12 @@
 .star-detail {
     margin-right: 12px;
 }
+
+.star-detail input {
+    width: 90px;
+}
+
+.legendItem.deselected {
+    opacity: 0.5;
+    text-decoration: line-through;
+}

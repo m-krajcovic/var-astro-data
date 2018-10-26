@@ -84,7 +84,49 @@ const borderColors = {
     "s - photographic": "#eacc5d"
 };
 
+class ChartLegendItem extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {active: true};
+    }
+
+    render() {
+        if (this.props.legend) {
+            const key = this.props.legend;
+            return (
+                <span key={key} style={{flex: "0 0 33%", textAlign: "center", cursor: 'pointer'}}
+                      className={`legendItem ${this.state.active ? 'selected' : 'deselected'}`}
+                      onClick={() => {
+                          if (this.props.onClick) {
+                              this.props.onClick(key, !this.state.active);
+                          }
+                          this.setState({active: !this.state.active});
+                      }}>
+                    <span style={{
+                        display: 'inline-block',
+                        height: 8,
+                        width: 8,
+                        borderRadius: '100%',
+                        borderWidth: 1,
+                        borderColor: borderColors[key],
+                        backgroundColor: colors[key],
+                        borderStyle: 'solid',
+                        marginRight: 4
+                    }}/>
+                    {key}
+            </span>
+            )
+        }
+        return <span></span>
+    }
+}
+
 class StarMinimaChart extends Component {
+    constructor(props) {
+        super(props);
+        this.echartsReact = null;
+    }
+
     static methodValue(method) {
         if (method === "pg") {
             return "photographic";
@@ -120,41 +162,50 @@ class StarMinimaChart extends Component {
                 minima.type = this.cValue(minima);
                 let oc = minima.oc;
                 let epoch = null;
-                if (minima.kind === 'p' && this.props.primary) {
+                if (minima.kind === 'p' && this.props.primary && this.props.primary.minimum0 && this.props.primary.period) {
                     oc = StarMinimaChart.ocCalc(this.props.primary, minima);
                     epoch = Math.round((minima.julianDate - this.props.primary.minimum0) / this.props.primary.period);
                 }
-                if (minima.kind === 's' && this.props.secondary) {
+                if (minima.kind === 's' && this.props.secondary && this.props.secondary.minimum0 && this.props.secondary.period) {
                     oc = StarMinimaChart.ocCalc(this.props.secondary, minima);
                     epoch = Math.round((minima.julianDate - this.props.secondary.minimum0) / this.props.secondary.period);
                 }
                 if (minima.quality !== '?') {
-                    if (grouppedMinima[minima.type]) {
+                    if (grouppedMinima[minima.type] && oc && epoch) {
                         grouppedMinima[minima.type].push([epoch, oc, minima.julianDate]);
                         minimaList.push({epoch, oc, minima});
                     }
                 }
             });
-            minimaList.sort((a,b) => a.epoch - b.epoch);
+            minimaList.sort((a, b) => a.epoch - b.epoch);
             return (
                 <>
-                    <div className="panel" style={{position: 'relative', overflow: 'hidden', marginRight: 12}}>
-                        <ReactEcharts
-                            option={this.getOption(grouppedMinima)}
-                            style={{overflow: 'hidden', height: 500, width: 700}}
-                        />
-                        <div className="panel-body" style={{width: 600, margin: "auto", display: 'flex', flexWrap: 'wrap'}}>
-                            {Object.keys(grouppedMinima).map(key => {
+                    <div className="panel" style={{position: 'relative', overflow: 'auto', marginBottom: 12, maxWidth: 900}}>
+                        <div style={{position: 'relative', paddingTop: '75%', width: '100%'}}>
+                            <ReactEcharts
+                                ref={(e) => {
+                                    this.echartsReact = e;
+                                }}
+                                option={this.getOption(grouppedMinima)}
+                                style={{overflow: 'hidden', position: "absolute", top: 0, bottom: 0, left: 0, right: 0, height: '100%'}}
+                            />
+                        </div>
+                        <div className="panel-body"
+                             style={{width: 600, margin: "auto", display: 'flex', flexWrap: 'wrap'}}>
+                            {Object.keys(grouppedMinima).map((key, index) => {
                                 return (
-                                    <span key={key} style={{flex: "0 0 33%", textAlign: "center"}}>
-                                        <span style={{display: 'inline-block', height: 8, width: 8, borderRadius: '100%', borderWidth: 1, borderColor: borderColors[key], backgroundColor: colors[key], borderStyle: 'solid', marginRight: 4}}></span>
-                                        {key}
-                                    </span>
+                                    <ChartLegendItem key={key} legend={key} onClick={(legend, active) => {
+                                        const echartsInstance = this.echartsReact.getEchartsInstance();
+                                        echartsInstance.dispatchAction({
+                                            type: 'legendToggleSelect',
+                                            name: legend
+                                        });
+                                    }}/>
                                 )
                             })}
                         </div>
                     </div>
-                    <div className="panel" style={{maxHeight: 500, overflow: "auto"}}>
+                    <div className="panel" style={{maxHeight: 600, overflow: "auto", maxWidth: 900}}>
                         <div className="panel-body">
                             <ul style={{paddingLeft: 0}}>
                                 <li><b>Epoch &nbsp; O-C</b></li>
@@ -271,7 +322,7 @@ class StarMinimaChart extends Component {
 export class StarDetail extends Component {
     constructor(props) {
         super(props);
-        this.state = {selectedElement: 'server', customPrimaryElement: {}, customSecondaryElement: {}};
+        this.state = {customPrimaryElement: {}, customSecondaryElement: {}};
         this.customElement = {primary: {}, secondary: {}};
     }
 
@@ -311,8 +362,8 @@ export class StarDetail extends Component {
             const star = this.props.star;
             let primaryElement = this.state.customPrimaryElement;
             let secondaryElement = this.state.customSecondaryElement;
-            const customValuesError = (this.state.selectedElement === 'custom') && !((primaryElement.minimum0 && primaryElement.period) || (secondaryElement.minimum0 && secondaryElement.period));
-            if (this.state.selectedElement === 'server' || customValuesError) {
+            const customValuesError = (this.props.selectedElement === 'custom') && !((primaryElement.minimum0 && primaryElement.period) || (secondaryElement.minimum0 && secondaryElement.period));
+            if (this.props.selectedElement === 'server' || customValuesError) {
                 const elements = this.getDefaultElements();
                 primaryElement = elements.primary;
                 secondaryElement = elements.secondary;
@@ -321,7 +372,9 @@ export class StarDetail extends Component {
                 <div className="star-detail-container" style={{
                     display: "flex",
                     flexDirection: "column",
-                    paddingLeft: 12
+                    paddingLeft: 12,
+                    paddingBottom: 12,
+                    paddingRight: 12,
                 }}>
                     <h3 style={{flex: "0 0 auto"}}>{star.starName} {star.constellation}</h3>
                     <div style={{display: 'flex', flex: "0 0 auto", marginBottom: 12}}>
@@ -348,10 +401,13 @@ export class StarDetail extends Component {
                     </div>
                     <div className="star-detail-wrapper">
                         <div className={`star-detail panel`}>
-                            <div className={`panel-header selectable ${this.state.selectedElement === 'server' ? ' selected' : ''}`}
-                                 onClick={() => {
-                                     this.setState({...this.state, selectedElement: 'server'});
-                                 }}>
+                            <div
+                                className={`panel-header selectable ${this.props.selectedElement === 'server' ? ' selected' : ''}`}
+                                onClick={() => {
+                                    if (this.props.onElementChange) {
+                                        this.props.onElementChange('server');
+                                    }
+                                }}>
                                 <b>From Server</b>
                             </div>
                             <div className="panel-body" style={{display: 'flex', flexDirection: 'row'}}>
@@ -368,38 +424,45 @@ export class StarDetail extends Component {
                         </div>
                         <div className={`star-detail panel`}
                         >
-                            <div className={`panel-header selectable ${this.state.selectedElement === 'custom' ? ' selected' : ''}`}
-                                 onClick={() => {
-                                     this.setState({...this.state, selectedElement: 'custom'});
-                                 }}>
+                            <div
+                                className={`panel-header selectable ${this.props.selectedElement === 'custom' ? ' selected' : ''}`}
+                                onClick={() => {
+                                    if (this.props.onElementChange) {
+                                        this.props.onElementChange('custom');
+                                    }
+                                }}>
                                 <b>Custom</b>
                             </div>
                             <div className="panel-body" style={{display: 'flex', flexDirection: 'row'}}>
                                 <div style={{marginRight: 12}}>
                                     <div>Primary</div>
                                     <div className="space-out"><b>M0: </b><input type="text"
+                                                                                 value={this.state.customPrimaryElement.minimum0}
                                                                                  onInput={(e) => this.handleCustomInputChange('primary', 'minimum0', e)}/>
                                     </div>
                                     <div className="space-out"><b>Period: </b><input type="text"
+                                                                                     value={this.state.customPrimaryElement.period}
                                                                                      onInput={(e) => this.handleCustomInputChange('primary', 'period', e)}/>
                                     </div>
                                 </div>
                                 <div style={{marginRight: 12}}>
                                     <div>Secondary</div>
                                     <div className="space-out"><b>M0: </b><input type="text"
+                                                                                 value={this.state.customSecondaryElement.minimum0}
                                                                                  onInput={(e) => this.handleCustomInputChange('secondary', 'minimum0', e)}/>
                                     </div>
                                     <div className="space-out"><b>Period: </b><input type="text"
+                                                                                     value={this.state.customSecondaryElement.period}
                                                                                      onInput={(e) => this.handleCustomInputChange('secondary', 'period', e)}/>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div>
+                    <div style={{color: "#ba160c"}}>
                         {customValuesError ? 'Invalid custom values, using the server ones.' : ''}
                     </div>
-                    <div style={{flexWrap: "wrap", flex: "1 1 auto", display: "flex", marginTop: 12}}>
+                    <div style={{marginTop: 12}}>
                         <StarMinimaChart minima={star.minima} primary={primaryElement} secondary={secondaryElement}/>
                     </div>
                 </div>

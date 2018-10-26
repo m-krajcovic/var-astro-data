@@ -7,7 +7,7 @@ import StarList, {StarDetail} from "./StarList";
 class App extends Component {
     constructor(props) {
         super(props);
-        this.state = {constellations: [], stars: [], selectedStar: null};
+        this.state = {constellations: [], stars: [], selectedStar: null, selectedElement: 'server'};
     }
 
     componentDidMount() {
@@ -25,7 +25,7 @@ class App extends Component {
     onStarSelected(star) {
         this.setState({...this.state, starLoading: true});
         fetch(BASE_URL + "/stars/" + star.starId).then(response => response.json()).then(value => {
-            this.setState({...this.state, selectedStar: value, starLoading: false});
+            this.setState({...this.state, selectedStar: value, starLoading: false, selectedElement: 'server'});
         });
     }
 
@@ -41,7 +41,9 @@ class App extends Component {
                     </div>
                 </div>
                 <div className="stars-detail-wrapper">
-                    <StarDetail star={this.state.selectedStar} loading={this.state.starLoading}/>
+                    <StarDetail selectedElement={this.state.selectedElement} star={this.state.selectedStar} loading={this.state.starLoading} onElementChange={(element) => {
+                        this.setState({...this.state, selectedElement: element})
+                    }}/>
                 </div>
             </div>
         );
