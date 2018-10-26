@@ -191,7 +191,7 @@ class StarMinimaChart extends Component {
                             />
                         </div>
                         <div className="panel-body"
-                             style={{width: 600, margin: "auto", display: 'flex', flexWrap: 'wrap'}}>
+                             style={{maxWidth: 600, margin: "auto", display: 'flex', flexWrap: 'wrap'}}>
                             {Object.keys(grouppedMinima).map((key, index) => {
                                 return (
                                     <ChartLegendItem key={key} legend={key} onClick={(legend, active) => {
