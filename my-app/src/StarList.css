@@ -16,3 +16,60 @@
     opacity: 0.5;
     text-decoration: line-through;
 }
+
+.tab-wrapper {
+    display: flex;
+}
+
+.tab-wrapper > .tab-item {
+    text-align: center;
+    height: 16px;
+    padding: 16px 8px;
+    flex-grow: 1;
+    flex-basis: 100%;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    position: relative;
+}
+
+.tab-wrapper > .tab-item:hover {
+    background: #eee;
+}
+
+.tab-wrapper > .tab-item.selected {
+    border-bottom-color: #0038a8;
+}
+
+.tab-wrapper > .tab-item.selected::after {
+    content: '';
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    border-bottom: 1px solid #0038a8;
+}
+
+.mono {
+    font-family: "Courier New", Courier, monospace;
+}
+
+.minima-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.minima-list > .tab-wrapper {
+    flex: 0 0 auto;
+}
+
+.minima-list .panel-body {
+    overflow: auto;
+    flex: 1 auto;
+}
+
+.minima-list textarea {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}

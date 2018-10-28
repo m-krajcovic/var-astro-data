@@ -2,7 +2,8 @@ import React, {Component} from 'react';
 import './App.css';
 import ConstellationList from "./ConstellationList";
 import {BASE_URL} from "./api-endpoint";
-import StarList, {StarDetail} from "./StarList";
+import StarList from "./StarList";
+import StarDetail from "./StarDetail";
 
 class App extends Component {
     constructor(props) {
