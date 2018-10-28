@@ -9,14 +9,14 @@ body {
     background-color: #ECEFF1;
 }
 
-*::-webkit-scrollbar-track
+.sidebar::-webkit-scrollbar-track
 {
     border-radius: 8px;
     background-color: #F5F5F5;
     box-shadow: none;
 }
 
-*::-webkit-scrollbar
+.sidebar::-webkit-scrollbar
 {
     width: 6px;
     background-color: #F5F5F5;
@@ -24,7 +24,7 @@ body {
     border-radius: 8px;
 }
 
-*::-webkit-scrollbar-thumb
+.sidebar::-webkit-scrollbar-thumb
 {
     border-radius: 8px;
     background-color: #a5a5a5;
