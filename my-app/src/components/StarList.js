@@ -1,7 +1,4 @@
 import React, {Component} from 'react';
-import './StarList.css';
-
-
 class StarList extends Component {
     constructor(props) {
         super(props);

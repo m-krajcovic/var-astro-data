@@ -72,4 +72,27 @@
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
+
+    min-width: 100%;
+    min-height: 200px;
+}
+
+.minima-list .loadable {
+    position: relative;
+}
+
+.minima-list .loadable::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 0;
+    height: 4px;
+    background-color: #0038a8;
+}
+
+.minima-list .loadable.loading::after {
+    width: calc(100% + 16px);
+    transition: width 1s;
 }

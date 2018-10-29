@@ -122,3 +122,7 @@ body {
 .space-out > b {
     margin-right: 3px;
 }
+
+.text-error {
+    color: #ba160c;
+}
