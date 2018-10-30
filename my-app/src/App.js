@@ -37,19 +37,19 @@ class OcGate extends Component {
 
     componentDidMount() {
         this.setState({...this.state, constellationsLoading: true});
-        fetch(BASE_URL + "/constellations").then(response => response.json())
+        fetch(BASE_URL + "/ocgate/constellations").then(response => response.json())
             .then(value => this.setState({constellations: value, stars: [], selectedStar: null, constellationsLoading: false}));
     }
 
     onConstellationSelected(constellation) {
         this.setState({...this.state, starsLoading: true});
-        fetch(BASE_URL + "/constellations/" + constellation + "/stars").then(response => response.json())
+        fetch(BASE_URL + "/ocgate/constellations/" + constellation + "/stars").then(response => response.json())
             .then(value => this.setState({...this.state, stars: value, starsLoading: false}));
     }
 
     onStarSelected(star) {
         this.setState({...this.state, starLoading: true});
-        fetch(BASE_URL + "/stars/" + star.starId).then(response => response.json()).then(value => {
+        fetch(BASE_URL + "/ocgate/stars/" + star.starId).then(response => response.json()).then(value => {
             this.setState({...this.state, selectedStar: value, starLoading: false, selectedElement: 'server'});
         });
     }
