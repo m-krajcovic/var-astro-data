@@ -1,12 +1,35 @@
 import React, {Component} from 'react';
 import './App.css';
-import './components/StarList.css';
-import ConstellationList from "./components/ConstellationList";
+import './components/ocgate/StarList.css';
+import ConstellationList from "./components/ocgate/ConstellationList";
 import {BASE_URL} from "./api-endpoint";
-import StarList from "./components/StarList";
-import StarDetail from "./components/StarDetail";
+import StarList from "./components/ocgate/StarList";
+import StarDetail from "./components/ocgate/StarDetail";
+import { BrowserRouter as Router, Route, Link, Redirect, NavLink } from "react-router-dom";
 
 class App extends Component {
+    render() {
+        return (
+            <Router>
+                <div className="app">
+                    <div class="app-header">
+                        <NavLink to="/oc" activeClassName="active"><span className="header-link">O-C Gate</span></NavLink>
+                        <NavLink to="/czev" activeClassName="active"><span className="header-link">CzeV</span></NavLink>
+                        <NavLink to="/brno" activeClassName="active"><span className="header-link">B.R.N.O.</span></NavLink>
+                        <NavLink to="/predictions" activeClassName="active"><span className="header-link">Predictions</span></NavLink>
+                    </div>
+                    <Redirect from="/" to="oc" />
+                    <Route path="/oc" component={OcGate}/>
+                    <Route path="/czev" component={Czev}/>
+                    <Route path="/brno" component={Brno}/>
+                    <Route path="/predictions" component={Predictions}/>
+                </div>
+            </Router>
+        );
+    }
+}
+
+class OcGate extends Component {
     constructor(props) {
         super(props);
         this.state = {constellations: [], stars: [], selectedStar: null, selectedElement: 'server'};
@@ -33,7 +56,7 @@ class App extends Component {
 
     render() {
         return (
-            <div className="App">
+            <div className="oc-gate-app">
                 <div className="sidebar-wrapper">
                     <div className="sidebar">
                         <ConstellationList constellations={this.state.constellations} onSelected={constellation => this.onConstellationSelected(constellation)} loading={this.state.constellationsLoading}/>
@@ -49,6 +72,30 @@ class App extends Component {
                 </div>
             </div>
         );
+    }
+}
+
+class Czev extends Component {
+    render() {
+        return (
+            <div>This will be new czev catalog!</div>
+        )
+    }
+}
+
+class Brno extends Component {
+    render() {
+        return (
+            <div></div>
+        );
+    }
+}
+
+class Predictions extends Component {
+    render() {
+        return (
+            <div></div>
+        )
     }
 }
 

@@ -1,6 +1,26 @@
 import React, {Component} from 'react';
 import StarMinimaChart from "./StarMinimaChart";
 
+const prependZero = function(length, number) {
+    let numberStr = `${number}`;
+    for (let i = 0; i < length - number; i++) {
+        numberStr = "0" + numberStr;
+    }
+    return numberStr;
+}
+
+const coordinatesToString = function(coords) {
+    return `${prependZero(2, coords.raHours)} ${prependZero(2, coords.raMinutes)} ${prependZero(2, coords.raSeconds)} ${coords.decSign}${prependZero(2, coords.decDegrees)} ${prependZero(2, coords.decMinutes)} ${prependZero(2, coords.decSeconds)}`;
+};
+
+const coordinatesToStringRa = function(coords) {
+    return `${prependZero(2, coords.raHours)} ${prependZero(2, coords.raMinutes)} ${prependZero(2, coords.raSeconds)}`;
+};
+
+const coordinatesToStringDec = function(coords) {
+    return `${coords.decSign}${prependZero(2, coords.decDegrees)} ${prependZero(2, coords.decMinutes)} ${prependZero(2, coords.decSeconds)}`;
+};
+
 export default class StarDetail extends Component {
     constructor(props) {
         super(props);
@@ -63,7 +83,8 @@ export default class StarDetail extends Component {
                         <div className="panel star-detail">
                             <div className="panel-header"><b>Coordinates</b></div>
                             <div className="panel-body">
-                                <div>{this.coordinatesToString(star.coordinates)}</div>
+                                <div><b>RA: </b>{coordinatesToStringRa(star.coordinates)}</div>
+                                <div><b>DEC: </b>{coordinatesToStringDec(star.coordinates)}</div>
                             </div>
                         </div>
                         {star.brightness.map(bright => {
@@ -162,9 +183,5 @@ export default class StarDetail extends Component {
             customPrimaryElement: this.customElement.primary,
             customSecondaryElement: this.customElement.secondary
         });
-    }
-
-    coordinatesToString(coords) {
-        return `${coords.raHours}:${coords.raMinutes}:${coords.raSeconds} ${coords.decSign}${coords.decDegrees}:${coords.decMinutes}:${coords.decSeconds}`;
     }
 }

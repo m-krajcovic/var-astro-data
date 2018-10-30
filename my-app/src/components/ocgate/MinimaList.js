@@ -8,7 +8,7 @@ export default class MinimaList extends Component {
 
     render() {
         return (
-            <div className="panel minima-list" style={{height: 600, overflow: "auto", width: 900}}>
+            <div className="panel minima-list" style={{height: 600, overflow: "auto", maxWidth: 900}}>
                 <div className="tab-wrapper">
                     <span className={`tab-item ${this.state.tab === "db" ? "selected" : ""}`}
                           onClick={() => this.setState({...this.state, tab: "db"})}
@@ -22,6 +22,7 @@ export default class MinimaList extends Component {
                         <table style={{paddingLeft: 0}}>
                             <thead>
                             <tr>
+                                <th align="right">Julian Date</th>
                                 <th align="right">Epoch</th>
                                 <th align="right">O-C</th>
                             </tr>
@@ -31,6 +32,7 @@ export default class MinimaList extends Component {
                                 this.props.minimaList.map(minima => {
                                     return (
                                         <tr key={minima.minima.id}>
+                                            <td align="right">{minima.minima.julianDate.toFixed(5)}</td>
                                             <td align="right">{minima.epoch}</td>
                                             <td align="right">{minima.oc}</td>
                                         </tr>
