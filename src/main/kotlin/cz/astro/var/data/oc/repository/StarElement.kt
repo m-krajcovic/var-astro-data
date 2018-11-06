@@ -1,4 +1,4 @@
-package cz.astro.`var`.data.repository
+package cz.astro.`var`.data.oc.repository
 
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -12,7 +12,7 @@ import javax.persistence.Table
  */
 @Entity
 @Table(name = "element")
-data class StarElement(
+class StarElement(
     @Id var id: Int,
     var minimum0: Double,
     var minimum9: Double,

@@ -1,7 +1,7 @@
-package cz.astro.`var`.data.controller
+package cz.astro.`var`.data.oc.controller
 
-import cz.astro.`var`.data.repository.ConstellationStarSummary
-import cz.astro.`var`.data.repository.StarRepository
+import cz.astro.`var`.data.oc.repository.ConstellationStarSummary
+import cz.astro.`var`.data.oc.repository.StarRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*
  */
 @RestController
 @CrossOrigin(origins = ["http://localhost:3000"])
-@RequestMapping("api")
+@RequestMapping("api/oc")
 class StarController(private val starRepository: StarRepository) {
 
     private val logger: Logger = LoggerFactory.getLogger(StarController::class.java)

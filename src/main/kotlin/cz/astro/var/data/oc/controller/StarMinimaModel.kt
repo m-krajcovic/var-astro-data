@@ -1,6 +1,6 @@
-package cz.astro.`var`.data.controller
+package cz.astro.`var`.data.oc.controller
 
-import cz.astro.`var`.data.repository.StarMinima
+import cz.astro.`var`.data.oc.repository.StarMinima
 
 /**
  * @author Michal

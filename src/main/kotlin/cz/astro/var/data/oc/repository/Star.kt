@@ -1,7 +1,7 @@
-package cz.astro.`var`.data.repository
+package cz.astro.`var`.data.oc.repository
 
 import cz.astro.`var`.data.CosmicCoordinates
-import cz.astro.`var`.data.repository.helper.BooleanToStringConverter
+import cz.astro.`var`.data.helper.BooleanToStringConverter
 import java.io.Serializable
 import java.time.LocalDate
 import javax.persistence.*
@@ -13,7 +13,7 @@ import javax.persistence.*
  */
 @Entity
 @Table(name="identif")
-data class Star(
+class Star(
         @Id var id: Int = -1,
         @Column(name = "MODIFIED") var lastModifiedDate: LocalDate = LocalDate.MIN,
         @Column(name = "CONS", columnDefinition = "char") var constellation: String = "",
@@ -42,22 +42,22 @@ data class Star(
         @Column(name = "TYPE", columnDefinition = "char") var type: String = "",
         @Column(name = "NOTE_ID", columnDefinition = "char") var noteId: String = "",
         @Column(name = "user") var user: Int = -1,
+        @OneToMany(targetEntity = StarElement::class)
+        @JoinColumns(
+                JoinColumn(updatable=false, insertable=false, name = "NCONS", referencedColumnName = "NCONS"),
+                JoinColumn(updatable=false, insertable=false, name = "NSTAR", referencedColumnName = "NSTAR")
+        )
+        var elements: MutableList<StarElement>,
         @OneToMany
         @JoinColumns(
                 JoinColumn(updatable=false, insertable=false, name = "NCONS", referencedColumnName = "NCONS"),
                 JoinColumn(updatable=false, insertable=false, name = "NSTAR", referencedColumnName = "NSTAR")
         )
-        var elements: List<StarElement>,
+        var brightness: MutableList<StarBrightness>,
         @OneToMany
         @JoinColumns(
                 JoinColumn(updatable=false, insertable=false, name = "NCONS", referencedColumnName = "NCONS"),
                 JoinColumn(updatable=false, insertable=false, name = "NSTAR", referencedColumnName = "NSTAR")
         )
-        var brightness: List<StarBrightness>,
-        @OneToMany
-        @JoinColumns(
-                JoinColumn(updatable=false, insertable=false, name = "NCONS", referencedColumnName = "NCONS"),
-                JoinColumn(updatable=false, insertable=false, name = "NSTAR", referencedColumnName = "NSTAR")
-        )
-        var minima: List<StarMinima>
+        var minima: MutableList<StarMinima>
 ) : Serializable

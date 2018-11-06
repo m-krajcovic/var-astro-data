@@ -1,6 +1,6 @@
-package cz.astro.`var`.data.controller
+package cz.astro.`var`.data.oc.controller
 
-import cz.astro.`var`.data.repository.StarMinimaSummary
+import cz.astro.`var`.data.oc.repository.StarMinimaSummary
 
 data class StarListItemModel(
         val starId: Int,

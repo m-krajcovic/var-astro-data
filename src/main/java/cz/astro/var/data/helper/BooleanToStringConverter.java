@@ -1,4 +1,4 @@
-package cz.astro.var.data.repository.helper;
+package cz.astro.var.data.helper;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;

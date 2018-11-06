@@ -1,4 +1,4 @@
-package cz.astro.`var`.data.repository
+package cz.astro.`var`.data.oc.repository
 
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -12,7 +12,7 @@ import javax.persistence.Table
  */
 @Entity
 @Table(name = "minima")
-data class StarMinima(
+class StarMinima(
         @Id var id: Int,
         @Column(name = "NCONS") var constellationId: Int = -1,
         @Column(name = "NSTAR") var starId: Int = -1,

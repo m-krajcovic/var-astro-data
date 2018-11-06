@@ -1,4 +1,4 @@
-package cz.astro.`var`.data.repository
+package cz.astro.`var`.data.oc.repository
 
 /**
  * @author Michal
