@@ -1,6 +1,7 @@
 package cz.astro.`var`.data.czev.repository
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.util.*
 
@@ -10,8 +11,16 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
                val starTypeRepository: StarTypeRepository,
                val userRepository: UserRepository,
                val observerRepository: StarObserverRepository,
-               val constellationRepository: ConstellationRepository) {
+               val constellationRepository: ConstellationRepository,
+               val starIdentificationRepository: StarIdentificationRepository) {
 
+    private lateinit var constellationsMap: Map<String, Constellation>
+    private lateinit var observersMap: Map<String, StarObserver>
+    private lateinit var user: User
+    private lateinit var bandsMap: Map<String, FilterBand>
+    private lateinit var typesMap: Map<String, StarType>
+
+    @Transactional
     fun initialize() {
         var users = getUsers()
         var constellations = getConstellations()
@@ -20,21 +29,34 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         var observers = getObservers()
 
         users = userRepository.saveAll(users)
-        val user = users[0]
+        user = users[0]
         observers = observerRepository.saveAll(observers)
-        val observersMap = observers.toMap { it.abbreviation }
+        observersMap = observers.toMap { it.abbreviation }
         constellations = constellationRepository.saveAll(constellations)
-        val constellationsMap = constellations.toMap { it.name }
+        constellationsMap = constellations.toMap { it.name }
         bands = filterBandRepository.saveAll(bands)
-        val bandsMap = bands.toMap { it.name }
+        bandsMap = bands.toMap { it.name }
         types = starTypeRepository.saveAll(types)
-        val typesMap = types.toMap { it.name }
+        typesMap = types.toMap { it.name }
 
-
+        var stars = getStars()
+        czevStarRepository.saveAll(stars)
     }
 
-    fun getStars(constellationsMap: Map<String, Constellation>, bandsMap: Map<String, FilterBand>, observersMap: Map<String, StarObserver>, user: User): List<CzevStar> {
+    @Transactional("czevTM")
+    fun test() {
+        val one = czevStarRepository.getOne(333)
+        val user1 = User("fjodor@gmail.com", "lolo")
+        user1.id = 1
+        one.approvedBy = user1
+        one.privateNote = "ahoj"
 
+        val save = czevStarRepository.saveAndFlush(one)
+
+        println(save.approvedBy)
+    }
+
+    fun getStars(): List<CzevStar> {
         val output = ArrayList<CzevStar>()
         output.addAll(Arrays.asList(
                 getStar("1", "UCAC4 537-046686", "FF Cnc", "08 29 39.312", "+17 17 00.58", "Cnc", "EA", "10.77", "9.384", "0.531", "0.57", "C", "2452500.939", "1.469331", "PeP", "1993"),
@@ -70,16 +92,24 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         return output
     }
 
-    fun getStar(czev: String, crossId: String, vsxName: String, ra: String, dec: String, cons: String, type: String, v: String, j: String, vk: String, amp: String, band: String, m0: String, per: String, disc: String, year: String): CzevStar {
-        return CzevStar(
-                czev.toLong(),
+    fun getStar(czev: String, crossId: String, vsxName: String, ra: String, dec: String, cons: String, type: String, v: String, j: String, jk: String, amp: String, band: String, m0: String, per: String, disc: String, year: String): CzevStar {
+        val crossIdentifications = getCrossIds(crossId)
+        val czevStar = CzevStar(
                 m0.toBigDecimalOrNull(),
-                per.toBigDecimalOrNull()
-
+                per.toBigDecimalOrNull(),
+                .0, .0, "", "", getConstellation(cons), type, getBand(band), getDiscoverers(disc), ArrayList(), null, vsxName, true, user, LocalDateTime.now(), v.toDoubleOrNull(), j.toDoubleOrNull(), jk.toDoubleOrNull(), amp.toDoubleOrNull(), CosmicCoordinates(ra, dec), year.toInt()
+                , czev.toLong()
         )
+        czevStar.crossIdentifications = crossIdentifications
+
+        return czevStar
     }
 
-    fun getDiscoverers(observersMap: Map<String, StarObserver>, key: String): MutableList<StarObserver> {
+    fun getCrossIds(crossId: String): MutableList<StarIdentification> {
+        return arrayListOf(StarIdentification(crossId, null))
+    }
+
+    fun getDiscoverers(key: String): MutableList<StarObserver> {
         val output = ArrayList<StarObserver>()
         key.split(",").forEach {
             val starObserver = observersMap[it.trim()]
@@ -92,12 +122,12 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         return output
     }
 
-    fun getBand(map: Map<String, FilterBand>, key: String): FilterBand? {
-        return map[key]
+    fun getBand(key: String): FilterBand? {
+        return bandsMap[key]
     }
 
-    fun getConstellation(map: Map<String, Constellation>, key: String): Constellation {
-        return map.getValue(key)
+    fun getConstellation(key: String): Constellation {
+        return constellationsMap.getValue(key)
     }
 
     fun getUsers(): List<User> {

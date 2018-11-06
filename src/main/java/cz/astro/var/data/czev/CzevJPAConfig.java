@@ -1,9 +1,11 @@
 package cz.astro.var.data.czev;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -12,6 +14,7 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
@@ -25,8 +28,11 @@ import java.util.HashMap;
 @EnableJpaRepositories(
         basePackages = "cz.astro.var.data.czev",
         entityManagerFactoryRef = "czevEntityManager",
-        transactionManagerRef = "czevTransactionManager"
+        transactionManagerRef = "czevTM"
 )
+@ComponentScan(basePackages = "cz.astro.var.data.czev")
+@EntityScan(basePackages = "cz.astro.var.data.czev")
+@EnableTransactionManagement
 public class CzevJPAConfig {
 
     @Autowired
@@ -54,11 +60,11 @@ public class CzevJPAConfig {
         return DataSourceBuilder.create().type(DriverManagerDataSource.class).build();
     }
 
-
-    @Bean
-    public PlatformTransactionManager czevTransactionManager() {
+    @Bean(name = "czevTM")
+    public PlatformTransactionManager czevTM() {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(czevEntityManager().getObject());
+        transactionManager.setDataSource(czevDataSource());
         return transactionManager;
     }
 }

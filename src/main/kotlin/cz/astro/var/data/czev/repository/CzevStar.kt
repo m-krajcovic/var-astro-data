@@ -1,6 +1,7 @@
 package cz.astro.`var`.data.czev.repository
 
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.util.regex.Pattern
 import javax.persistence.*
@@ -8,10 +9,8 @@ import javax.persistence.*
 @Entity
 @Table(name = "czev_CzevStar")
 class CzevStar(
-        @Column(unique = true)
-        var czevId: Long,
-        @Column(precision = 19, scale = 7) var m0: BigDecimal?,
-        @Column(precision = 19, scale = 7) var period: BigDecimal?,
+        @Column(precision = 19, scale = 7, nullable = true) var m0: BigDecimal?,
+        @Column(precision = 19, scale = 7, nullable = true) var period: BigDecimal?,
         var periodError: Double,
         var m0Error: Double,
         @Column(columnDefinition = "text") var publicNote: String,
@@ -21,29 +20,42 @@ class CzevStar(
         var type: String,
         @ManyToOne(fetch = FetchType.LAZY)
         var filterBand: FilterBand?,
-        @ManyToMany
+        @ManyToMany(fetch = FetchType.LAZY)
         var discoverers: MutableList<StarObserver>,
-        @OneToMany(mappedBy = "star")
-        var comments: MutableList<StarComment>,
-        @OneToMany(mappedBy = "star")
-        var logs: MutableList<StarChangeLog>,
         @ManyToMany
         var publications: MutableList<Publication>,
-        @OneToMany(mappedBy = "star")
-        var crossIdentifications: MutableList<StarIdentification>,
-        var vsxId: Long?,
+        @Column(nullable = true) var vsxId: Long?,
         var vsxName: String,
         var approved: Boolean,
         @ManyToOne(fetch = FetchType.LAZY)
         var approvedBy: User?,
         var approvedOn: LocalDateTime,
-        var vMagnitude: Double,
-        var jMagnitude: Double,
-        var jk: Double,
-        var amplitude: Double,
+        @Column(nullable = true)
+        var vMagnitude: Double?,
+        @Column(nullable = true)
+        var jMagnitude: Double?,
+        @Column(nullable = true)
+        var jk: Double?,
+        @Column(nullable = true)
+        var amplitude: Double?,
+        @Embedded
         var coordinates: CosmicCoordinates,
-        var year: Int
-) : CzevEntity()
+        var year: Int,
+        @Column(nullable = true)
+        var czevId: Long? = null,
+        @OneToMany(mappedBy = "star")
+        var comments: MutableList<StarComment> = ArrayList(),
+        @OneToMany(mappedBy = "star")
+        var logs: MutableList<StarChangeLog> = ArrayList()
+) : CzevEntity() {
+
+    @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var crossIdentifications: MutableList<StarIdentification> = ArrayList()
+        set(value) {
+            value.forEach { it.star = this }
+            field = value
+        }
+}
 
 @Entity
 @Table(name = "czev_Constellation")
@@ -121,6 +133,7 @@ class StarObserver(
         @Column(unique = true)
         var email: String,
         @OneToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "user_id")
         var user: User? = null
 ) : CzevEntity() {
     override fun equals(other: Any?): Boolean {
@@ -150,10 +163,21 @@ class StarObserver(
 @Table(name = "czev_User")
 class User(
         var email: String,
-        var password: String,
-        @OneToOne(fetch = FetchType.LAZY)
-        var observer: StarObserver? = null
-) : CzevEntity()
+        var password: String
+) : CzevEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is User) return false
+
+        if (email != other.email) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return email.hashCode()
+    }
+}
 
 @Entity
 @Table(name = "czev_StarComment")
@@ -170,46 +194,51 @@ class StarComment(
 class StarChangeLog(
         @ManyToOne(fetch = FetchType.LAZY)
         var star: CzevStar,
-        @OneToMany(mappedBy = "changeLog")
+        @OneToMany(mappedBy = "changeLog", orphanRemoval = true, cascade = [CascadeType.ALL])
         var entries: MutableList<StarChangeLogEntry>,
         @ManyToOne(fetch = FetchType.LAZY)
         var user: User
-) : CzevEntity()
+) : CzevEntity() {
+}
 
 @Entity
 @Table(name = "czev_StarChangeLogEntry")
 class StarChangeLogEntry(
-        @ManyToOne(fetch = FetchType.LAZY)
-        var changeLog: StarChangeLog,
         var changedColumn: String,
-        var newValue: String
-) : CzevEntity()
+        var newValue: String,
+        var oldValue: String
+) : CzevEntity() {
+    @ManyToOne(fetch = FetchType.LAZY)
+    lateinit var changeLog: StarChangeLog
+}
 
 @Entity
 @Table(name = "czev_StarIdentification")
 class StarIdentification(
+        var name: String,
         @ManyToOne(fetch = FetchType.LAZY)
-        var star: CzevStar,
-        @ManyToOne(fetch = FetchType.LAZY)
-        var format: CdsFormat,
-        var name: String
-) : CzevEntity()
+        var format: CdsFormat?
+) : CzevEntity() {
+    @ManyToOne(fetch = FetchType.LAZY)
+    lateinit var star: CzevStar
+}
 
 @Entity
 @Table(name = "czev_CdsFormat")
 class CdsFormat(
         var name: String,
-        @OneToMany(mappedBy = "format")
+        @OneToMany(mappedBy = "format", orphanRemoval = true, cascade = [CascadeType.ALL])
         var patterns: MutableList<CdsFormatPattern>
 ) : CzevEntity()
 
 @Entity
 @Table(name = "czev_CdsFormatPattern")
 class CdsFormatPattern(
-        @ManyToOne(fetch = FetchType.LAZY)
-        var format: CdsFormat,
         var value: String
-) : CzevEntity()
+) : CzevEntity() {
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    lateinit var format: CdsFormat
+}
 
 @Entity
 @Table(name = "czev_Publication")
@@ -218,7 +247,7 @@ class Publication(
 ) : CzevEntity()
 
 @MappedSuperclass
-class CzevEntity(
+abstract class CzevEntity(
         @Id
         @GeneratedValue
         var id: Long = -1,
@@ -232,34 +261,34 @@ class CzevEntity(
 
 @Embeddable
 class CosmicCoordinates(
-        var rightAscension: Double,
-        var declination: Double
+        @Column(precision = 10, scale = 4) var rightAscension: BigDecimal,
+        @Column(precision = 10, scale = 4) var declination: BigDecimal
 ) {
     constructor(raString: String, decString: String) : this(raStringToDegrees(raString), decStringToDegrees(decString))
 }
 
-fun raStringToDegrees(raString: String) : Double {
+fun raStringToDegrees(raString: String): BigDecimal {
     val raSplit = raString.split(Pattern.compile("\\s|:"))
     if (raSplit.size != 3) {
         throw IllegalArgumentException("Given string doesn't have correct format")
     }
-    val hours = raSplit[0].toInt()
-    val minutes = raSplit[1].toInt()
-    val seconds = raSplit[2].toDouble()
+    val hours = raSplit[0].toBigDecimal()
+    val minutes = raSplit[1].toBigDecimal()
+    val seconds = raSplit[2].toBigDecimal()
 
-    return hours * 15 + minutes/4 + seconds/240
+    return hours.multiply(BigDecimal(15)) + minutes.divide(BigDecimal(4), 4, RoundingMode.HALF_UP) + seconds.divide(BigDecimal(240), 4, RoundingMode.HALF_UP)
 }
 
-fun decStringToDegrees(decString: String) : Double {
+fun decStringToDegrees(decString: String): BigDecimal {
     val decSplit = decString.split(Pattern.compile("\\s|:"))
     if (decSplit.size != 3) {
         throw IllegalArgumentException("Given string doesn't have correct format")
     }
-    val degrees = decSplit[0].toDouble()
-    val arcmin = decSplit[1].toDouble()
-    val arcsec = decSplit[2].toDouble()
+    val degrees = decSplit[0].toBigDecimal()
+    val arcmin = decSplit[1].toBigDecimal()
+    val arcsec = decSplit[2].toBigDecimal()
 
-    val op: (Double, Double) -> Double = if (degrees > 0) { a,b -> a + b } else { a,b -> a - b }
+    val op: (BigDecimal, BigDecimal) -> BigDecimal = if (degrees > BigDecimal.ZERO) { a, b -> a + b } else { a, b -> a - b }
 
-    return op(degrees, op(arcmin/60, arcsec/3600))
+    return op(degrees, op(arcmin.divide(BigDecimal(60), 4, RoundingMode.HALF_UP), arcsec.divide(BigDecimal(3600), 4, RoundingMode.HALF_UP)))
 }

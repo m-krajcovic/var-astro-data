@@ -1,9 +1,11 @@
 package cz.astro.var.data.oc;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
@@ -13,6 +15,7 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
@@ -26,15 +29,18 @@ import java.util.HashMap;
 @EnableJpaRepositories(
         basePackages = "cz.astro.var.data.oc",
         entityManagerFactoryRef = "ocEntityManager",
-        transactionManagerRef = "ocTransactionManager"
+        transactionManagerRef = "ocTM"
 )
+@ComponentScan(basePackages = "cz.astro.var.data.oc")
+@EntityScan(basePackages = "cz.astro.var.data.oc")
+@EnableTransactionManagement
 public class OcJPAConfig {
 
     @Autowired
     private Environment env;
 
-    @Bean
     @Primary
+    @Bean
     public LocalContainerEntityManagerFactoryBean ocEntityManager() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(ocDataSource());
@@ -58,10 +64,11 @@ public class OcJPAConfig {
     }
 
     @Primary
-    @Bean
-    public PlatformTransactionManager ocTransactionManager() {
+    @Bean(name = "ocTM")
+    public PlatformTransactionManager ocTM() {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(ocEntityManager().getObject());
+        transactionManager.setDataSource(ocDataSource());
         return transactionManager;
     }
 }
