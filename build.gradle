@@ -30,8 +30,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web:2.0.5.RELEASE'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.0.5.RELEASE'
     implementation 'org.springframework.boot:spring-boot-starter-security:2.0.5.RELEASE'
+    implementation 'io.jsonwebtoken:jjwt:0.9.1'
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.0.5.RELEASE'
 
     components {
         withModule('org.springframework:spring-beans') {
@@ -46,6 +47,8 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     compile "org.jetbrains.kotlin:kotlin-reflect"
     compile "org.jetbrains.kotlin:kotlin-noarg"
+    compile "org.hibernate:hibernate-envers:5.3.7.Final"
+    compile "org.apache.commons:commons-csv:1.5"
     compile "mysql:mysql-connector-java:8.0.12"
 }
 

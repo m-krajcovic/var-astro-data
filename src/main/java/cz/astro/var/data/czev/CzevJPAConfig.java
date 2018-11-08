@@ -28,7 +28,7 @@ import java.util.HashMap;
 @EnableJpaRepositories(
         basePackages = "cz.astro.var.data.czev",
         entityManagerFactoryRef = "czevEntityManager",
-        transactionManagerRef = "czevTM"
+        transactionManagerRef = "czevTransactionManager"
 )
 @ComponentScan(basePackages = "cz.astro.var.data.czev")
 @EntityScan(basePackages = "cz.astro.var.data.czev")
@@ -60,8 +60,8 @@ public class CzevJPAConfig {
         return DataSourceBuilder.create().type(DriverManagerDataSource.class).build();
     }
 
-    @Bean(name = "czevTM")
-    public PlatformTransactionManager czevTM() {
+    @Bean(name = "czevTransactionManager")
+    public PlatformTransactionManager czevTransactionManager() {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(czevEntityManager().getObject());
         transactionManager.setDataSource(czevDataSource());

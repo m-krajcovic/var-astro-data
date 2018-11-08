@@ -29,7 +29,7 @@ import java.util.HashMap;
 @EnableJpaRepositories(
         basePackages = "cz.astro.var.data.oc",
         entityManagerFactoryRef = "ocEntityManager",
-        transactionManagerRef = "ocTM"
+        transactionManagerRef = "ocTransactionManager"
 )
 @ComponentScan(basePackages = "cz.astro.var.data.oc")
 @EntityScan(basePackages = "cz.astro.var.data.oc")
@@ -63,12 +63,12 @@ public class OcJPAConfig {
         return DataSourceBuilder.create().type(DriverManagerDataSource.class).build();
     }
 
-    @Primary
-    @Bean(name = "ocTM")
-    public PlatformTransactionManager ocTM() {
+    @Bean(name = "ocTransactionManager")
+    public PlatformTransactionManager ocTransactionManager() {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(ocEntityManager().getObject());
         transactionManager.setDataSource(ocDataSource());
         return transactionManager;
     }
+
 }

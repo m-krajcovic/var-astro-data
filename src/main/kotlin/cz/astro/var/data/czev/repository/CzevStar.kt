@@ -1,13 +1,18 @@
 package cz.astro.`var`.data.czev.repository
 
+import org.hibernate.annotations.NaturalId
+import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDateTime
+import java.util.*
 import java.util.regex.Pattern
 import javax.persistence.*
 
 @Entity
 @Table(name = "czev_CzevStar")
+@Audited
 class CzevStar(
         @Column(precision = 19, scale = 7, nullable = true) var m0: BigDecimal?,
         @Column(precision = 19, scale = 7, nullable = true) var period: BigDecimal?,
@@ -15,7 +20,7 @@ class CzevStar(
         var m0Error: Double,
         @Column(columnDefinition = "text") var publicNote: String,
         @Column(columnDefinition = "text") var privateNote: String,
-        @ManyToOne(fetch = FetchType.LAZY)
+        @ManyToOne(optional = false, fetch = FetchType.LAZY)
         var constellation: Constellation,
         var type: String,
         @ManyToOne(fetch = FetchType.LAZY)
@@ -42,11 +47,7 @@ class CzevStar(
         var coordinates: CosmicCoordinates,
         var year: Int,
         @Column(nullable = true)
-        var czevId: Long? = null,
-        @OneToMany(mappedBy = "star")
-        var comments: MutableList<StarComment> = ArrayList(),
-        @OneToMany(mappedBy = "star")
-        var logs: MutableList<StarChangeLog> = ArrayList()
+        var czevId: Long? = null
 ) : CzevEntity() {
 
     @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL], orphanRemoval = true)
@@ -55,10 +56,14 @@ class CzevStar(
             value.forEach { it.star = this }
             field = value
         }
+
+    @ManyToOne(optional=false, fetch = FetchType.LAZY)
+    lateinit var createdBy: User
 }
 
 @Entity
 @Table(name = "czev_Constellation")
+@Audited
 class Constellation(
         @Column(unique = true)
         var name: String
@@ -103,6 +108,7 @@ class StarType(
 
 @Entity
 @Table(name = "czev_FilterBand")
+@Audited
 class FilterBand(
         @Column(unique = true)
         var name: String
@@ -125,6 +131,7 @@ class FilterBand(
 
 @Entity
 @Table(name = "czev_StarObserver")
+@Audited
 class StarObserver(
         var firstName: String,
         var lastName: String,
@@ -161,10 +168,20 @@ class StarObserver(
 
 @Entity
 @Table(name = "czev_User")
+@Audited
 class User(
-        var email: String,
-        var password: String
+        @NaturalId
+        var email: String = "",
+        @NotAudited
+        var password: String = "",
+        @ManyToMany
+        var roles: MutableSet<Role> = HashSet()
 ) : CzevEntity() {
+
+    constructor(id: Long) : this() {
+        super.id = id
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is User) return false
@@ -180,6 +197,14 @@ class User(
 }
 
 @Entity
+@Table(name = "czev_Role")
+@Audited
+class Role(
+        @Column(unique = true)
+        val name: String
+): CzevEntity()
+
+@Entity
 @Table(name = "czev_StarComment")
 class StarComment(
         @ManyToOne(fetch = FetchType.LAZY)
@@ -188,34 +213,39 @@ class StarComment(
         var star: CzevStar,
         @Column(columnDefinition = "text") var text: String
 ) : CzevEntity()
-
-@Entity
-@Table(name = "czev_StarChangeLog")
-class StarChangeLog(
-        @ManyToOne(fetch = FetchType.LAZY)
-        var star: CzevStar,
-        @OneToMany(mappedBy = "changeLog", orphanRemoval = true, cascade = [CascadeType.ALL])
-        var entries: MutableList<StarChangeLogEntry>,
-        @ManyToOne(fetch = FetchType.LAZY)
-        var user: User
-) : CzevEntity() {
-}
-
-@Entity
-@Table(name = "czev_StarChangeLogEntry")
-class StarChangeLogEntry(
-        var changedColumn: String,
-        var newValue: String,
-        var oldValue: String
-) : CzevEntity() {
-    @ManyToOne(fetch = FetchType.LAZY)
-    lateinit var changeLog: StarChangeLog
-}
+//
+//@Entity
+//@Table(name = "czev_StarChangeLog")
+//class StarChangeLog(
+//        @ManyToOne(fetch = FetchType.LAZY)
+//        var star: CzevStar,
+//        @OneToMany(mappedBy = "changeLog", orphanRemoval = true, cascade = [CascadeType.ALL])
+//        var entries: MutableList<StarChangeLogEntry>,
+//        @ManyToOne(fetch = FetchType.LAZY)
+//        var user: User
+//) : CzevEntity() {
+//}
+//
+//@Entity
+//@Table(name = "czev_StarChangeLogEntry")
+//class StarChangeLogEntry(
+//        var changedColumn: String,
+//        var newValue: String,
+//        var oldValue: String,
+//        @Id
+//        @GeneratedValue
+//        var id: Long = -1
+//) {
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    lateinit var changeLog: StarChangeLog
+//}
 
 @Entity
 @Table(name = "czev_StarIdentification")
+@Audited
 class StarIdentification(
         var name: String,
+        @NotAudited
         @ManyToOne(fetch = FetchType.LAZY)
         var format: CdsFormat?
 ) : CzevEntity() {
@@ -234,14 +264,18 @@ class CdsFormat(
 @Entity
 @Table(name = "czev_CdsFormatPattern")
 class CdsFormatPattern(
-        var value: String
-) : CzevEntity() {
+        var value: String,
+        @Id
+        @GeneratedValue
+        var id: Long = -1
+) {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     lateinit var format: CdsFormat
 }
 
 @Entity
 @Table(name = "czev_Publication")
+@Audited
 class Publication(
         var title: String
 ) : CzevEntity()
@@ -276,7 +310,7 @@ fun raStringToDegrees(raString: String): BigDecimal {
     val minutes = raSplit[1].toBigDecimal()
     val seconds = raSplit[2].toBigDecimal()
 
-    return hours.multiply(BigDecimal(15)) + minutes.divide(BigDecimal(4), 4, RoundingMode.HALF_UP) + seconds.divide(BigDecimal(240), 4, RoundingMode.HALF_UP)
+    return hours.multiply(BigDecimal(15)) + minutes.divide(BigDecimal(4), 4, RoundingMode.HALF_UP) + seconds.divide(BigDecimal(240), 7, RoundingMode.HALF_UP)
 }
 
 fun decStringToDegrees(decString: String): BigDecimal {
@@ -290,5 +324,5 @@ fun decStringToDegrees(decString: String): BigDecimal {
 
     val op: (BigDecimal, BigDecimal) -> BigDecimal = if (degrees > BigDecimal.ZERO) { a, b -> a + b } else { a, b -> a - b }
 
-    return op(degrees, op(arcmin.divide(BigDecimal(60), 4, RoundingMode.HALF_UP), arcsec.divide(BigDecimal(3600), 4, RoundingMode.HALF_UP)))
+    return op(degrees, op(arcmin.divide(BigDecimal(60), 4, RoundingMode.HALF_UP), arcsec.divide(BigDecimal(3600), 7, RoundingMode.HALF_UP)))
 }

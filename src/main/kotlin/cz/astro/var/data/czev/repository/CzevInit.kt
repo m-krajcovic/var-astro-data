@@ -12,7 +12,9 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
                val userRepository: UserRepository,
                val observerRepository: StarObserverRepository,
                val constellationRepository: ConstellationRepository,
-               val starIdentificationRepository: StarIdentificationRepository) {
+               val starIdentificationRepository: StarIdentificationRepository,
+               val czevIdSequenceIdentifierRepository: CzevIdSequenceIdentifierRepository,
+               val roleRepository: RoleRepository) {
 
     private lateinit var constellationsMap: Map<String, Constellation>
     private lateinit var observersMap: Map<String, StarObserver>
@@ -22,14 +24,17 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
 
     @Transactional
     fun initialize() {
-        var users = getUsers()
+        user = getUsers()
         var constellations = getConstellations()
         var bands = getFilterBands()
         var types = getTypes()
         var observers = getObservers()
+        var roles = getRoles()
 
-        users = userRepository.saveAll(users)
-        user = users[0]
+        roles = roleRepository.saveAll(roles)
+        user.roles = HashSet(roles)
+        user = userRepository.save(user)
+
         observers = observerRepository.saveAll(observers)
         observersMap = observers.toMap { it.abbreviation }
         constellations = constellationRepository.saveAll(constellations)
@@ -43,17 +48,25 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         czevStarRepository.saveAll(stars)
     }
 
-    @Transactional("czevTM")
+    private fun getRoles(): List<Role> {
+        return listOf(Role("ROLE_ADMIN"), Role("ROLE_USER"))
+    }
+
+    @Transactional
     fun test() {
-        val one = czevStarRepository.getOne(333)
-        val user1 = User("fjodor@gmail.com", "lolo")
-        user1.id = 1
+        var one = czevStarRepository.findAll().first()
+
+        one.approvedBy = null;
+        one = czevStarRepository.saveAndFlush(one)
+
+        val user1 = userRepository.findAll().first()
         one.approvedBy = user1
         one.privateNote = "ahoj"
 
-        val save = czevStarRepository.saveAndFlush(one)
+        one = czevStarRepository.saveAndFlush(one)
 
-        println(save.approvedBy)
+        println(one.approvedBy)
+
     }
 
     fun getStars(): List<CzevStar> {
@@ -100,6 +113,7 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
                 .0, .0, "", "", getConstellation(cons), type, getBand(band), getDiscoverers(disc), ArrayList(), null, vsxName, true, user, LocalDateTime.now(), v.toDoubleOrNull(), j.toDoubleOrNull(), jk.toDoubleOrNull(), amp.toDoubleOrNull(), CosmicCoordinates(ra, dec), year.toInt()
                 , czev.toLong()
         )
+        czevStar.createdBy = user
         czevStar.crossIdentifications = crossIdentifications
 
         return czevStar
@@ -130,10 +144,9 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         return constellationsMap.getValue(key)
     }
 
-    fun getUsers(): List<User> {
-        val output = ArrayList<User>();
-        output.add(User("mich.krajcovic@gmail.com", "heslo"))
-        return output;
+    fun getUsers(): User {
+        val user = User("mich.krajcovic@gmail.com", "heslo", mutableSetOf(Role("ROLE_ADMIN"), Role("ROLE_USER")))
+        return user;
     }
 
     fun getFilterBands(): List<FilterBand> {

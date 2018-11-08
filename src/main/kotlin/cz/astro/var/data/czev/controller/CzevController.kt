@@ -1,5 +1,6 @@
 package cz.astro.`var`.data.czev.controller
 
+import cz.astro.`var`.data.czev.service.CzevStarDetailsModel
 import cz.astro.`var`.data.czev.service.CzevStarListModel
 import cz.astro.`var`.data.czev.service.CzevStarService
 import org.springframework.security.access.annotation.Secured
@@ -16,8 +17,8 @@ class CzevController(private val starService: CzevStarService) {
         return starService.getAllApprovedStars()
     }
 
-    @GetMapping("stars/{czevId}")
-    fun getApprovedStarDetails(@PathVariable czevId: Long): CzevStarListModel {
-        return starService.getApprovedStarDetails(czevId)
+    @GetMapping("stars/{id}")
+    fun getApprovedStarDetails(@PathVariable id: Long): CzevStarDetailsModel {
+        return starService.getStarDetails(id)
     }
 }
