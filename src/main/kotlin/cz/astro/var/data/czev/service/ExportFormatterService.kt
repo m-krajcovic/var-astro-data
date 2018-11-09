@@ -9,8 +9,10 @@ interface ExportFormatterService<I, O> {
     fun format(input: I): O
 }
 
+interface CzevStarCsvExportFormatterService: ExportFormatterService<List<CzevStarExportModel>, String>
+
 @Component
-class CzevStarCsvExportFormatterService: ExportFormatterService<List<CzevStarExportModel>, String> {
+class CzevStarCsvExportFormatterServiceImpl: CzevStarCsvExportFormatterService {
     override fun format(input: List<CzevStarExportModel>): String {
 
         val writer = StringWriter()

@@ -3,24 +3,26 @@ package cz.astro.`var`.data.czev.service
 import cz.astro.`var`.data.czev.repository.*
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.text.DecimalFormat
 
-data class CzevStarNewModel(
-        val vsxName: String,
-        val vsxId: Long?,
+data class CzevStarDraftModel(
+        val id: Long?,
         val constellation: ConstellationModel,
         val type: String,
         val discoverers: List<StarObserverModel>,
         val amplitude: Double?,
         val filterBand: FilterBandModel?,
-        val crossIds: List<String>,
+        val crossIdentifications: List<String>,
         val coordinates: CosmicCoordinatesModel,
-        val privateNode: String,
-        val publicNote: String
+        val privateNote: String,
+        val publicNote: String,
+        val m0: BigDecimal?,
+        val period: BigDecimal?,
+        val year: Int
 )
 
 data class CzevStarDetailsModel(
-        val id: Long,
-        val czevId: Long?,
+        val czevId: Long,
         val coordinates: CosmicCoordinatesModel,
         val constellation: ConstellationModel,
         val type: String,
@@ -54,8 +56,7 @@ data class CzevStarExportModel(
 )
 
 data class CzevStarListModel(
-        val id: Long,
-        val czevId: Long?,
+        val czevId: Long,
         val coordinates: CosmicCoordinatesModel,
         val constellation: ConstellationModel,
         val type: String,
@@ -82,7 +83,10 @@ data class CosmicCoordinatesModel(
         val minutesRemainder = minutes.remainder(BigDecimal.ONE)
         val seconds = (minutesRemainder * BigDecimal(60)).setScale(3, RoundingMode.HALF_UP)
 
-        return "$hours $minutesRounded $seconds"
+        val dc = DecimalFormat("00.000")
+        val ic = DecimalFormat("00")
+
+        return "${ic.format(hours)} ${ic.format(minutesRounded)} ${dc.format(seconds)}"
     }
 
     fun toStringDec(): String {
@@ -92,8 +96,12 @@ data class CosmicCoordinatesModel(
         val arcminutesRounded = arcminutes.setScale(0, RoundingMode.DOWN)
         val arcminutesRemainder = arcminutes.abs().remainder(BigDecimal.ONE)
         val arcseconds = arcminutesRemainder * BigDecimal(60)
+
+        val dc = DecimalFormat("00.00")
+        val ic = DecimalFormat("00")
+
         val sign = if (degrees > BigDecimal.ZERO) "+" else "-"
-        return "$sign$degrees $arcminutesRounded $arcseconds"
+        return "$sign${ic.format(degrees.abs())} ${ic.format(arcminutesRounded)} ${dc.format(arcseconds)}"
     }
 }
 
@@ -116,12 +124,32 @@ data class StarObserverModel(
 
 fun CzevStar.toDetailsModel(): CzevStarDetailsModel {
     return CzevStarDetailsModel(
-            id, czevId, coordinates.toModel(), constellation.toModel(), type, .0, discoverers.toModels(), m0, period, filterBand.toModel(), year, publicNote, vsxName, vsxId
+            czevId, coordinates.toModel(), constellation.toModel(), type, .0, discoverers.toModels(), m0, period, filterBand.toModel(), year, publicNote, vsxName, vsxId
     )
 }
 
 fun CzevStar.toListModel(): CzevStarListModel {
-    return CzevStarListModel(id, czevId, coordinates.toModel(), constellation.toModel(), type, .0, discoverers.toModels(), m0, period, year)
+    return CzevStarListModel(czevId, coordinates.toModel(), constellation.toModel(), type, .0, discoverers.toModels(), m0, period, year)
+}
+
+fun CzevStar.toExportModel(): CzevStarExportModel {
+    return CzevStarExportModel(
+            czevId,
+            crossIdentifications.asSequence().map { it.name }.toList(),
+            vsxName,
+            coordinates.toModel(),
+            constellation.toModel(),
+            type,
+            vMagnitude,
+            jMagnitude,
+            jk,
+            amplitude,
+            filterBand.toModel(),
+            m0,
+            period,
+            discoverers.toModels(),
+            year
+    )
 }
 
 fun FilterBand?.toModel(): FilterBandModel? {

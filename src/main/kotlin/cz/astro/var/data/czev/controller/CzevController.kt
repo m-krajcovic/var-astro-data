@@ -10,11 +10,12 @@ import org.springframework.web.bind.annotation.*
 @CrossOrigin(origins = ["http://localhost:3000"])
 @RequestMapping("api/czev")
 @Secured("ROLE_ANONYMOUS")
-class CzevController(private val starService: CzevStarService) {
+class CzevController(
+        private val starService: CzevStarService) {
 
     @GetMapping("stars")
     fun getApprovedStars(): List<CzevStarListModel> {
-        return starService.getAllApprovedStars()
+        return starService.getAllForList()
     }
 
     @GetMapping("stars/{id}")

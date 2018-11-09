@@ -1,84 +1,36 @@
 package cz.astro.`var`.data.czev.service
 
-import cz.astro.`var`.data.czev.repository.*
-import cz.astro.`var`.data.security.UserPrincipal
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.security.core.context.SecurityContextHolder
+import cz.astro.`var`.data.czev.repository.CzevStarRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
+import java.math.BigDecimal
 
 @Service
 @Transactional
 class CzevStarServiceImpl(
-        private val czevStarRepository: CzevStarRepository,
-        private val observerRepository: StarObserverRepository,
-        private val filterBandRepository: FilterBandRepository,
-        private val constellationRepository: ConstellationRepository,
-        private val czevIdSequenceIdentifierRepository: CzevIdSequenceIdentifierRepository
+        private val czevStarRepository: CzevStarRepository
 ) : CzevStarService {
-
-    @PreAuthorize("hasRole('USER')")
-    override fun insertMultiple(stars: List<CzevStarNewModel>) {
-        val principal = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val user = User(principal.id)
-        val newStars = stars.map { modelToStar(it, user) }
-        czevStarRepository.saveAll(newStars)
+    override fun getAllForExport(): List<CzevStarExportModel> {
+        return czevStarRepository.findAllFetched().asSequence().map { it.toExportModel() }.toList()
     }
 
-    @PreAuthorize("hasRole('USER')")
-    override fun insertOne(star: CzevStarNewModel) {
-
-        val principal = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val user = User(principal.id)
-
-        val newStar = modelToStar(star, user)
-
-        czevStarRepository.save(newStar)
-    }
-
-    private fun modelToStar(star: CzevStarNewModel, user: User): CzevStar {
-        val observers = observerRepository.findAllById(star.discoverers.map { it.id })
-        if (observers.size == 0) {
-            throw ServiceException("At least one observer must be set as discoverer.")
-        }
-        val filterBand = if (star.filterBand != null) filterBandRepository.findById(star.filterBand.id).orElse(null) else null
-        val constellation = constellationRepository.findById(star.constellation.id).orElseThrow { ServiceException("Constellation not found") }
-        val crossIds = star.crossIds.map { StarIdentification(it, null) }.toMutableList()
-
-        val newStar = CzevStar(
-                null, null, .0, .0, star.publicNote, star.privateNode, constellation,
-                star.type, filterBand, observers, ArrayList(), star.vsxId, star.vsxName, false,
-                null, LocalDateTime.now(), null, null, null, star.amplitude,
-                star.coordinates.toEntity(), LocalDateTime.now().year
-        )
-        newStar.crossIdentifications = crossIds
-        return newStar
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    override fun approve(id: Long) {
-        val principal = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val user = User(principal.id)
-
-        val star = czevStarRepository.getOne(id)
-        val czevId = czevIdSequenceIdentifierRepository.save(CzevIdSequenceIdentifier())
-        star.czevId = czevId.id
-        czevIdSequenceIdentifierRepository.delete(czevId)
-        star.approved = true
-        star.approvedBy = user
-        star.approvedOn = LocalDateTime.now()
-        czevStarRepository.save(star)
+    override fun getByCoordinatesForList(coordinates: CosmicCoordinatesModel, radius: BigDecimal): List<CzevStarListModel> {
+        return czevStarRepository.findAllByCoordinatesPartlyFetched(
+                coordinates.ra - radius,
+                coordinates.ra + radius,
+                coordinates.dec - radius,
+                coordinates.dec + radius
+        ).asSequence().map { it.toListModel() }.toList()
     }
 
     @Transactional(readOnly = true)
     override fun getStarDetails(id: Long): CzevStarDetailsModel {
-        val star = czevStarRepository.findFetchedById(id)
+        val star = czevStarRepository.findByIdFetched(id)
         return star.orElse(null).toDetailsModel()
     }
 
     @Transactional(readOnly = true)
-    override fun getAllApprovedStars(): List<CzevStarListModel> {
-        return czevStarRepository.findAllApproved().asSequence().map { it.toListModel() }.toList()
+    override fun getAllForList(): List<CzevStarListModel> {
+        return czevStarRepository.findAllPartlyFetched().asSequence().map { it.toListModel() }.toList()
     }
 }
