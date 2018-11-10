@@ -50,7 +50,9 @@ class CzevStar(
         @NotAudited
         @ManyToOne(optional = false, fetch = FetchType.LAZY)
         @JoinColumn(updatable = false)
-        var createdBy: User
+        var createdBy: User,
+        @NotAudited
+        var typeValid: Boolean = true
 ) {
     @Id
     @SequenceGenerator(name = "czev_CzevIdSequence", sequenceName = "czev_CzevIdSequence", allocationSize = 1)
@@ -70,6 +72,7 @@ class CzevStar(
     @NotAudited
     @Column(updatable = false)
     var createdOn: LocalDateTime = LocalDateTime.now()
+
 }
 
 // TODO: Check this out? Doesn't seem very thread safe
@@ -117,14 +120,17 @@ class CzevStarDraft(
         var rejectedOn: LocalDateTime? = null,
         var rejectedNote: String = "",
         @ManyToOne(fetch = FetchType.LAZY)
-        var rejectedBy: User? = null
+        var rejectedBy: User? = null,
+        @NotAudited
+        var typeValid: Boolean = true
 ) : CzevEntity()
 
 @Entity
 @Table(name = "czev_Constellation")
 @Audited
 class Constellation(
-        @Column(unique = true)
+        @NaturalId
+        @Column(nullable = false, unique = true)
         var name: String
 ) : CzevEntity() {
     override fun equals(other: Any?): Boolean {
@@ -146,7 +152,8 @@ class Constellation(
 @Entity
 @Table(name = "czev_StarType")
 class StarType(
-        @Column(unique = true)
+        @NaturalId
+        @Column(nullable = false, unique = true)
         var name: String
 ) : CzevEntity() {
     override fun equals(other: Any?): Boolean {
@@ -169,7 +176,8 @@ class StarType(
 @Table(name = "czev_FilterBand")
 @Audited
 class FilterBand(
-        @Column(unique = true)
+        @NaturalId
+        @Column(nullable = false, unique = true)
         var name: String
 ) : CzevEntity() {
     override fun equals(other: Any?): Boolean {
@@ -194,7 +202,8 @@ class FilterBand(
 class StarObserver(
         var firstName: String,
         var lastName: String,
-        @Column(unique = true)
+        @NaturalId
+        @Column(nullable = false, unique = true)
         var abbreviation: String,
         @Column(unique = true)
         var email: String,
@@ -230,6 +239,7 @@ class StarObserver(
 @Audited
 class User(
         @NaturalId
+        @Column(nullable = false, unique = true)
         var email: String = "",
         @NotAudited
         var password: String = "",
@@ -259,7 +269,8 @@ class User(
 @Table(name = "czev_Role")
 @Audited
 class Role(
-        @Column(unique = true)
+        @NaturalId
+        @Column(nullable = false, unique = true)
         val name: String
 ) : CzevEntity()
 
@@ -277,6 +288,8 @@ class StarComment(
 @Table(name = "czev_StarIdentification")
 @Audited
 class StarIdentification(
+        @NaturalId
+        @Column(nullable = false, unique = true)
         var name: String,
         @NotAudited
         @ManyToOne(fetch = FetchType.LAZY)
@@ -289,6 +302,8 @@ class StarIdentification(
 @Entity
 @Table(name = "czev_CdsFormat")
 class CdsFormat(
+        @NaturalId
+        @Column(nullable = false, unique = true)
         var name: String,
         @OneToMany(mappedBy = "format", orphanRemoval = true, cascade = [CascadeType.ALL])
         var patterns: MutableSet<CdsFormatPattern>
@@ -310,6 +325,8 @@ class CdsFormatPattern(
 @Table(name = "czev_Publication")
 @Audited
 class Publication(
+        @NaturalId
+        @Column(nullable = false, unique = true)
         var title: String
 ) : CzevEntity()
 

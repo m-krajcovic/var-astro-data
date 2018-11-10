@@ -199,3 +199,7 @@ class TAPVizierService(
     }
 }
 
+/*
+SELECT TOP 100 "I/322A/out".UCAC4,  "I/322A/out".RAJ2000,  "I/322A/out".DEJ2000, "I/322A/out".Kmag, "I/322A/out".Jmag, "I/322A/out".Vmag
+FROM "I/322A/out"
+*/

@@ -1,5 +1,7 @@
 package cz.astro.`var`.data.czev.repository
 
+import cz.astro.`var`.data.czev.service.StarTypeValidator
+import cz.astro.`var`.data.czev.service.StarTypeValidatorImpl
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -20,6 +22,8 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
     private lateinit var user: User
     private lateinit var bandsMap: Map<String, FilterBand>
     private lateinit var typesMap: Map<String, StarType>
+
+    private lateinit var typesValidator: StarTypeValidator
 
     @Transactional
     fun initialize() {
@@ -43,6 +47,7 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         types = starTypeRepository.saveAll(types)
         typesMap = types.toMap { it.name }
 
+        typesValidator = StarTypeValidatorImpl(types.map { it.name }.toSet())
         var stars = getStars()
         czevStarRepository.saveAll(stars)
     }
@@ -110,6 +115,7 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
                 getConstellation(cons), type, getBand(band), getDiscoverers(disc), CosmicCoordinates(ra, dec), year.toInt(), mutableSetOf(), null, vsxName, v.toDoubleOrNull(), j.toDoubleOrNull(), jk.toDoubleOrNull(), amp.toDoubleOrNull(), user
         )
         czevStar.crossIdentifications = crossIdentifications
+        czevStar.typeValid = typesValidator.validate(type)
 
         return czevStar
     }
