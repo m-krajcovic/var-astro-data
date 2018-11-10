@@ -25,8 +25,9 @@ class CzevStarServiceImpl(
 
     @Transactional(readOnly = true)
     override fun getStarDetails(id: Long): CzevStarDetailsModel {
-        val star = czevStarRepository.findByIdFetched(id)
-        return star.orElse(null).toDetailsModel()
+        return czevStarRepository.findByIdFetched(id).map {
+            it.toDetailsModel()
+        }.orElse(null)
     }
 
     @Transactional(readOnly = true)

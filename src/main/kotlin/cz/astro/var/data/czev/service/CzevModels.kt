@@ -31,6 +31,7 @@ data class CzevStarDetailsModel(
         val m0: BigDecimal?,
         val period: BigDecimal?,
         val filterBand: FilterBandModel?,
+        val crossIdentifications: List<String>,
         val year: Int,
         val publicNote: String,
         val vsxName: String,
@@ -124,12 +125,15 @@ data class StarObserverModel(
 
 fun CzevStar.toDetailsModel(): CzevStarDetailsModel {
     return CzevStarDetailsModel(
-            czevId, coordinates.toModel(), constellation.toModel(), type, .0, discoverers.toModels(), m0, period, filterBand.toModel(), year, publicNote, vsxName, vsxId
+            czevId, coordinates.toModel(), constellation.toModel(), type, .0,
+            discoverers.toModels(), m0, period, filterBand.toModel(), crossIdentifications.map { it.name },
+            year, publicNote, vsxName, vsxId
     )
 }
 
 fun CzevStar.toListModel(): CzevStarListModel {
-    return CzevStarListModel(czevId, coordinates.toModel(), constellation.toModel(), type, .0, discoverers.toModels(), m0, period, year)
+    return CzevStarListModel(czevId, coordinates.toModel(), constellation.toModel(),
+            type, .0, discoverers.toModels(), m0, period, year)
 }
 
 fun CzevStar.toExportModel(): CzevStarExportModel {
@@ -167,6 +171,13 @@ fun Constellation.toModel(): ConstellationModel {
     return ConstellationModel(id, name)
 }
 
-fun List<StarObserver>.toModels(): List<StarObserverModel> {
+fun Set<StarObserver>.toModels(): List<StarObserverModel> {
     return this.asSequence().map { StarObserverModel(it.id, it.firstName, it.lastName, it.abbreviation) }.toList()
+}
+
+fun CzevStarDraft.toModel(): CzevStarDraftModel {
+    return CzevStarDraftModel(
+            id, constellation.toModel(), type, discoverers.toModels(), amplitude, filterBand.toModel(),
+            crossIdentifications.map { it.name }, coordinates.toModel(), privateNote, publicNote, m0, period, year
+    )
 }

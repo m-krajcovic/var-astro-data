@@ -25,8 +25,6 @@ class CzevExportController(
     @RequestMapping("stars")
     @ResponseBody
     fun exportCzevToCsv(@RequestParam("format") format: String): DownloadableTextResponse {
-//        response.contentType = "text/csv;charset=utf-8"
-//        response.setHeader("Content-Disposition","attachment; filename=\"czev_catalogue_${LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)}.csv\"")
         val allForExport = starService.getAllForExport()
         return when (format) {
             "csv" -> {

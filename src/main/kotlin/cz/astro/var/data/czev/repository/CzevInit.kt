@@ -2,7 +2,6 @@ package cz.astro.`var`.data.czev.repository
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 import java.util.*
 
 @Service
@@ -56,17 +55,13 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
     fun test() {
         var one = czevStarRepository.findAll().first()
 
-        one.approvedBy = null;
-        one = czevStarRepository.saveAndFlush(one)
-
-        val user1 = userRepository.findAll().first()
-        one.approvedBy = user1
         one.privateNote = "ahoj"
+        one.publicNote = "ahoj"
 
-        one = czevStarRepository.saveAndFlush(one)
+        czevStarRepository.saveAndFlush(one)
 
-        println(one.approvedBy)
-
+        one.publicNote = "fedor!"
+        czevStarRepository.saveAndFlush(one)
     }
 
     fun getStars(): List<CzevStar> {
@@ -110,21 +105,21 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         val czevStar = CzevStar(
                 m0.toBigDecimalOrNull(),
                 per.toBigDecimalOrNull(),
-                .0, .0, "", "", getConstellation(cons), type, getBand(band), getDiscoverers(disc), ArrayList(), null, vsxName, true, user, LocalDateTime.now(), v.toDoubleOrNull(), j.toDoubleOrNull(), jk.toDoubleOrNull(), amp.toDoubleOrNull(), CosmicCoordinates(ra, dec), year.toInt()
-                , czev.toLong()
+                .0, .0,
+                "", "",
+                getConstellation(cons), type, getBand(band), getDiscoverers(disc), CosmicCoordinates(ra, dec), year.toInt(), mutableSetOf(), null, vsxName, v.toDoubleOrNull(), j.toDoubleOrNull(), jk.toDoubleOrNull(), amp.toDoubleOrNull(), user
         )
-        czevStar.createdBy = user
         czevStar.crossIdentifications = crossIdentifications
 
         return czevStar
     }
 
-    fun getCrossIds(crossId: String): MutableList<StarIdentification> {
-        return arrayListOf(StarIdentification(crossId, null))
+    fun getCrossIds(crossId: String): MutableSet<StarIdentification> {
+        return hashSetOf(StarIdentification(crossId, null))
     }
 
-    fun getDiscoverers(key: String): MutableList<StarObserver> {
-        val output = ArrayList<StarObserver>()
+    fun getDiscoverers(key: String): MutableSet<StarObserver> {
+        val output = HashSet<StarObserver>()
         key.split(",").forEach {
             val starObserver = observersMap[it.trim()]
             if (starObserver != null) {
@@ -145,8 +140,9 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
     }
 
     fun getUsers(): User {
-        val user = User("mich.krajcovic@gmail.com", "heslo", mutableSetOf(Role("ROLE_ADMIN"), Role("ROLE_USER")))
-        return user;
+        // password = "heslo"
+        val user = User("mich.krajcovic@gmail.com", "\$2a\$10\$SL18Zb8wOtLMJx1oaFzhxuUve2poa3POHCvytccdZi4FA.9PVQrn2", mutableSetOf(Role("ROLE_ADMIN"), Role("ROLE_USER")))
+        return user
     }
 
     fun getFilterBands(): List<FilterBand> {

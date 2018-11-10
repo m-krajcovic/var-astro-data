@@ -23,6 +23,7 @@ class CzevStar(
         var periodError: Double,
         var m0Error: Double,
         @Column(columnDefinition = "text") var publicNote: String,
+        @NotAudited
         @Column(columnDefinition = "text") var privateNote: String,
         @ManyToOne(optional = false, fetch = FetchType.LAZY)
         var constellation: Constellation,
@@ -30,9 +31,12 @@ class CzevStar(
         @ManyToOne(fetch = FetchType.LAZY)
         var filterBand: FilterBand?,
         @ManyToMany(fetch = FetchType.LAZY)
-        var discoverers: MutableList<StarObserver>,
+        var discoverers: MutableSet<StarObserver>,
+        @Embedded
+        var coordinates: CosmicCoordinates,
+        var year: Int,
         @ManyToMany(fetch = FetchType.LAZY)
-        var publications: MutableList<Publication>,
+        var publications: MutableSet<Publication>,
         @Column(nullable = true) var vsxId: Long?,
         var vsxName: String,
         @Column(nullable = true)
@@ -43,9 +47,10 @@ class CzevStar(
         var jk: Double?,
         @Column(nullable = true)
         var amplitude: Double?,
-        @Embedded
-        var coordinates: CosmicCoordinates,
-        var year: Int
+        @NotAudited
+        @ManyToOne(optional = false, fetch = FetchType.LAZY)
+        @JoinColumn(updatable = false)
+        var createdBy: User
 ) {
     @Id
     @SequenceGenerator(name = "czev_CzevIdSequence", sequenceName = "czev_CzevIdSequence", allocationSize = 1)
@@ -53,21 +58,18 @@ class CzevStar(
     var czevId: Long = -1
 
     @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL], orphanRemoval = true)
-    var crossIdentifications: MutableList<StarIdentification> = ArrayList()
+    var crossIdentifications: MutableSet<StarIdentification> = HashSet()
         set(value) {
             value.forEach { it.star = this }
             field = value
         }
 
     @Version
-    lateinit var lastChange: LocalDateTime
+    var lastChange: LocalDateTime = LocalDateTime.now()
 
+    @NotAudited
     @Column(updatable = false)
     var createdOn: LocalDateTime = LocalDateTime.now()
-
-    @Column(updatable = false)
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    lateinit var createdBy: User
 }
 
 // TODO: Check this out? Doesn't seem very thread safe
@@ -101,11 +103,11 @@ class CzevStarDraft(
         @Embedded
         var coordinates: CosmicCoordinates,
         @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-        var crossIdentifications: MutableList<StarIdentification>,
+        var crossIdentifications: MutableSet<StarIdentification>,
         @Column(precision = 15, scale = 7, nullable = true) var m0: BigDecimal?,
         @Column(precision = 10, scale = 7, nullable = true) var period: BigDecimal?,
         @ManyToMany
-        var discoverers: MutableList<StarObserver>,
+        var discoverers: MutableSet<StarObserver>,
         var year: Int,
         @Column(columnDefinition = "text") var privateNote: String,
         @Column(columnDefinition = "text") var publicNote: String,
@@ -289,7 +291,7 @@ class StarIdentification(
 class CdsFormat(
         var name: String,
         @OneToMany(mappedBy = "format", orphanRemoval = true, cascade = [CascadeType.ALL])
-        var patterns: MutableList<CdsFormatPattern>
+        var patterns: MutableSet<CdsFormatPattern>
 ) : CzevEntity()
 
 @Entity

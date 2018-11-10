@@ -25,10 +25,10 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
-    public JwtAuthResponse loginUser(UserPrincipal user) {
+    public JwtAuthResponse loginUser(JwtAuthRequest user) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        user.getEmail(),
+                        user.getUsername(),
                         user.getPassword()
                 )
         );

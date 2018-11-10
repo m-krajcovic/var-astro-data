@@ -1,7 +1,12 @@
 package cz.astro.var.data.security;
 
+import javax.validation.constraints.NotBlank;
+
 public class JwtAuthRequest {
+
+    @NotBlank
     private String username;
+    @NotBlank
     private String password;
 
     public String getUsername() {
