@@ -120,13 +120,13 @@ class Ucac4StarInformationResolverService(
             val ra = result[1]?.toBigDecimalOrNull()
             val dec = result[2]?.toBigDecimalOrNull()
             val magnitudes = HashMap<String, Double>()
-            val kmag = result[3]?.toDoubleOrNull()?.let {
+            result[3]?.toDoubleOrNull()?.let {
                 magnitudes.put("K", it)
             }
-            val vmag = result[4]?.toDoubleOrNull()?.let {
+            result[4]?.toDoubleOrNull()?.let {
                 magnitudes.put("V", it)
             }
-            val jmag = result[5]?.toDoubleOrNull()?.let {
+            result[5]?.toDoubleOrNull()?.let {
                 magnitudes.put("J", it)
             }
             var coordinates: CosmicCoordinatesModel? = null

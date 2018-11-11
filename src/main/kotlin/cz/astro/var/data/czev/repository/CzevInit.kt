@@ -13,8 +13,6 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
                val userRepository: UserRepository,
                val observerRepository: StarObserverRepository,
                val constellationRepository: ConstellationRepository,
-               val starIdentificationRepository: StarIdentificationRepository,
-               val czevIdSequenceIdentifierRepository: CzevIdSequenceIdentifierRepository,
                val roleRepository: RoleRepository) {
 
     private lateinit var constellationsMap: Map<String, Constellation>

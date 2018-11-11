@@ -44,4 +44,3 @@ interface StarTypeRepository: JpaRepository<StarType, Long>
 interface FilterBandRepository: JpaRepository<FilterBand, Long>
 interface StarObserverRepository: JpaRepository<StarObserver, Long>
 interface StarIdentificationRepository: JpaRepository<StarIdentification, Long>
-interface CzevIdSequenceIdentifierRepository: JpaRepository<CzevIdSequenceIdentifier, Long>

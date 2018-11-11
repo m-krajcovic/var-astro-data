@@ -31,11 +31,11 @@ public class SesameStarInformationResolverServiceTest {
 
     @Test
     public void testVizier() {
-        VsxStarInformationNameCoordinatesResolverService vsxService = new VsxStarInformationNameCoordinatesResolverService(new TAPVizierService(new RestTemplate()));
+        VsxVariableStarInformationResolverService vsxService = new VsxVariableStarInformationResolverService(new TAPVizierService(new RestTemplate()));
         Optional<VariableStarInformationModel> rw_com = vsxService.findByName("RW Com");
         CosmicCoordinatesModel coords = new CosmicCoordinatesModel(new BigDecimal("188.25117"), new BigDecimal("26.71622"));
         List<VariableStarInformationDistanceModel> byCoordinates = vsxService.findByCoordinates(coords, 0.1);
-        Optional<VariableStarInformationDistanceModel> nearestByCoordinates = vsxService.findNearestByCoordinates(coords);
+        Optional<VariableStarInformationDistanceModel> nearestByCoordinates = vsxService.findNearest(coords);
         System.out.println("hi");
     }
 }
