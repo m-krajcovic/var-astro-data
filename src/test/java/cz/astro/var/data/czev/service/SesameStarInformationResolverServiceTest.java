@@ -14,7 +14,7 @@ import java.util.Optional;
 public class SesameStarInformationResolverServiceTest {
 
 //    @Autowired
-//    private SesameStarInformationResolverService sesameService;
+//    private SesameStarInformationNameResolverService sesameService;
 //
 //    @Test
 //    public void findByName() {
@@ -31,7 +31,7 @@ public class SesameStarInformationResolverServiceTest {
 
     @Test
     public void testVizier() {
-        VsxStarInformationResolverService vsxService = new VsxStarInformationResolverService(new TAPVizierService(new RestTemplate()));
+        VsxStarInformationNameCoordinatesResolverService vsxService = new VsxStarInformationNameCoordinatesResolverService(new TAPVizierService(new RestTemplate()));
         Optional<VariableStarInformationModel> rw_com = vsxService.findByName("RW Com");
         CosmicCoordinatesModel coords = new CosmicCoordinatesModel(new BigDecimal("188.25117"), new BigDecimal("26.71622"));
         List<VariableStarInformationDistanceModel> byCoordinates = vsxService.findByCoordinates(coords, 0.1);
