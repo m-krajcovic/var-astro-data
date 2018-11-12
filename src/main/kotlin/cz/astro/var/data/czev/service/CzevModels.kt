@@ -1,11 +1,29 @@
 package cz.astro.`var`.data.czev.service
 
 import cz.astro.`var`.data.czev.repository.*
+import cz.astro.`var`.data.security.UserPrincipal
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
 
 data class CzevStarDraftModel(
+        val id: Long?,
+        val constellation: ConstellationModel,
+        val type: String,
+        val discoverers: List<StarObserverModel>,
+        val amplitude: Double?,
+        val filterBand: FilterBandModel?,
+        val crossIdentifications: List<String>,
+        val coordinates: CosmicCoordinatesModel,
+        val privateNote: String,
+        val publicNote: String,
+        val m0: BigDecimal?,
+        val period: BigDecimal?,
+        val year: Int,
+        val createdBy: UserPrincipal
+)
+
+data class CzevStarApprovalModel(
         val id: Long?,
         val constellation: ConstellationModel,
         val type: String,
@@ -26,7 +44,10 @@ data class CzevStarDetailsModel(
         val coordinates: CosmicCoordinatesModel,
         val constellation: ConstellationModel,
         val type: String,
-        val magnitude: Double,
+        val jMagnitude: Double?,
+        val vMagnitude: Double?,
+        val jkMagnitude: Double?,
+        val amplitude: Double?,
         val discoverers: List<StarObserverModel>,
         val m0: BigDecimal?,
         val period: BigDecimal?,
@@ -47,7 +68,7 @@ data class CzevStarExportModel(
         val type: String,
         val vMagnitude: Double?,
         val jMagnitude: Double?,
-        val jk: Double?,
+        val jkMagnitude: Double?,
         val amplitude: Double?,
         val filterBand: FilterBandModel?,
         val m0: BigDecimal?,
@@ -61,7 +82,6 @@ data class CzevStarListModel(
         val coordinates: CosmicCoordinatesModel,
         val constellation: ConstellationModel,
         val type: String,
-        val magnitude: Double,
         val discoverers: List<StarObserverModel>,
         val m0: BigDecimal?,
         val period: BigDecimal?,
@@ -125,7 +145,7 @@ data class StarObserverModel(
 
 fun CzevStar.toDetailsModel(): CzevStarDetailsModel {
     return CzevStarDetailsModel(
-            czevId, coordinates.toModel(), constellation.toModel(), type, .0,
+            czevId, coordinates.toModel(), constellation.toModel(), type, jMagnitude, vMagnitude, jkMagnitude, amplitude,
             discoverers.toModels(), m0, period, filterBand.toModel(), crossIdentifications.map { it.name },
             year, publicNote, vsxName, vsxId
     )
@@ -133,7 +153,7 @@ fun CzevStar.toDetailsModel(): CzevStarDetailsModel {
 
 fun CzevStar.toListModel(): CzevStarListModel {
     return CzevStarListModel(czevId, coordinates.toModel(), constellation.toModel(),
-            type, .0, discoverers.toModels(), m0, period, year)
+            type, discoverers.toModels(), m0, period, year)
 }
 
 fun CzevStar.toExportModel(): CzevStarExportModel {
@@ -146,7 +166,7 @@ fun CzevStar.toExportModel(): CzevStarExportModel {
             type,
             vMagnitude,
             jMagnitude,
-            jk,
+            jkMagnitude,
             amplitude,
             filterBand.toModel(),
             m0,
@@ -176,8 +196,11 @@ fun Set<StarObserver>.toModels(): List<StarObserverModel> {
 }
 
 fun CzevStarDraft.toModel(): CzevStarDraftModel {
+    val principal = UserPrincipal()
+    principal.id = createdBy.id
     return CzevStarDraftModel(
             id, constellation.toModel(), type, discoverers.toModels(), amplitude, filterBand.toModel(),
-            crossIdentifications.map { it.name }, coordinates.toModel(), privateNote, publicNote, m0, period, year
+            crossIdentifications.map { it.name }, coordinates.toModel(), privateNote, publicNote, m0, period, year,
+            principal
     )
 }

@@ -34,7 +34,7 @@ class CzevStarCsvExportFormatterServiceImpl: CzevStarCsvExportFormatterService {
                             it.type,
                             it.vMagnitude ?: "",
                             it.jMagnitude ?: "",
-                            it.jk ?: "",
+                            it.jkMagnitude ?: "",
                             it.amplitude ?: "",
                             it.filterBand?.name ?: "",
                             it.m0 ?: "",

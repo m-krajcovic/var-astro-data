@@ -41,12 +41,12 @@ class AuthController(
 
     @Transactional
     @PostMapping("signup")
-    fun registerUser(@Valid @RequestBody signupRequest: SignUpRequest): ResponseEntity<*> {
-        if (userRepository.existsByEmail(signupRequest.email)) {
+    fun registerUser(@Valid @RequestBody signUpRequest: SignUpRequest): ResponseEntity<*> {
+        if (userRepository.existsByEmail(signUpRequest.email)) {
             return ResponseEntity(false, HttpStatus.BAD_REQUEST)
         }
 
-        val user = User(signupRequest.email, passwordEncoder.encode(signupRequest.password),
+        val user = User(signUpRequest.email, passwordEncoder.encode(signUpRequest.password),
                 mutableSetOf(roleRepository.findByName("ROLE_USER").orElseThrow { ServiceException("role missing") }))
         val result = userRepository.save(user)
 
@@ -59,12 +59,12 @@ class AuthController(
 
 }
 
-class SignUpRequest(
+data class SignUpRequest(
         @NotBlank
         @Email
-        var email: String = "",
+        var email: String,
         @NotBlank
-        var password: String = "",
+        var password: String,
         var firstName: String = "",
         var lastName: String = ""
 )

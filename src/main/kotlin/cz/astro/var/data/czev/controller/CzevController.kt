@@ -1,14 +1,21 @@
 package cz.astro.`var`.data.czev.controller
 
+import cz.astro.`var`.data.czev.repository.decStringToDegrees
+import cz.astro.`var`.data.czev.repository.raStringToDegrees
 import cz.astro.`var`.data.czev.service.*
 import org.springframework.web.bind.annotation.*
+import java.math.BigDecimal
+import javax.validation.constraints.Min
 
 @RestController
 @CrossOrigin(origins = ["http://localhost:3000"])
 @RequestMapping("api/czev")
 class CzevController(
         private val starService: CzevStarService,
-        private val draftService: CzevStarDraftService) {
+        private val draftService: CzevStarDraftService,
+        private val ucac4Resolved: Ucac4StarInformationResolverService,
+        private val vsxResolver: VsxVariableStarInformationResolverService,
+        private val sesameResolver: SesameVariableStarInformationResolverService) {
 
     @GetMapping("stars")
     fun getApprovedStars(): List<CzevStarListModel> {
@@ -46,7 +53,21 @@ class CzevController(
     }
 
     @PostMapping("stars")
-    fun approveDraft(model: CzevStarDraftModel) {
+    fun approveDraft(model: CzevStarApprovalModel) {
         draftService.approve(model)
+    }
+
+    @GetMapping("cds", params = ["name"])
+    fun getStarInformationByName(@RequestParam("name") name: String) {
+
+    }
+
+    @GetMapping("cds", params = ["ra", "dec"])
+    fun getStarInformationByCoords(@RequestParam("ra") ra: String, @RequestParam("dec") dec: String) {
+//        val coords = CosmicCoordinatesModel()
+        val raDegreesPattern = Regex("\\d*(\\.\\d+)?")
+        val decDegreesPattern = Regex()
+        val raDegrees = raStringToDegrees(ra)
+        val decDegrees = decStringToDegrees(dec)
     }
 }

@@ -57,17 +57,19 @@ data class StarInformationDistanceModel(
         val model: StarInformationModel
 )
 
+interface Ucac4StarInformationResolverService: StarInformationResolverService
+
 @Component
-class Ucac4StarInformationResolverService(
+class Ucac4StarInformationResolverServiceImpl(
         private val tapVizierService: TAPVizierService
-) : StarInformationResolverService {
+) : Ucac4StarInformationResolverService {
     companion object {
         const val UCAC4_CAT = "\"I/322A/out\""
         const val QUERY_FIELDS = "$UCAC4_CAT.UCAC4, $UCAC4_CAT.RAJ2000, $UCAC4_CAT.DEJ2000, $UCAC4_CAT.Kmag, $UCAC4_CAT.Jmag, $UCAC4_CAT.Vmag"
     }
 
     override fun findByIdentifier(identifier: String): Optional<StarInformationModel> {
-        val query = "SELECT TOP 1 ${QUERY_FIELDS} FROM ${UCAC4_CAT} WHERE ${VsxVariableStarInformationResolverService.VSX_CAT}.UCAC4 = '${identifier.replace("'", "''")}'"
+        val query = "SELECT TOP 1 $QUERY_FIELDS FROM $UCAC4_CAT WHERE $UCAC4_CAT.UCAC4 = '${identifier.replace("'", "''")}'"
         return tapVizierService.query(query).map { it.toSingleModel() }
     }
 
@@ -80,12 +82,12 @@ class Ucac4StarInformationResolverService(
     }
 
     private fun findByCoordinates(coordinates: CosmicCoordinatesModel, limit: Int, radiusDegrees: Double): List<StarInformationDistanceModel> {
-        return tapVizierService.query(tapVizierService.buildDistanceQuery(
+        return tapVizierService.query(TAPVizierService.buildDistanceQuery(
                 UCAC4_CAT, QUERY_FIELDS, coordinates, radiusDegrees, limit
         )).map { it.toDistanceModels() }.orElse(ArrayList())
     }
 
-    private fun TAPVizierService.TAPVizierResult.toDistanceModels(): List<StarInformationDistanceModel> {
+    private fun TAPVizierResult.toDistanceModels(): List<StarInformationDistanceModel> {
         val output = ArrayList<StarInformationDistanceModel>()
         data.forEach {result ->
             val ucacId = result[0] ?: ""
@@ -112,7 +114,7 @@ class Ucac4StarInformationResolverService(
         return output
     }
 
-    private fun TAPVizierService.TAPVizierResult.toSingleModel(): StarInformationModel? {
+    private fun TAPVizierResult.toSingleModel(): StarInformationModel? {
         if (data.isNotEmpty() && data[0].size == 7) {
             // vsxId, name, type, epoch, period, ra, dec
             val result = data[0]
@@ -139,10 +141,12 @@ class Ucac4StarInformationResolverService(
     }
 }
 
+interface SesameVariableStarInformationResolverService: VariableStarInformationNameResolverService
+
 @Component
-class SesameVariableStarInformationResolverService(
+class SesameVariableStarInformationResolverServiceImpl(
         private val restTemplate: RestTemplate
-) : VariableStarInformationNameResolverService {
+) : SesameVariableStarInformationResolverService {
     override fun findByName(name: String): Optional<VariableStarInformationModel> {
         val uriVariables = mapOf(Pair("name", name))
         val rawResult: String = restTemplate.getForObject("http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oxpI/S?{name}", uriVariables)
@@ -189,10 +193,12 @@ class SesameVariableStarInformationResolverService(
     }
 }
 
+interface VsxVariableStarInformationResolverService: VariableStarInformationCoordinatesResolverService, VariableStarInformationNameResolverService
+
 @Component
-class VsxVariableStarInformationResolverService(
+class VsxVariableStarInformationResolverServiceImpl(
         private val tapVizierService: TAPVizierService
-) : VariableStarInformationCoordinatesResolverService, VariableStarInformationNameResolverService {
+) : VsxVariableStarInformationResolverService {
 
     companion object {
         const val VSX_CAT: String = "\"B/vsx/vsx\""
@@ -209,7 +215,7 @@ class VsxVariableStarInformationResolverService(
     }
 
     private fun findByCoordinates(coordinates: CosmicCoordinatesModel, limit: Int, radiusDegrees: Double): List<VariableStarInformationDistanceModel> {
-        return tapVizierService.query(tapVizierService.buildDistanceQuery(
+        return tapVizierService.query(TAPVizierService.buildDistanceQuery(
                 VSX_CAT, QUERY_FIELDS, coordinates, radiusDegrees, limit
         )).map { it.toDistanceModels() }.orElse(ArrayList())
     }
@@ -218,7 +224,7 @@ class VsxVariableStarInformationResolverService(
         return Optional.ofNullable(findByCoordinates(coordinates, 1, 1.0).firstOrNull())
     }
 
-    private fun TAPVizierService.TAPVizierResult.toDistanceModels(): List<VariableStarInformationDistanceModel> {
+    private fun TAPVizierResult.toDistanceModels(): List<VariableStarInformationDistanceModel> {
         val result = ArrayList<VariableStarInformationDistanceModel>()
         data.forEach {
             if (it.size == 8) {
@@ -247,7 +253,7 @@ class VsxVariableStarInformationResolverService(
         return result
     }
 
-    private fun TAPVizierService.TAPVizierResult.toSingleModel(index: Int): VariableStarInformationModel? {
+    private fun TAPVizierResult.toSingleModel(index: Int): VariableStarInformationModel? {
         if (data.size > index && data[index].size == 7) {
             // vsxId, name, type, epoch, period, ra, dec
             val result = data[index]
@@ -268,25 +274,36 @@ class VsxVariableStarInformationResolverService(
     }
 }
 
+interface TAPVizierService {
+    fun query(query: String): Optional<TAPVizierResult>
+
+    companion object {
+        fun buildDistanceQuery(catalogue: String, queryFields: String, coordinates: CosmicCoordinatesModel, radiusDegrees: Double, limit: Int): String {
+            val distanceField = "DISTANCE(POINT('ICRS',${coordinates.ra}, ${coordinates.dec}), POINT('ICRS',$catalogue.RAJ2000, $catalogue.DEJ2000)) as \"DISTANCE\""
+            return "SELECT TOP $limit $queryFields, $distanceField FROM $catalogue WHERE 1=CONTAINS(POINT('ICRS',$catalogue.RAJ2000,$catalogue.DEJ2000), CIRCLE('ICRS', ${coordinates.ra}, ${coordinates.dec}, $radiusDegrees)) ORDER BY \"DISTANCE\""
+        }
+    }
+}
+
+class TAPVizierResult(
+        var metadata: List<TAPVizierMetadata> = ArrayList(),
+        var data: List<List<String?>> = ArrayList()
+)
+
+class TAPVizierMetadata(
+        var name: String = "",
+        var description: String = "",
+        var datatype: String = "",
+        var unit: String = "",
+        var ucd: String = ""
+)
+
 @Component
-class TAPVizierService(
+class TAPVizierServiceImpl(
         private val restTemplate: RestTemplate
-) {
+): TAPVizierService {
 
-    class TAPVizierResult(
-            var metadata: List<TAPVizierMetadata> = ArrayList(),
-            var data: List<List<String?>> = ArrayList()
-    )
-
-    class TAPVizierMetadata(
-            var name: String = "",
-            var description: String = "",
-            var datatype: String = "",
-            var unit: String = "",
-            var ucd: String = ""
-    )
-
-    fun query(query: String): Optional<TAPVizierResult> {
+    override fun query(query: String): Optional<TAPVizierResult> {
         val url = "http://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync?request=doQuery&lang=adql&format=json&query={query}"
 
         try {
@@ -296,11 +313,5 @@ class TAPVizierService(
             // TODO log
             return Optional.empty()
         }
-    }
-
-    fun buildDistanceQuery(catalogue: String, queryFields: String, coordinates: CosmicCoordinatesModel, radiusDegrees: Double, limit: Int): String {
-        val distanceField = "DISTANCE(POINT('ICRS',${coordinates.ra}, ${coordinates.dec}), POINT('ICRS',$catalogue.RAJ2000, $catalogue.DEJ2000)) as \"DISTANCE\""
-        val query = "SELECT TOP $limit $queryFields, $distanceField FROM $catalogue WHERE 1=CONTAINS(POINT('ICRS',$catalogue.RAJ2000,$catalogue.DEJ2000), CIRCLE('ICRS', ${coordinates.ra}, ${coordinates.dec}, $radiusDegrees)) ORDER BY \"DISTANCE\""
-        return query
     }
 }

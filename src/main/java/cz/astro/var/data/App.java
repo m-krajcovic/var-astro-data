@@ -5,6 +5,8 @@
  */
 package cz.astro.var.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import cz.astro.var.data.czev.repository.CzevInit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +18,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class App implements CommandLineRunner {
 
     public static void main(String[] args) {
+        new ObjectMapper().registerModule(new KotlinModule());
         SpringApplication.run(App.class, args);
     }
 

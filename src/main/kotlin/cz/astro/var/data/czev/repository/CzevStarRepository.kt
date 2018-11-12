@@ -27,7 +27,10 @@ interface CzevStarRepository : JpaRepository<CzevStar, Long>, JpaSpecificationEx
 }
 
 interface UserRepository: JpaRepository<User, Long> {
-    fun findByEmail(email: String): Optional<User>
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id = :id")
+    fun findByIdFetched(@Param("id") id: Long): Optional<User>
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.email = :email")
+    fun findByEmailFetched(@Param("email") email: String): Optional<User>
     fun existsByEmail(email: String): Boolean
 }
 
@@ -36,7 +39,12 @@ interface RoleRepository: JpaRepository<Role, Long> {
 }
 
 interface CzevStarDraftRepository : JpaRepository<CzevStarDraft, Long> {
-    fun findByCreatedBy(user: User): List<CzevStarDraft>
+    @Query("SELECT DISTINCT d FROM CzevStarDraft d LEFT JOIN FETCH d.constellation LEFT JOIN FETCH d.crossIdentifications LEFT JOIN FETCH d.discoverers LEFT JOIN FETCH d.filterBand WHERE d.createdBy = :user")
+    fun findForUserFetched(@Param("user") user: User): List<CzevStarDraft>
+    @Query("SELECT DISTINCT d FROM CzevStarDraft d LEFT JOIN FETCH d.constellation LEFT JOIN FETCH d.crossIdentifications LEFT JOIN FETCH d.discoverers LEFT JOIN FETCH d.filterBand")
+    fun findAllFetched(): List<CzevStarDraft>
+    @Query("SELECT DISTINCT d FROM CzevStarDraft d LEFT JOIN FETCH d.constellation LEFT JOIN FETCH d.crossIdentifications LEFT JOIN FETCH d.discoverers LEFT JOIN FETCH d.filterBand WHERE d.id = :id")
+    fun findByIdFetched(@Param("id") id: Long): Optional<CzevStarDraft>
 }
 
 interface ConstellationRepository : JpaRepository<Constellation, Long>

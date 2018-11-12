@@ -44,7 +44,7 @@ class CzevStar(
         @Column(nullable = true)
         var jMagnitude: Double?,
         @Column(nullable = true)
-        var jk: Double?,
+        var jkMagnitude: Double?,
         @Column(nullable = true)
         var amplitude: Double?,
         @NotAudited

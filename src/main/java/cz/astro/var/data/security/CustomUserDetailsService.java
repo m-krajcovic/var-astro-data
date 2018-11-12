@@ -20,7 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @Transactional
     public UserPrincipal loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findByEmailFetched(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         UserPrincipal userPrincipal = new UserPrincipal();
         userPrincipal.setEmail(user.getEmail());
@@ -34,7 +34,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Transactional
     public UserPrincipal loadUserById(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findByIdFetched(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         UserPrincipal userPrincipal = new UserPrincipal();
         userPrincipal.setEmail(user.getEmail());
