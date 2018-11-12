@@ -23,7 +23,7 @@ data class CzevStarDraftModel(
         val createdBy: UserPrincipal
 )
 
-data class CzevStarApprovalModel(
+data class CzevStarDraftNewModel(
         val id: Long?,
         val constellation: ConstellationModel,
         val type: String,
@@ -37,6 +37,25 @@ data class CzevStarApprovalModel(
         val m0: BigDecimal?,
         val period: BigDecimal?,
         val year: Int
+)
+
+data class CzevStarApprovalModel(
+        val id: Long,
+        val constellation: ConstellationModel,
+        val type: String,
+        val discoverers: List<StarObserverModel>,
+        val amplitude: Double?,
+        val filterBand: FilterBandModel?,
+        val crossIdentifications: List<String>,
+        val coordinates: CosmicCoordinatesModel,
+        val privateNote: String,
+        val publicNote: String,
+        val m0: BigDecimal?,
+        val period: BigDecimal?,
+        val year: Int,
+        val jMagnitude: Double?,
+        val vMagnitude: Double?,
+        val jkMagnitude: Double?
 )
 
 data class CzevStarDetailsModel(

@@ -105,7 +105,7 @@ class CzevStarDraft(
         var amplitude: Double?,
         @Embedded
         var coordinates: CosmicCoordinates,
-        @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+        @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
         var crossIdentifications: MutableSet<StarIdentification>,
         @Column(precision = 15, scale = 7, nullable = true) var m0: BigDecimal?,
         @Column(precision = 10, scale = 7, nullable = true) var period: BigDecimal?,

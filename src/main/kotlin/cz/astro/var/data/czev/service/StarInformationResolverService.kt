@@ -3,6 +3,8 @@ package cz.astro.`var`.data.czev.service
 import cz.astro.`var`.data.czev.repository.decStringToDegrees
 import cz.astro.`var`.data.czev.repository.raStringToDegrees
 import cz.astro.`var`.data.czev.repository.sesame.SesameResult
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
@@ -16,8 +18,8 @@ import javax.xml.bind.UnmarshalException
 import kotlin.collections.HashMap
 
 interface VariableStarInformationCoordinatesResolverService {
-    fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<VariableStarInformationDistanceModel>
-    fun findNearest(coordinates: CosmicCoordinatesModel): Optional<VariableStarInformationDistanceModel>
+    fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<DistanceModel<VariableStarInformationModel>>
+    fun findNearest(coordinates: CosmicCoordinatesModel): Optional<DistanceModel<VariableStarInformationModel>>
 }
 
 interface VariableStarInformationNameResolverService {
@@ -26,8 +28,8 @@ interface VariableStarInformationNameResolverService {
 
 interface StarInformationResolverService {
     fun findByIdentifier(identifier: String): Optional<StarInformationModel>
-    fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<StarInformationDistanceModel>
-    fun findNearest(coordinates: CosmicCoordinatesModel): Optional<StarInformationDistanceModel>
+    fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<DistanceModel<StarInformationModel>>
+    fun findNearest(coordinates: CosmicCoordinatesModel): Optional<DistanceModel<StarInformationModel>>
 }
 
 data class VariableStarInformationModel(
@@ -40,10 +42,9 @@ data class VariableStarInformationModel(
         val vsxId: Long?
 )
 
-
-data class VariableStarInformationDistanceModel(
+data class DistanceModel<T>(
         val distance: Double,
-        val model: VariableStarInformationModel
+        val model: T
 )
 
 data class StarInformationModel(
@@ -52,12 +53,11 @@ data class StarInformationModel(
         val magnitudes: Map<String, Double>
 )
 
-data class StarInformationDistanceModel(
-        val distance: Double,
-        val model: StarInformationModel
-)
 
-interface Ucac4StarInformationResolverService: StarInformationResolverService
+interface Ucac4StarInformationResolverService : StarInformationResolverService {
+    fun isValidIdentifier(identifier: String): Boolean
+    fun selectIdentifier(identifier: String): Optional<String>
+}
 
 @Component
 class Ucac4StarInformationResolverServiceImpl(
@@ -66,30 +66,46 @@ class Ucac4StarInformationResolverServiceImpl(
     companion object {
         const val UCAC4_CAT = "\"I/322A/out\""
         const val QUERY_FIELDS = "$UCAC4_CAT.UCAC4, $UCAC4_CAT.RAJ2000, $UCAC4_CAT.DEJ2000, $UCAC4_CAT.Kmag, $UCAC4_CAT.Jmag, $UCAC4_CAT.Vmag"
+
+        val IDENTIFIER_PATTERN = Regex("\\s*(UCAC4.*?)?(\\d{3}-\\d{6})\\s*")
+    }
+
+    override fun selectIdentifier(identifier: String): Optional<String> {
+        val match = IDENTIFIER_PATTERN.matchEntire(identifier)
+        if (match != null) {
+            return Optional.of(match.groups[2]!!.value)
+        }
+        return Optional.empty()
+    }
+
+    override fun isValidIdentifier(identifier: String): Boolean {
+        return IDENTIFIER_PATTERN.matches(identifier)
     }
 
     override fun findByIdentifier(identifier: String): Optional<StarInformationModel> {
-        val query = "SELECT TOP 1 $QUERY_FIELDS FROM $UCAC4_CAT WHERE $UCAC4_CAT.UCAC4 = '${identifier.replace("'", "''")}'"
-        return tapVizierService.query(query).map { it.toSingleModel() }
+        return selectIdentifier(identifier).map {
+            val query = "SELECT TOP 1 $QUERY_FIELDS FROM $UCAC4_CAT WHERE $UCAC4_CAT.UCAC4 = '${it.replace("'", "''")}'"
+            tapVizierService.query(query).map { it.toSingleModel() }.orElse(null)
+        }
     }
 
-    override fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<StarInformationDistanceModel> {
+    override fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<DistanceModel<StarInformationModel>> {
         return findByCoordinates(coordinates, 10, radiusDegrees)
     }
 
-    override fun findNearest(coordinates: CosmicCoordinatesModel): Optional<StarInformationDistanceModel> {
+    override fun findNearest(coordinates: CosmicCoordinatesModel): Optional<DistanceModel<StarInformationModel>> {
         return Optional.ofNullable(findByCoordinates(coordinates, 1, 1.0).firstOrNull())
     }
 
-    private fun findByCoordinates(coordinates: CosmicCoordinatesModel, limit: Int, radiusDegrees: Double): List<StarInformationDistanceModel> {
+    private fun findByCoordinates(coordinates: CosmicCoordinatesModel, limit: Int, radiusDegrees: Double): List<DistanceModel<StarInformationModel>> {
         return tapVizierService.query(TAPVizierService.buildDistanceQuery(
                 UCAC4_CAT, QUERY_FIELDS, coordinates, radiusDegrees, limit
         )).map { it.toDistanceModels() }.orElse(ArrayList())
     }
 
-    private fun TAPVizierResult.toDistanceModels(): List<StarInformationDistanceModel> {
-        val output = ArrayList<StarInformationDistanceModel>()
-        data.forEach {result ->
+    private fun TAPVizierResult.toDistanceModels(): List<DistanceModel<StarInformationModel>> {
+        val output = ArrayList<DistanceModel<StarInformationModel>>()
+        data.forEach { result ->
             val ucacId = result[0] ?: ""
             val ra = result[1]?.toBigDecimalOrNull()
             val dec = result[2]?.toBigDecimalOrNull()
@@ -108,14 +124,14 @@ class Ucac4StarInformationResolverServiceImpl(
                 if (ra != null && dec != null) {
                     coordinates = CosmicCoordinatesModel(ra, dec)
                 }
-                output.add(StarInformationDistanceModel(it, StarInformationModel(coordinates, ucacId, magnitudes)))
+                output.add(DistanceModel(it, StarInformationModel(coordinates, ucacId, magnitudes)))
             }
         }
         return output
     }
 
     private fun TAPVizierResult.toSingleModel(): StarInformationModel? {
-        if (data.isNotEmpty() && data[0].size == 7) {
+        if (data.isNotEmpty() && data[0].size == 6) {
             // vsxId, name, type, epoch, period, ra, dec
             val result = data[0]
             val ucacId = result[0] ?: ""
@@ -141,13 +157,19 @@ class Ucac4StarInformationResolverServiceImpl(
     }
 }
 
-interface SesameVariableStarInformationResolverService: VariableStarInformationNameResolverService
+interface SesameVariableStarInformationResolverService : VariableStarInformationNameResolverService
 
 @Component
 class SesameVariableStarInformationResolverServiceImpl(
         private val restTemplate: RestTemplate
 ) : SesameVariableStarInformationResolverService {
+
+    companion object {
+        val logger = LoggerFactory.getLogger(SesameVariableStarInformationResolverService::class.java)
+    }
+
     override fun findByName(name: String): Optional<VariableStarInformationModel> {
+        logger.debug(name)
         val uriVariables = mapOf(Pair("name", name))
         val rawResult: String = restTemplate.getForObject("http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oxpI/S?{name}", uriVariables)
                 ?: throw ServiceException("Sesame resolver failed")
@@ -193,7 +215,7 @@ class SesameVariableStarInformationResolverServiceImpl(
     }
 }
 
-interface VsxVariableStarInformationResolverService: VariableStarInformationCoordinatesResolverService, VariableStarInformationNameResolverService
+interface VsxVariableStarInformationResolverService : VariableStarInformationCoordinatesResolverService, VariableStarInformationNameResolverService
 
 @Component
 class VsxVariableStarInformationResolverServiceImpl(
@@ -210,22 +232,22 @@ class VsxVariableStarInformationResolverServiceImpl(
         return tapVizierService.query(query).map { it.toSingleModel(0) }
     }
 
-    override fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<VariableStarInformationDistanceModel> {
+    override fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<DistanceModel<VariableStarInformationModel>> {
         return findByCoordinates(coordinates, 10, radiusDegrees)
     }
 
-    private fun findByCoordinates(coordinates: CosmicCoordinatesModel, limit: Int, radiusDegrees: Double): List<VariableStarInformationDistanceModel> {
+    private fun findByCoordinates(coordinates: CosmicCoordinatesModel, limit: Int, radiusDegrees: Double): List<DistanceModel<VariableStarInformationModel>> {
         return tapVizierService.query(TAPVizierService.buildDistanceQuery(
                 VSX_CAT, QUERY_FIELDS, coordinates, radiusDegrees, limit
         )).map { it.toDistanceModels() }.orElse(ArrayList())
     }
 
-    override fun findNearest(coordinates: CosmicCoordinatesModel): Optional<VariableStarInformationDistanceModel> {
+    override fun findNearest(coordinates: CosmicCoordinatesModel): Optional<DistanceModel<VariableStarInformationModel>> {
         return Optional.ofNullable(findByCoordinates(coordinates, 1, 1.0).firstOrNull())
     }
 
-    private fun TAPVizierResult.toDistanceModels(): List<VariableStarInformationDistanceModel> {
-        val result = ArrayList<VariableStarInformationDistanceModel>()
+    private fun TAPVizierResult.toDistanceModels(): List<DistanceModel<VariableStarInformationModel>> {
+        val result = ArrayList<DistanceModel<VariableStarInformationModel>>()
         data.forEach {
             if (it.size == 8) {
                 val vsxId = it[0]?.toLongOrNull()
@@ -241,7 +263,7 @@ class VsxVariableStarInformationResolverServiceImpl(
                 }
                 val distance = it[7]?.toDoubleOrNull()
                 if (distance != null) {
-                    result.add(VariableStarInformationDistanceModel(
+                    result.add(DistanceModel<VariableStarInformationModel>(
                             distance,
                             VariableStarInformationModel(
                                     coordinates, name, emptySet(), type, epoch, period, vsxId
@@ -268,7 +290,7 @@ class VsxVariableStarInformationResolverServiceImpl(
             if (ra != null && dec != null) {
                 coordinates = CosmicCoordinatesModel(ra, dec)
             }
-            return VariableStarInformationModel(coordinates, name, emptySet(), type, epoch, period, vsxId)
+            return VariableStarInformationModel(coordinates, name, setOf(name), type, epoch, period, vsxId)
         }
         return null
     }
@@ -301,9 +323,14 @@ class TAPVizierMetadata(
 @Component
 class TAPVizierServiceImpl(
         private val restTemplate: RestTemplate
-): TAPVizierService {
+) : TAPVizierService {
+
+    companion object {
+        val logger: Logger = LoggerFactory.getLogger(TAPVizierServiceImpl::class.java)
+    }
 
     override fun query(query: String): Optional<TAPVizierResult> {
+        logger.debug(query)
         val url = "http://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync?request=doQuery&lang=adql&format=json&query={query}"
 
         try {

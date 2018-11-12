@@ -18,7 +18,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class App implements CommandLineRunner {
 
     public static void main(String[] args) {
-        new ObjectMapper().registerModule(new KotlinModule());
         SpringApplication.run(App.class, args);
     }
 
@@ -30,6 +29,7 @@ public class App implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        new ObjectMapper().registerModule(new KotlinModule());
         if (czevhbm2ddl.startsWith("create")) {
             czevInit.initialize();
         }

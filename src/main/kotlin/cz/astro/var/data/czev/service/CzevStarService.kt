@@ -15,15 +15,16 @@ import java.util.*
 interface CzevStarService {
     fun getAllForList(): List<CzevStarListModel>
     fun getStarDetails(id: Long): CzevStarDetailsModel
-    fun getByCoordinatesForList(coordinates: CosmicCoordinatesModel, radius: BigDecimal): List<CzevStarListModel>
+    fun getByCoordinatesForList(coordinates: CosmicCoordinatesModel, radius: BigDecimal): List<DistanceModel<CzevStarListModel>>
     fun getAllForExport(): List<CzevStarExportModel>
+    fun getByIdentification(identification: String): Optional<CzevStarListModel>
 }
 
 interface CzevStarDraftService {
     fun approve(approvalModel: CzevStarApprovalModel): Optional<CzevStarDetailsModel>
     fun reject(rejection: CzevStarDraftRejectionModel)
-    fun insert(draft: CzevStarDraftModel)
-    fun insertAll(drafts: List<CzevStarDraftModel>)
+    fun insert(draft: CzevStarDraftNewModel)
+    fun insertAll(drafts: List<CzevStarDraftNewModel>)
     fun getById(id: Long): Optional<CzevStarDraftModel>
     fun getAll(): List<CzevStarDraftModel>
     fun getAllForCurrentUser(): List<CzevStarDraftModel>
@@ -86,14 +87,13 @@ class CzevStarDraftServiceImpl(
 
     @PreAuthorize("hasRole('ADMIN')")
     override fun approve(approvalModel: CzevStarApprovalModel): Optional<CzevStarDetailsModel> {
-        if (approvalModel.id != null) {
-            return czevStarDraftRepository.findById(approvalModel.id).map {
-                val newStar = czevStarRepository.save(it.toPublished(approvalModel))
-                czevStarDraftRepository.delete(it)
-                newStar.toDetailsModel()
-            }
+        return czevStarDraftRepository.findById(approvalModel.id).map {
+            val typeValidator = StarTypeValidatorImpl(typeRepository.findAll().map { type -> type.name }.toSet())
+            val published = it.toPublished(approvalModel, typeValidator)
+            czevStarDraftRepository.delete(it)
+            val newStar = czevStarRepository.save(published)
+            newStar.toDetailsModel()
         }
-        return Optional.empty()
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -109,14 +109,14 @@ class CzevStarDraftServiceImpl(
     }
 
     @PreAuthorize("hasRole('USER')")
-    override fun insert(draft: CzevStarDraftModel) {
+    override fun insert(draft: CzevStarDraftNewModel) {
         val user = securityService.currentUser!!
         val typeValidator = StarTypeValidatorImpl(typeRepository.findAll().map { it.name }.toSet())
         czevStarDraftRepository.save(draft.toEntity(User(user.id), typeValidator))
     }
 
     @PreAuthorize("hasRole('USER')")
-    override fun insertAll(drafts: List<CzevStarDraftModel>) {
+    override fun insertAll(drafts: List<CzevStarDraftNewModel>) {
         val principal = securityService.currentUser!!
         val user = User(principal.id)
         val typeValidator = StarTypeValidatorImpl(typeRepository.findAll().map { it.name }.toSet())
@@ -143,14 +143,25 @@ class CzevStarDraftServiceImpl(
         return czevStarDraftRepository.findForUserFetched(User(user.id)).map { it.toModel() }
     }
 
-    private fun CzevStarDraft.toPublished(approvalModel: CzevStarApprovalModel): CzevStar {
-        val czevStar = CzevStar(m0, period, .0, .0, publicNote, privateNote, constellation, type, filterBand,
-                discoverers, coordinates, year, mutableSetOf(), null, "", null, null, null, null, createdBy)
-        czevStar.crossIdentifications = crossIdentifications
+    private fun CzevStarDraft.toPublished(model: CzevStarApprovalModel, typeValidator: StarTypeValidator): CzevStar {
+        val constEntity = constellationRepository.findById(model.constellation.id).orElse(constellation)
+        val filterBandEntity = model.filterBand?.let { filterBandRepository.findById(it.id).orElse(filterBand) }
+                ?: filterBand
+        var observerEntities = observerRepository.findAllById(model.discoverers.map { it.id }).toMutableSet()
+        if (observerEntities.isEmpty()) {
+            observerEntities = discoverers
+        }
+        val czevStar = CzevStar(model.m0, model.period, .0, .0, model.publicNote, model.privateNote, constEntity, model.type, filterBandEntity,
+                observerEntities, model.coordinates.toEntity(), model.year, mutableSetOf(), null, "", model.vMagnitude, model.jMagnitude, model.jkMagnitude, model.amplitude, createdBy)
+        czevStar.crossIdentifications = model.crossIdentifications.map { StarIdentification(it, null) }.toMutableSet()
+        czevStar.typeValid = typeValidator.validate(model.type)
+        if (!czevStar.typeValid) {
+            czevStar.type = typeValidator.tryFixCase(type)
+        }
         return czevStar
     }
 
-    private fun CzevStarDraftModel.toEntity(user: User, typeValidator: StarTypeValidator): CzevStarDraft {
+    private fun CzevStarDraftNewModel.toEntity(user: User, typeValidator: StarTypeValidator): CzevStarDraft {
         val observers = observerRepository.findAllById(discoverers.map { it.id }).toMutableSet()
         if (observers.size == 0) {
             throw ServiceException("At least one observer must be set as discoverer.")
