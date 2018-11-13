@@ -46,13 +46,13 @@ class CzevController(
     fun deleteDraft(@PathVariable id: Long) = draftService.delete(id)
 
     @PostMapping("drafts/{id}/rejection")
-    fun rejectDraft(@PathVariable id: Long, model: CzevStarDraftRejectionModel) {
+    fun rejectDraft(@PathVariable id: Long, @RequestBody model: CzevStarDraftRejectionModel) {
         model.id = id
         draftService.reject(model)
     }
 
     @PostMapping("stars")
-    fun approveDraft(model: CzevStarApprovalModel) {
+    fun approveDraft(@RequestBody model: CzevStarApprovalModel) {
         draftService.approve(model)
     }
 

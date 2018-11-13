@@ -1,7 +1,10 @@
 package cz.astro.`var`.data.czev.service
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.security.UserPrincipal
+import org.codehaus.jackson.annotate.JsonIgnore
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
@@ -20,6 +23,7 @@ data class CzevStarDraftModel(
         val m0: BigDecimal?,
         val period: BigDecimal?,
         val year: Int,
+        @JsonIgnore
         val createdBy: UserPrincipal
 )
 
@@ -222,4 +226,33 @@ fun CzevStarDraft.toModel(): CzevStarDraftModel {
             crossIdentifications.map { it.name }, coordinates.toModel(), privateNote, publicNote, m0, period, year,
             principal
     )
+}
+
+fun main(args: Array<String>) {
+    val jacksonObjectMapper = jacksonObjectMapper()
+    var json = """{
+	"id": 364,
+	"constellation": {
+		"id": 64,
+		"name": ""
+	},
+	"type": "ek",
+	"discoverers": [{"id": 7, "firstName": "", "lastName": "", "abbreviation": ""}],
+	"amplitude": 0.5,
+	"crossIdentifications": ["Michalova hviezda"],
+	"privateNote": "testujem to to tu",
+	"year": 2018,
+	"publicNote": "Public",
+	"coordinates": {
+		"ra": 10,
+		"dec": 20
+	},
+	"filterBand": null,
+	"m0": 1,
+	"period": 1,
+	"jMagnitude": 1,
+	"vMagnitude": 1,
+	"jkMagnitude": 1
+}"""
+    val mapped = jacksonObjectMapper.readValue<CzevStarApprovalModel>(json)
 }

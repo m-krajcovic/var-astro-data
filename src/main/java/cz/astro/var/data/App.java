@@ -5,8 +5,6 @@
  */
 package cz.astro.var.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import cz.astro.var.data.czev.repository.CzevInit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +27,6 @@ public class App implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        new ObjectMapper().registerModule(new KotlinModule());
         if (czevhbm2ddl.startsWith("create")) {
             czevInit.initialize();
         }

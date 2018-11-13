@@ -33,9 +33,11 @@ interface CzevStarDraftService {
 }
 
 data class CzevStarDraftRejectionModel(
-        var id: Long,
         val rejectionNote: String
-)
+) {
+    var id: Long = -1
+}
+
 
 interface AccessVoter {
     fun isDraftOwner(draftId: Long, principal: UserPrincipal): Boolean
@@ -87,11 +89,11 @@ class CzevStarDraftServiceImpl(
 
     @PreAuthorize("hasRole('ADMIN')")
     override fun approve(approvalModel: CzevStarApprovalModel): Optional<CzevStarDetailsModel> {
-        return czevStarDraftRepository.findById(approvalModel.id).map {
+        return czevStarDraftRepository.findByIdFetched(approvalModel.id).map {
             val typeValidator = StarTypeValidatorImpl(typeRepository.findAll().map { type -> type.name }.toSet())
             val published = it.toPublished(approvalModel, typeValidator)
-            czevStarDraftRepository.delete(it)
             val newStar = czevStarRepository.save(published)
+            czevStarDraftRepository.delete(it)
             newStar.toDetailsModel()
         }
     }
@@ -133,7 +135,7 @@ class CzevStarDraftServiceImpl(
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
     override fun getAll(): List<CzevStarDraftModel> {
-        return czevStarDraftRepository.findAll().map { it.toModel() }
+        return czevStarDraftRepository.findAllFetched().map { it.toModel() }
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -145,15 +147,22 @@ class CzevStarDraftServiceImpl(
 
     private fun CzevStarDraft.toPublished(model: CzevStarApprovalModel, typeValidator: StarTypeValidator): CzevStar {
         val constEntity = constellationRepository.findById(model.constellation.id).orElse(constellation)
-        val filterBandEntity = model.filterBand?.let { filterBandRepository.findById(it.id).orElse(filterBand) }
-                ?: filterBand
+        val filterBandEntity = model.filterBand?.let { filterBandRepository.findById(it.id).orElse(null) }
         var observerEntities = observerRepository.findAllById(model.discoverers.map { it.id }).toMutableSet()
         if (observerEntities.isEmpty()) {
             observerEntities = discoverers
         }
         val czevStar = CzevStar(model.m0, model.period, .0, .0, model.publicNote, model.privateNote, constEntity, model.type, filterBandEntity,
                 observerEntities, model.coordinates.toEntity(), model.year, mutableSetOf(), null, "", model.vMagnitude, model.jMagnitude, model.jkMagnitude, model.amplitude, createdBy)
-        czevStar.crossIdentifications = model.crossIdentifications.map { StarIdentification(it, null) }.toMutableSet()
+        val modelIdsSet = model.crossIdentifications.toSet()
+        modelIdsSet.forEach {
+            val identification = StarIdentification(it, null)
+            if (!crossIdentifications.contains(identification)) {
+                crossIdentifications.add(identification)
+            }
+        }
+        crossIdentifications.removeIf { !modelIdsSet.contains(it.name)}
+        czevStar.crossIdentifications = crossIdentifications
         czevStar.typeValid = typeValidator.validate(model.type)
         if (!czevStar.typeValid) {
             czevStar.type = typeValidator.tryFixCase(type)
