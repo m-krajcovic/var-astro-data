@@ -266,7 +266,7 @@ class VsxVariableStarInformationResolverServiceImpl(
                     result.add(DistanceModel<VariableStarInformationModel>(
                             distance,
                             VariableStarInformationModel(
-                                    coordinates, name, emptySet(), type, epoch, period, vsxId
+                                    coordinates, name, setOf(name), type, epoch, period, vsxId
                             )
                     ))
                 }

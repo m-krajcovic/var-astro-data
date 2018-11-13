@@ -80,18 +80,20 @@ class CzevIdGenerator: IdentifierGenerator {
     override fun generate(session: SharedSessionContractImplementor?, obj: Any?): Serializable? {
         val connection = session?.connection() ?: return null
         try {
-            val statement = connection.createStatement()
-            val rs = statement.executeQuery("SELECT MAX(czevId) FROM czev_CzevStar")
-            if (rs.next()) {
-                val id = rs.getInt(1)
-                return id + 1
+            if (obj is CzevStar) {
+                obj.czevId
+                val statement = connection.createStatement()
+                val rs = statement.executeQuery("SELECT MAX(czevId) FROM czev_CzevStar")
+                if (rs.next()) {
+                    val id = rs.getInt(1)
+                    return id + 1
+                }
             }
         } catch (e: SQLException) {
             e.printStackTrace()
         }
         return null
     }
-
 }
 
 @Entity

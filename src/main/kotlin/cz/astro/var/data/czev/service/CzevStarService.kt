@@ -18,6 +18,7 @@ interface CzevStarService {
     fun getByCoordinatesForList(coordinates: CosmicCoordinatesModel, radius: BigDecimal): List<DistanceModel<CzevStarListModel>>
     fun getAllForExport(): List<CzevStarExportModel>
     fun getByIdentification(identification: String): Optional<CzevStarListModel>
+    fun update(model: CzevStarDetailsModel): CzevStarDetailsModel
 }
 
 interface CzevStarDraftService {
@@ -30,14 +31,8 @@ interface CzevStarDraftService {
     fun getAllForCurrentUser(): List<CzevStarDraftModel>
     fun deleteAll(ids: List<Long>)
     fun delete(id: Long)
+    fun update(model: CzevStarDraftModel): CzevStarDraftModel
 }
-
-data class CzevStarDraftRejectionModel(
-        val rejectionNote: String
-) {
-    var id: Long = -1
-}
-
 
 interface AccessVoter {
     fun isDraftOwner(draftId: Long, principal: UserPrincipal): Boolean
@@ -65,14 +60,41 @@ class AccessVoterImpl(
 @Service
 @Transactional
 class CzevStarDraftServiceImpl(
-        private val observerRepository: StarObserverRepository,
-        private val filterBandRepository: FilterBandRepository,
-        private val constellationRepository: ConstellationRepository,
         private val czevStarRepository: CzevStarRepository,
         private val czevStarDraftRepository: CzevStarDraftRepository,
         private val securityService: SecurityService,
         private val typeRepository: StarTypeRepository
 ) : CzevStarDraftService {
+    override fun update(model: CzevStarDraftModel): CzevStarDraftModel {
+        val updatedEntity = czevStarDraftRepository.getOne(model.id)
+        updatedEntity.apply {
+
+            val modelIdsSet = model.crossIdentifications.toSet()
+            modelIdsSet.forEach {
+                val identification = StarIdentification(it, null)
+                if (!crossIdentifications.contains(identification)) {
+                    crossIdentifications.add(identification)
+                }
+            }
+            crossIdentifications.removeIf { !modelIdsSet.contains(it.name) }
+
+            val observers = model.discoverers.toEntities()
+            val newConstellation = model.constellation.toEntity()
+            val newFilterBand: FilterBand? = model.filterBand.toEntity()
+
+            type = model.type
+            publicNote = model.publicNote
+            amplitude = model.amplitude
+            m0 = model.m0
+            period = model.period
+            constellation = newConstellation
+            filterBand = newFilterBand
+            year = model.year
+            discoverers = observers
+            coordinates = CosmicCoordinates(model.coordinates.ra, model.coordinates.dec)
+        }
+        return czevStarDraftRepository.save(updatedEntity).toModel()
+    }
 
     @PreAuthorize("hasRole('ADMIN') or @accessVoter.isDraftsOwner(#ids, principal)")
     override fun deleteAll(ids: List<Long>) {
@@ -146,14 +168,12 @@ class CzevStarDraftServiceImpl(
     }
 
     private fun CzevStarDraft.toPublished(model: CzevStarApprovalModel, typeValidator: StarTypeValidator): CzevStar {
-        val constEntity = constellationRepository.findById(model.constellation.id).orElse(constellation)
-        val filterBandEntity = model.filterBand?.let { filterBandRepository.findById(it.id).orElse(null) }
-        var observerEntities = observerRepository.findAllById(model.discoverers.map { it.id }).toMutableSet()
-        if (observerEntities.isEmpty()) {
-            observerEntities = discoverers
-        }
-        val czevStar = CzevStar(model.m0, model.period, .0, .0, model.publicNote, model.privateNote, constEntity, model.type, filterBandEntity,
+        val newConstellation = model.constellation.toEntity()
+        val newFilterBand = model.filterBand.toEntity()
+        val observerEntities = model.discoverers.toEntities()
+        val czevStar = CzevStar(model.m0, model.period, .0, .0, model.publicNote, model.privateNote, newConstellation, model.type, newFilterBand,
                 observerEntities, model.coordinates.toEntity(), model.year, mutableSetOf(), null, "", model.vMagnitude, model.jMagnitude, model.jkMagnitude, model.amplitude, createdBy)
+
         val modelIdsSet = model.crossIdentifications.toSet()
         modelIdsSet.forEach {
             val identification = StarIdentification(it, null)
@@ -161,7 +181,8 @@ class CzevStarDraftServiceImpl(
                 crossIdentifications.add(identification)
             }
         }
-        crossIdentifications.removeIf { !modelIdsSet.contains(it.name)}
+        crossIdentifications.removeIf { !modelIdsSet.contains(it.name) }
+
         czevStar.crossIdentifications = crossIdentifications
         czevStar.typeValid = typeValidator.validate(model.type)
         if (!czevStar.typeValid) {
@@ -171,16 +192,12 @@ class CzevStarDraftServiceImpl(
     }
 
     private fun CzevStarDraftNewModel.toEntity(user: User, typeValidator: StarTypeValidator): CzevStarDraft {
-        val observers = observerRepository.findAllById(discoverers.map { it.id }).toMutableSet()
-        if (observers.size == 0) {
-            throw ServiceException("At least one observer must be set as discoverer.")
-        }
-        val filterBand = if (filterBand != null) filterBandRepository.findById(filterBand.id).orElse(null) else null
-        val constellation = constellationRepository.findById(constellation.id).orElseThrow { ServiceException("Constellation not found") }
+        val observers = discoverers.toEntities()
+        val newConstellation = constellation.toEntity()
+        val newFilterBand = filterBand.toEntity()
         val crossIds = crossIdentifications.map { StarIdentification(it, null) }.toMutableSet()
-
         val czevStarDraft = CzevStarDraft(
-                constellation, type, filterBand, amplitude, CosmicCoordinates(coordinates.ra, coordinates.dec), crossIds,
+                newConstellation, type, newFilterBand, amplitude, CosmicCoordinates(coordinates.ra, coordinates.dec), crossIds,
                 m0, period, observers, year, privateNote, publicNote, user)
         czevStarDraft.typeValid = typeValidator.validate(type)
         if (!czevStarDraft.typeValid) {

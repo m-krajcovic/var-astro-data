@@ -112,6 +112,7 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
                 "", "",
                 getConstellation(cons), type, getBand(band), getDiscoverers(disc), CosmicCoordinates(ra, dec), year.toInt(), mutableSetOf(), null, vsxName, v.toDoubleOrNull(), j.toDoubleOrNull(), jk.toDoubleOrNull(), amp.toDoubleOrNull(), user
         )
+        czevStar.czevId = czev.toLong()
         czevStar.crossIdentifications = crossIdentifications
         czevStar.typeValid = typesValidator.validate(type)
 

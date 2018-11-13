@@ -102,6 +102,13 @@ class CzevController(
             throw IllegalArgumentException("Coordinates are not in valid format")
         }
         val coords = CosmicCoordinatesModel(raDegrees, decDegrees)
+        // TODO: Other formats like these?
+        // GSC 01234-06789 (5 digits before and after the dash, use leading zeroes if necessary)
+        //2MASS J11431012-5804040 (use a J before the coordinates)
+        //USNO-A2.0 0300-13671194
+        //USNO-B1.0 0319-0360318 (use a dash between USNO and the catalog version, it is part of the acronym)
+        //GSC2.3 S111210165373
+        //UCAC4 810-003941
         val ucacResult = ucac4Resolver.findByCoordinates(coords, 0.01)
         val vsxResult = vsxResolver.findByCoordinates(coords, 0.01)
         val czevResult = starService.getByCoordinatesForList(coords, 0.01.toBigDecimal())

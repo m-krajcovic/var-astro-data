@@ -23,7 +23,7 @@ class StarController(private val starRepository: StarRepository) {
             starRepository.findAllStarMinimaSummary().asSequence().map { it.toListItemModel() }.toList()
 
     @GetMapping("stars/{starId}")
-    fun getById(@PathVariable starId: Int): StarModel = starRepository.getOne(starId).toModel()
+    fun getById(@PathVariable starId: Int): StarModel = starRepository.findById(starId).map { it.toModel() }.orElse(null)
 
     @GetMapping("constellations")
     fun getConstellations(): Set<ConstellationStarSummary> = starRepository.findAllConstellationStarSummary()

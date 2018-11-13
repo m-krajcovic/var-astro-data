@@ -1,6 +1,9 @@
 package cz.astro.`var`.data.czev.service
 
+import cz.astro.`var`.data.czev.repository.CosmicCoordinates
 import cz.astro.`var`.data.czev.repository.CzevStarRepository
+import cz.astro.`var`.data.czev.repository.FilterBand
+import cz.astro.`var`.data.czev.repository.StarIdentification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -11,6 +14,42 @@ import java.util.*
 class CzevStarServiceImpl(
         private val czevStarRepository: CzevStarRepository
 ) : CzevStarService {
+    override fun update(model: CzevStarDetailsModel): CzevStarDetailsModel {
+        val updatedEntity = czevStarRepository.getOne(model.czevId)
+        updatedEntity.apply {
+
+            val modelIdsSet = model.crossIdentifications.toSet()
+            modelIdsSet.forEach {
+                val identification = StarIdentification(it, null)
+                if (!crossIdentifications.contains(identification)) {
+                    crossIdentifications.add(identification)
+                }
+            }
+            crossIdentifications.removeIf { !modelIdsSet.contains(it.name)}
+
+            val observers = model.discoverers.toEntities()
+            val newConstellation = model.constellation.toEntity()
+            val newFilterBand: FilterBand? = model.filterBand.toEntity()
+
+            type = model.type
+            publicNote = model.publicNote
+            amplitude = model.amplitude
+            m0 = model.m0
+            period = model.period
+            jMagnitude = model.jMagnitude
+            jkMagnitude = model.jkMagnitude
+            vMagnitude = model.vMagnitude
+            constellation = newConstellation
+            filterBand = newFilterBand
+            year = model.year
+            discoverers = observers
+            coordinates = CosmicCoordinates(model.coordinates.ra, model.coordinates.dec)
+            vsxId = model.vsxId
+            vsxName = model.vsxName
+        }
+        return czevStarRepository.save(updatedEntity).toDetailsModel()
+    }
+
     override fun getByIdentification(identification: String): Optional<CzevStarListModel> {
         return czevStarRepository.findByStarIdentificationPartlyFetched(identification.trim()).map { it.toListModel() }
     }

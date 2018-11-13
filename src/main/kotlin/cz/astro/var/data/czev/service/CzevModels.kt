@@ -10,9 +10,10 @@ import java.math.RoundingMode
 import java.text.DecimalFormat
 
 data class CzevStarDraftModel(
-        val id: Long?,
+        val id: Long,
         val constellation: ConstellationModel,
         val type: String,
+        val typeValid: Boolean,
         val discoverers: List<StarObserverModel>,
         val amplitude: Double?,
         val filterBand: FilterBandModel?,
@@ -43,6 +44,12 @@ data class CzevStarDraftNewModel(
         val year: Int
 )
 
+data class CzevStarDraftRejectionModel(
+        val rejectionNote: String
+) {
+    var id: Long = -1
+}
+
 data class CzevStarApprovalModel(
         val id: Long,
         val constellation: ConstellationModel,
@@ -67,6 +74,7 @@ data class CzevStarDetailsModel(
         val coordinates: CosmicCoordinatesModel,
         val constellation: ConstellationModel,
         val type: String,
+        val typeValid: Boolean,
         val jMagnitude: Double?,
         val vMagnitude: Double?,
         val jkMagnitude: Double?,
@@ -105,6 +113,7 @@ data class CzevStarListModel(
         val coordinates: CosmicCoordinatesModel,
         val constellation: ConstellationModel,
         val type: String,
+        val typeValid: Boolean,
         val discoverers: List<StarObserverModel>,
         val m0: BigDecimal?,
         val period: BigDecimal?,
@@ -115,10 +124,6 @@ data class CosmicCoordinatesModel(
         val ra: BigDecimal,
         val dec: BigDecimal
 ) {
-
-    fun toEntity(): CosmicCoordinates {
-        return CosmicCoordinates(ra, dec)
-    }
 
     fun toStringRa(): String {
         val hours = ra.divide(BigDecimal(15), RoundingMode.HALF_UP).setScale(0, RoundingMode.DOWN)
@@ -168,7 +173,7 @@ data class StarObserverModel(
 
 fun CzevStar.toDetailsModel(): CzevStarDetailsModel {
     return CzevStarDetailsModel(
-            czevId, coordinates.toModel(), constellation.toModel(), type, jMagnitude, vMagnitude, jkMagnitude, amplitude,
+            czevId, coordinates.toModel(), constellation.toModel(), type, typeValid, jMagnitude, vMagnitude, jkMagnitude, amplitude,
             discoverers.toModels(), m0, period, filterBand.toModel(), crossIdentifications.map { it.name },
             year, publicNote, vsxName, vsxId
     )
@@ -176,7 +181,7 @@ fun CzevStar.toDetailsModel(): CzevStarDetailsModel {
 
 fun CzevStar.toListModel(): CzevStarListModel {
     return CzevStarListModel(czevId, coordinates.toModel(), constellation.toModel(),
-            type, discoverers.toModels(), m0, period, year)
+            type, typeValid, discoverers.toModels(), m0, period, year)
 }
 
 fun CzevStar.toExportModel(): CzevStarExportModel {
@@ -222,37 +227,33 @@ fun CzevStarDraft.toModel(): CzevStarDraftModel {
     val principal = UserPrincipal()
     principal.id = createdBy.id
     return CzevStarDraftModel(
-            id, constellation.toModel(), type, discoverers.toModels(), amplitude, filterBand.toModel(),
+            id, constellation.toModel(), type, typeValid, discoverers.toModels(), amplitude, filterBand.toModel(),
             crossIdentifications.map { it.name }, coordinates.toModel(), privateNote, publicNote, m0, period, year,
             principal
     )
 }
 
-fun main(args: Array<String>) {
-    val jacksonObjectMapper = jacksonObjectMapper()
-    var json = """{
-	"id": 364,
-	"constellation": {
-		"id": 64,
-		"name": ""
-	},
-	"type": "ek",
-	"discoverers": [{"id": 7, "firstName": "", "lastName": "", "abbreviation": ""}],
-	"amplitude": 0.5,
-	"crossIdentifications": ["Michalova hviezda"],
-	"privateNote": "testujem to to tu",
-	"year": 2018,
-	"publicNote": "Public",
-	"coordinates": {
-		"ra": 10,
-		"dec": 20
-	},
-	"filterBand": null,
-	"m0": 1,
-	"period": 1,
-	"jMagnitude": 1,
-	"vMagnitude": 1,
-	"jkMagnitude": 1
-}"""
-    val mapped = jacksonObjectMapper.readValue<CzevStarApprovalModel>(json)
+fun ConstellationModel.toEntity(): Constellation {
+    val constellation = Constellation(name)
+    constellation.id = id
+    return constellation
+}
+
+fun FilterBandModel?.toEntity(): FilterBand? {
+    if (this == null) return null
+    val filterBand = FilterBand(name)
+    filterBand.id = id
+    return filterBand
+}
+
+fun List<StarObserverModel>.toEntities(): MutableSet<StarObserver> {
+    return this.map {
+        val starObserver = StarObserver(it.firstName, it.lastName, it.abbreviation, "")
+        starObserver.id = it.id
+        starObserver
+    }.toMutableSet()
+}
+
+fun CosmicCoordinatesModel.toEntity(): CosmicCoordinates {
+    return CosmicCoordinates(ra, dec)
 }
