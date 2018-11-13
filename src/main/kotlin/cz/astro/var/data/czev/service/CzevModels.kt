@@ -1,7 +1,5 @@
 package cz.astro.`var`.data.czev.service
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.security.UserPrincipal
 import org.codehaus.jackson.annotate.JsonIgnore
@@ -231,6 +229,18 @@ fun CzevStarDraft.toModel(): CzevStarDraftModel {
             crossIdentifications.map { it.name }, coordinates.toModel(), privateNote, publicNote, m0, period, year,
             principal
     )
+}
+
+fun MutableSet<StarIdentification>.intersectIds(newIds: Iterable<String>): MutableSet<StarIdentification> {
+    val modelIdsSet = newIds.toSet()
+    modelIdsSet.forEach {
+        val identification = StarIdentification(it, null)
+        if (!contains(identification)) {
+            add(identification)
+        }
+    }
+    removeIf { !modelIdsSet.contains(it.name) }
+    return this
 }
 
 fun ConstellationModel.toEntity(): Constellation {

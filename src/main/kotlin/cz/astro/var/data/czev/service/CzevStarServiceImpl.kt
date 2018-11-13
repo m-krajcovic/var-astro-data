@@ -3,7 +3,6 @@ package cz.astro.`var`.data.czev.service
 import cz.astro.`var`.data.czev.repository.CosmicCoordinates
 import cz.astro.`var`.data.czev.repository.CzevStarRepository
 import cz.astro.`var`.data.czev.repository.FilterBand
-import cz.astro.`var`.data.czev.repository.StarIdentification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -18,14 +17,7 @@ class CzevStarServiceImpl(
         val updatedEntity = czevStarRepository.getOne(model.czevId)
         updatedEntity.apply {
 
-            val modelIdsSet = model.crossIdentifications.toSet()
-            modelIdsSet.forEach {
-                val identification = StarIdentification(it, null)
-                if (!crossIdentifications.contains(identification)) {
-                    crossIdentifications.add(identification)
-                }
-            }
-            crossIdentifications.removeIf { !modelIdsSet.contains(it.name)}
+            crossIdentifications = crossIdentifications.intersectIds(model.crossIdentifications)
 
             val observers = model.discoverers.toEntities()
             val newConstellation = model.constellation.toEntity()

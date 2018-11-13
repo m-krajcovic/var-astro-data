@@ -69,18 +69,11 @@ class CzevStarDraftServiceImpl(
         val updatedEntity = czevStarDraftRepository.getOne(model.id)
         updatedEntity.apply {
 
-            val modelIdsSet = model.crossIdentifications.toSet()
-            modelIdsSet.forEach {
-                val identification = StarIdentification(it, null)
-                if (!crossIdentifications.contains(identification)) {
-                    crossIdentifications.add(identification)
-                }
-            }
-            crossIdentifications.removeIf { !modelIdsSet.contains(it.name) }
-
             val observers = model.discoverers.toEntities()
             val newConstellation = model.constellation.toEntity()
             val newFilterBand: FilterBand? = model.filterBand.toEntity()
+
+            crossIdentifications = crossIdentifications.intersectIds(model.crossIdentifications)
 
             type = model.type
             publicNote = model.publicNote
@@ -174,14 +167,7 @@ class CzevStarDraftServiceImpl(
         val czevStar = CzevStar(model.m0, model.period, .0, .0, model.publicNote, model.privateNote, newConstellation, model.type, newFilterBand,
                 observerEntities, model.coordinates.toEntity(), model.year, mutableSetOf(), null, "", model.vMagnitude, model.jMagnitude, model.jkMagnitude, model.amplitude, createdBy)
 
-        val modelIdsSet = model.crossIdentifications.toSet()
-        modelIdsSet.forEach {
-            val identification = StarIdentification(it, null)
-            if (!crossIdentifications.contains(identification)) {
-                crossIdentifications.add(identification)
-            }
-        }
-        crossIdentifications.removeIf { !modelIdsSet.contains(it.name) }
+        crossIdentifications = crossIdentifications.intersectIds(model.crossIdentifications)
 
         czevStar.crossIdentifications = crossIdentifications
         czevStar.typeValid = typeValidator.validate(model.type)

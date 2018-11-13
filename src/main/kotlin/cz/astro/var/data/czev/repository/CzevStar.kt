@@ -1,14 +1,10 @@
 package cz.astro.`var`.data.czev.repository
 
 import org.hibernate.annotations.NaturalId
-import org.hibernate.engine.spi.SharedSessionContractImplementor
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
-import org.hibernate.id.IdentifierGenerator
-import java.io.Serializable
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.sql.SQLException
 import java.time.LocalDateTime
 import java.util.*
 import java.util.regex.Pattern
@@ -73,27 +69,6 @@ class CzevStar(
     @Column(updatable = false)
     var createdOn: LocalDateTime = LocalDateTime.now()
 
-}
-
-// TODO: Check this out? Doesn't seem very thread safe
-class CzevIdGenerator: IdentifierGenerator {
-    override fun generate(session: SharedSessionContractImplementor?, obj: Any?): Serializable? {
-        val connection = session?.connection() ?: return null
-        try {
-            if (obj is CzevStar) {
-                obj.czevId
-                val statement = connection.createStatement()
-                val rs = statement.executeQuery("SELECT MAX(czevId) FROM czev_CzevStar")
-                if (rs.next()) {
-                    val id = rs.getInt(1)
-                    return id + 1
-                }
-            }
-        } catch (e: SQLException) {
-            e.printStackTrace()
-        }
-        return null
-    }
 }
 
 @Entity
@@ -320,21 +295,11 @@ class CdsFormat(
         @NaturalId
         @Column(nullable = false, unique = true)
         var name: String,
-        @OneToMany(mappedBy = "format", orphanRemoval = true, cascade = [CascadeType.ALL])
-        var patterns: MutableSet<CdsFormatPattern>
+        @ElementCollection
+        @CollectionTable(name = "czev_CdsFormat_Patterns", joinColumns = [JoinColumn(name = "format_id")])
+        @Column(name = "pattern")
+        var patterns: MutableSet<String>
 ) : CzevEntity()
-
-@Entity
-@Table(name = "czev_CdsFormatPattern")
-class CdsFormatPattern(
-        var value: String,
-        @Id
-        @GeneratedValue
-        var id: Long = -1
-) {
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    lateinit var format: CdsFormat
-}
 
 @Entity
 @Table(name = "czev_Publication")
