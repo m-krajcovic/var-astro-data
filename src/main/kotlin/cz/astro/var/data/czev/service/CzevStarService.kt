@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 interface CzevStarService {
-    fun getAllForList(): List<CzevStarListModel>
+    fun getAllForList(filter: CzevCatalogFilter): List<CzevStarListModel>
     fun getStarDetails(id: Long): Optional<CzevStarDetailsModel>
     fun getByCoordinatesForList(coordinates: CosmicCoordinatesModel, radius: BigDecimal): List<DistanceModel<CzevStarListModel>>
     fun getAllForExport(filter: CzevCatalogFilter): List<CzevStarExportModel>

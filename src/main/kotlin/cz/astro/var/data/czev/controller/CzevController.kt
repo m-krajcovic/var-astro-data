@@ -27,8 +27,8 @@ class CzevController(
         private val objectMapper: ObjectMapper) {
 
     @GetMapping("stars")
-    fun getApprovedStars(): List<CzevStarListModel> {
-        return starService.getAllForList()
+    fun getApprovedStars(filter: CzevCatalogFilter): List<CzevStarListModel> {
+        return starService.getAllForList(filter)
     }
 
     @GetMapping("stars/{id}")
