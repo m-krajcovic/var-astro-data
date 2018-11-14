@@ -1,8 +1,6 @@
 package cz.astro.`var`.data.czev.service
 
-import cz.astro.`var`.data.czev.repository.CosmicCoordinates
-import cz.astro.`var`.data.czev.repository.CzevStarRepository
-import cz.astro.`var`.data.czev.repository.FilterBand
+import cz.astro.`var`.data.czev.repository.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -11,17 +9,29 @@ import java.util.*
 @Service
 @Transactional
 class CzevStarServiceImpl(
-        private val czevStarRepository: CzevStarRepository
+        private val czevStarRepository: CzevStarRepository,
+        private val observerRepository: StarObserverRepository,
+        private val constellationRepository: ConstellationRepository,
+        private val filterBandRepository: FilterBandRepository,
+        private val starIdentificationRepository: StarIdentificationRepository
 ) : CzevStarService {
     override fun update(model: CzevStarUpdateModel): CzevStarDetailsModel {
         val updatedEntity = czevStarRepository.getOne(model.czevId)
         updatedEntity.apply {
 
-            crossIdentifications = crossIdentifications.intersectIds(model.crossIdentifications)
+            val observers = observerRepository.findAllById(discoverers.map { it.id }).toMutableSet()
+            if (observers.size == 0 || observers.size != discoverers.size) {
+                throw ServiceException("Some of discoverers don't exist")
+            }
+            val newConstellation = constellationRepository.findById(constellation.id).orElseThrow { ServiceException("Constellation does not exist") }
+            val newFilterBand = filterBand?.let { filterBandRepository.findById(it.id).orElseThrow { ServiceException("Filter band does not exist") } }
 
-            val observers = model.discoverers.toEntities()
-            val newConstellation = model.constellation.toEntity()
-            val newFilterBand: FilterBand? = model.filterBand.toEntity()
+
+            val newIds = crossIdentifications.intersectIds(model.crossIdentifications)
+
+            if (starIdentificationRepository.existsByNameIn(newIds)) {
+                throw ServiceException("Star with same cross-id already exists")
+            }
 
             type = model.type
             publicNote = model.publicNote

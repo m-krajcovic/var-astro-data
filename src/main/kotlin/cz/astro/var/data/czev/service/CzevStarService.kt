@@ -130,11 +130,19 @@ class CzevStarDraftServiceImpl(
         val updatedEntity = czevStarDraftRepository.getOne(model.id)
         updatedEntity.apply {
 
-            val observers = model.discoverers.toEntities()
-            val newConstellation = model.constellation.toEntity()
-            val newFilterBand: FilterBand? = model.filterBand.toEntity()
+            val observers = observerRepository.findAllById(discoverers.map { it.id }).toMutableSet()
+            if (observers.size == 0 || observers.size != discoverers.size) {
+                throw ServiceException("Some of discoverers don't exist")
+            }
+            val newConstellation = constellationRepository.findById(constellation.id).orElseThrow { ServiceException("Constellation does not exist") }
+            val newFilterBand = filterBand?.let { filterBandRepository.findById(it.id).orElseThrow { ServiceException("Filter band does not exist") } }
 
-            crossIdentifications = crossIdentifications.intersectIds(model.crossIdentifications)
+
+            val newIds = crossIdentifications.intersectIds(model.crossIdentifications)
+
+            if (starIdentificationRepository.existsByNameIn(newIds)) {
+                throw ServiceException("Star with same cross-id already exists")
+            }
 
             type = model.type
             publicNote = model.publicNote
@@ -193,10 +201,6 @@ class CzevStarDraftServiceImpl(
         val user = securityService.currentUser!!
         val typeValidator = StarTypeValidatorImpl(typeRepository.findAll().map { it.name }.toSet())
         val entity = draft.toEntity(User(user.id), typeValidator)
-        if (starIdentificationRepository.existsByNameIn(draft.crossIdentifications)) {
-            // TODO
-            throw ServiceException("Already exists")
-        }
         return czevStarDraftRepository.save(entity).toModel()
     }
 
@@ -229,13 +233,21 @@ class CzevStarDraftServiceImpl(
     }
 
     private fun CzevStarDraft.toPublished(model: CzevStarApprovalModel, typeValidator: StarTypeValidator): CzevStar {
-        val newConstellation = model.constellation.toEntity()
-        val newFilterBand = model.filterBand.toEntity()
-        val observerEntities = model.discoverers.toEntities()
-        val czevStar = CzevStar(model.m0, model.period, .0, .0, model.publicNote, model.privateNote, newConstellation, model.type, newFilterBand,
-                observerEntities, model.coordinates.toEntity(), model.year, mutableSetOf(), null, "", model.vMagnitude, model.jMagnitude, model.jkMagnitude, model.amplitude, createdBy)
+        val observers = observerRepository.findAllById(discoverers.map { it.id }).toMutableSet()
+        if (observers.size == 0 || observers.size != discoverers.size) {
+            throw ServiceException("Some of discoverers don't exist")
+        }
+        val newConstellation = constellationRepository.findById(constellation.id).orElseThrow { ServiceException("Constellation does not exist") }
+        val newFilterBand = filterBand?.let { filterBandRepository.findById(it.id).orElseThrow { ServiceException("Filter band does not exist") } }
 
-        crossIdentifications = crossIdentifications.intersectIds(model.crossIdentifications)
+        val czevStar = CzevStar(model.m0, model.period, .0, .0, model.publicNote, model.privateNote, newConstellation, model.type, newFilterBand,
+                observers, model.coordinates.toEntity(), model.year, mutableSetOf(), null, "", model.vMagnitude, model.jMagnitude, model.jkMagnitude, model.amplitude, createdBy)
+
+        val newIds = crossIdentifications.intersectIds(model.crossIdentifications)
+
+        if (starIdentificationRepository.existsByNameIn(newIds)) {
+            throw ServiceException("Star with same cross-id already exists")
+        }
 
         czevStar.crossIdentifications = crossIdentifications
         czevStar.typeValid = typeValidator.validate(model.type)
@@ -246,11 +258,18 @@ class CzevStarDraftServiceImpl(
     }
 
     private fun CzevStarDraftNewModel.toEntity(user: User, typeValidator: StarTypeValidator): CzevStarDraft {
-        // TODO: i guess it should be fetched from db first and fail with custom exception
-        val observers = discoverers.toEntities()
-        val newConstellation = constellation.toEntity()
-        val newFilterBand = filterBand.toEntity()
+        val observers = observerRepository.findAllById(discoverers.map { it.id }).toMutableSet()
+        if (observers.size == 0 || observers.size != discoverers.size) {
+            throw ServiceException("Some of discoverers don't exist")
+        }
+        val newConstellation = constellationRepository.findById(constellation.id).orElseThrow { ServiceException("Constellation does not exist") }
+        val newFilterBand = filterBand?.let { filterBandRepository.findById(it.id).orElseThrow { ServiceException("Filter band does not exist") } }
         val crossIds = crossIdentifications.map { StarIdentification(it, null) }.toMutableSet()
+
+        if (starIdentificationRepository.existsByNameIn(crossIdentifications)) {
+            throw ServiceException("Star with same cross-id already exists")
+        }
+
         val czevStarDraft = CzevStarDraft(
                 newConstellation, type, newFilterBand, amplitude, CosmicCoordinates(coordinates.ra, coordinates.dec), crossIds,
                 m0, period, observers, year, privateNote, publicNote, user)
