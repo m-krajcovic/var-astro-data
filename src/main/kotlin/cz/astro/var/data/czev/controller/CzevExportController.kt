@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseBody
 import java.nio.charset.Charset
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 @Controller
 @RequestMapping("api/czev/export")
@@ -24,8 +25,8 @@ class CzevExportController(
 
     @RequestMapping("stars")
     @ResponseBody
-    fun exportCzevToCsv(@RequestParam("format") format: String): DownloadableTextResponse {
-        val allForExport = starService.getAllForExport()
+    fun exportCzevToCsv(@RequestParam("format") format: String, filter: CzevCatalogFilter): DownloadableTextResponse {
+        val allForExport = starService.getAllForExport(filter)
         return when (format) {
             "csv" -> {
                 DownloadableTextResponse(exportFormatterService.format(allForExport),
@@ -39,7 +40,22 @@ class CzevExportController(
             }
         }
     }
+
+
 }
+
+data class CzevCatalogFilter(
+        val czevIdFrom: Optional<Long> = Optional.empty(),
+        val czevIdTo: Optional<Long> = Optional.empty(),
+        val constellation: Optional<Long> = Optional.empty(),
+        val type: Optional<String> = Optional.empty(),
+        val amplitudeFrom: Optional<Double> = Optional.empty(),
+        val amplitudeTo: Optional<Double> = Optional.empty(),
+        val filterBand: Optional<Long> = Optional.empty(),
+        val yearFrom: Optional<Int> = Optional.empty(),
+        val yearTo: Optional<Int> = Optional.empty(),
+        val discoverer: Optional<Long> = Optional.empty()
+)
 
 class DownloadableTextMessageConverter : AbstractHttpMessageConverter<DownloadableTextResponse>(MediaType.TEXT_PLAIN, TEXT_CSV, TEXT_LATEX) {
 

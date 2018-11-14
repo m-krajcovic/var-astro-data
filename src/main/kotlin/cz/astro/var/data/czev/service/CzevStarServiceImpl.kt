@@ -1,10 +1,13 @@
 package cz.astro.`var`.data.czev.service
 
+import cz.astro.`var`.data.czev.controller.CzevCatalogFilter
 import cz.astro.`var`.data.czev.repository.*
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.util.*
+import javax.persistence.criteria.*
 
 @Service
 @Transactional
@@ -56,8 +59,8 @@ class CzevStarServiceImpl(
         return czevStarRepository.findByStarIdentificationPartlyFetched(identification.trim()).map { it.toListModel() }
     }
 
-    override fun getAllForExport(): List<CzevStarExportModel> {
-        return czevStarRepository.findAllFetched().asSequence().map { it.toExportModel() }.toList()
+    override fun getAllForExport(filter: CzevCatalogFilter): List<CzevStarExportModel> {
+        return czevStarRepository.findAll(CzevStarFilterSpec(filter)).asSequence().map { it.toExportModel() }.toList()
     }
 
     override fun getByCoordinatesForList(coordinates: CosmicCoordinatesModel, radius: BigDecimal): List<DistanceModel<CzevStarListModel>> {
@@ -89,3 +92,111 @@ fun cosmicDistance(ra1: Double, dec1: Double, ra2: Double, dec2: Double): Double
     val dec2Rads = Math.toRadians(dec2)
     return Math.toDegrees(Math.acos(Math.sin(dec1Rads) * Math.sin(dec2Rads) + Math.cos(dec1Rads) * Math.cos(dec2Rads) * Math.cos(ra1Rads - ra2Rads)))
 }
+
+class CzevStarFilterSpec(val spec: CzevCatalogFilter): Specification<CzevStar> {
+    override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+        val clazz = query.resultType
+        if (clazz == Long::class.java || clazz == Long::class.javaPrimitiveType)
+            return null
+
+        val predicates = ArrayList<Predicate>()
+        root.fetch<CzevStar, Constellation>(CzevStar::constellation.name, JoinType.LEFT)
+        root.fetch<CzevStar, StarObserver>(CzevStar::discoverers.name, JoinType.LEFT)
+        root.fetch<CzevStar, StarIdentification>(CzevStar::crossIdentifications.name, JoinType.LEFT)
+        root.fetch<CzevStar, FilterBand>(CzevStar::filterBand.name, JoinType.LEFT)
+        val discovererJoin = root.join<CzevStar, StarObserver>(CzevStar::discoverers.name, JoinType.LEFT)
+        query.distinct(true)
+        query.orderBy(criteriaBuilder.asc(root.get<Long>(CzevStar::czevId.name)))
+        spec.apply {
+            czevIdFrom.ifPresent {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root[CzevStar::czevId.name], it))
+            }
+            czevIdTo.ifPresent {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root[CzevStar::czevId.name], it))
+            }
+            type.ifPresent {
+                predicates.add(criteriaBuilder.like(root.get<String>(CzevStar::type.name), it))
+            }
+            yearFrom.ifPresent {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root[CzevStar::year.name], it))
+            }
+            yearTo.ifPresent {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root[CzevStar::year.name], it))
+            }
+            amplitudeFrom.ifPresent {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root[CzevStar::amplitude.name], it))
+            }
+            amplitudeTo.ifPresent {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root[CzevStar::amplitude.name], it))
+            }
+            constellation.ifPresent {
+                predicates.add(criteriaBuilder.equal(root.get<Constellation>(CzevStar::constellation.name).get<Long>(Constellation::id.name), it))
+            }
+            filterBand.ifPresent {
+                predicates.add(criteriaBuilder.equal(root.get<FilterBand>(CzevStar::filterBand.name).get<Long>(FilterBand::id.name), it))
+            }
+            discoverer.ifPresent {
+                predicates.add(criteriaBuilder.equal(discovererJoin.get<Long>(StarObserver::id.name), it))
+            }
+        }
+        return criteriaBuilder.and(*predicates.toTypedArray())
+    }
+}
+
+//
+//class CzevStarWithIdFrom(val from: Long): Specification<CzevStar> {
+//    override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+//        return criteriaBuilder.greaterThanOrEqualTo(root["czevId"], from)
+//    }
+//}
+//
+//class CzevStarWithIdTo(val to: Long): Specification<CzevStar> {
+//    override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+//        return criteriaBuilder.lessThanOrEqualTo(root["czevId"], to)
+//    }
+//}
+//
+//class CzevStarWithConstellationId(val constellationId: Long): Specification<CzevStar> {
+//    override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+//        val join = root.join<CzevStar, Constellation>("constellation")
+//        return criteriaBuilder.equal(join.get<Long>("id"), constellationId)
+//    }
+//}
+//
+//class CzevStarWithTypeLike(val type: String): Specification<CzevStar> {
+//    override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+//        return criteriaBuilder.like(root.get<String>("type"), type)
+//    }
+//}
+//
+//class CzevStarWithAmplitudeFrom(val from: Double): Specification<CzevStar> {
+//    override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+//        return criteriaBuilder.greaterThanOrEqualTo(root["amplitude"], from)
+//    }
+//}
+//
+//class CzevStarWithAmplitudeTo(val to: Double): Specification<CzevStar> {
+//    override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+//        return criteriaBuilder.lessThanOrEqualTo(root["amplitude"], to)
+//    }
+//}
+//
+//class CzevStarWithYearFrom(val from: Int): Specification<CzevStar> {
+//    override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+//        return criteriaBuilder.greaterThanOrEqualTo(root["year"], from)
+//    }
+//}
+//
+//class CzevStarWithYearTo(val to: Int): Specification<CzevStar> {
+//    override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+//        return criteriaBuilder.lessThanOrEqualTo(root["year"], to)
+//    }
+//}
+//
+//class CzevStarWithDiscoverer(val discovererId: Long): Specification<CzevStar> {
+//    override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+//        val join = root.join<CzevStar, StarObserver>("discoverers")
+//        return criteriaBuilder.equal(join.get<Long>("id"), discovererId)
+//    }
+//}
+//

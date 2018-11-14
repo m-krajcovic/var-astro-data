@@ -1,5 +1,6 @@
 package cz.astro.`var`.data.czev.service
 
+import cz.astro.`var`.data.czev.controller.CzevCatalogFilter
 import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.security.SecurityService
 import cz.astro.`var`.data.security.UserPrincipal
@@ -16,7 +17,7 @@ interface CzevStarService {
     fun getAllForList(): List<CzevStarListModel>
     fun getStarDetails(id: Long): Optional<CzevStarDetailsModel>
     fun getByCoordinatesForList(coordinates: CosmicCoordinatesModel, radius: BigDecimal): List<DistanceModel<CzevStarListModel>>
-    fun getAllForExport(): List<CzevStarExportModel>
+    fun getAllForExport(filter: CzevCatalogFilter): List<CzevStarExportModel>
     fun getByIdentification(identification: String): Optional<CzevStarListModel>
     fun update(model: CzevStarUpdateModel): CzevStarDetailsModel
 }

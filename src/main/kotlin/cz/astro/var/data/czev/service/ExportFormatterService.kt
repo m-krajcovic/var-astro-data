@@ -91,12 +91,12 @@ class CzevStarDraftCsvImportReaderImpl: CzevStarDraftCsvImportReader {
                         val type = csvRecord[3].trim()
                         val amplitude = csvRecord[4].toDoubleOrNull()
                         val filterBand = csvRecord[5].trim()
-                        val crossIds = csvRecord[6].split(',').map { it.trim() }
+                        val crossIds = csvRecord[6].split(',').map { i -> i.trim() }.toSet()
                         val year = csvRecord[7].toIntOrNull()
                         if (year == null) {
                             error.messages.add("Failed to parse year of discovery")
                         }
-                        val discoverers = csvRecord[8].split(',').map { it.trim() }
+                        val discoverers = csvRecord[8].split(',').map { d -> d.trim() }.toSet()
                         val m0 = csvRecord[9].toBigDecimalOrNull()
                         val period = csvRecord[10].toBigDecimalOrNull()
                         val privateNote = csvRecord[11]
