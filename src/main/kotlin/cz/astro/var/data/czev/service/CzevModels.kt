@@ -3,9 +3,12 @@ package cz.astro.`var`.data.czev.service
 import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.security.UserPrincipal
 import org.codehaus.jackson.annotate.JsonIgnore
+import org.springframework.web.multipart.MultipartFile
+import java.io.InputStream
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
+import java.time.LocalDateTime
 
 data class CzevStarDraftModel(
         val id: Long,
@@ -23,11 +26,14 @@ data class CzevStarDraftModel(
         val period: BigDecimal?,
         val year: Int,
         @JsonIgnore
-        val createdBy: UserPrincipal
+        val createdBy: UserPrincipal,
+        val rejected: Boolean,
+        val rejectedReason: String,
+        val rejectedOn: LocalDateTime?
 )
 
-data class CzevStarDraftNewModel(
-        val id: Long?,
+data class CzevStarDraftUpdateModel(
+        val id: Long,
         val constellation: ConstellationModel,
         val type: String,
         val discoverers: List<StarObserverModel>,
@@ -42,11 +48,64 @@ data class CzevStarDraftNewModel(
         val year: Int
 )
 
+data class CzevStarDraftNewModel(
+        val constellation: ConstellationModel,
+        val type: String,
+        val discoverers: List<StarObserverModel>,
+        val amplitude: Double?,
+        val filterBand: FilterBandModel?,
+        val crossIdentifications: List<String>,
+        val coordinates: CosmicCoordinatesModel,
+        val privateNote: String,
+        val publicNote: String,
+        val m0: BigDecimal?,
+        val period: BigDecimal?,
+        val year: Int
+)
+
+data class CzevStarDraftImportModel(
+        val coordinates: CosmicCoordinatesModel,
+        val constellation: String,
+        val type: String,
+        val amplitude: Double?,
+        val filterBand: String,
+        val crossIds: List<String>,
+        val year: Int,
+        val discoverers: List<String>,
+        val m0: BigDecimal?,
+        val period: BigDecimal?,
+        val privateNote: String,
+        val publicNote: String
+)
+
 data class CzevStarDraftRejectionModel(
         val rejectionNote: String
 ) {
     var id: Long = -1
 }
+
+data class CsvImportModel(
+//        val settings: CsvImportSettings,
+        val fileInputStream: InputStream
+)
+
+data class CsvImportResultModel(
+        val importedCount: Int,
+        val parsingErrors: List<ImportRecordError>
+)
+
+//data class CsvImportSettings(
+//        val discoverersStrategy: DiscoverersImportStrategy = DiscoverersImportStrategy.ABBREVIATIONS_FAIL,
+//        val validationFailStrategy: ImportValidationFailStrategy = ImportValidationFailStrategy.SKIP
+//)
+//
+//enum class ImportValidationFailStrategy {
+//    SKIP, FAIL_ALL
+//}
+//
+//enum class DiscoverersImportStrategy {
+//    ABBREVIATIONS_FAIL, NAME_CREATE_NEW, NAME_FAIL
+//}
 
 data class CzevStarApprovalModel(
         val id: Long,
@@ -68,6 +127,27 @@ data class CzevStarApprovalModel(
 )
 
 data class CzevStarDetailsModel(
+        val czevId: Long,
+        val coordinates: CosmicCoordinatesModel,
+        val constellation: ConstellationModel,
+        val type: String,
+        val typeValid: Boolean,
+        val jMagnitude: Double?,
+        val vMagnitude: Double?,
+        val jkMagnitude: Double?,
+        val amplitude: Double?,
+        val discoverers: List<StarObserverModel>,
+        val m0: BigDecimal?,
+        val period: BigDecimal?,
+        val filterBand: FilterBandModel?,
+        val crossIdentifications: List<String>,
+        val year: Int,
+        val publicNote: String,
+        val vsxName: String,
+        val vsxId: Long?
+)
+
+data class CzevStarUpdateModel(
         val czevId: Long,
         val coordinates: CosmicCoordinatesModel,
         val constellation: ConstellationModel,
@@ -227,7 +307,7 @@ fun CzevStarDraft.toModel(): CzevStarDraftModel {
     return CzevStarDraftModel(
             id, constellation.toModel(), type, typeValid, discoverers.toModels(), amplitude, filterBand.toModel(),
             crossIdentifications.map { it.name }, coordinates.toModel(), privateNote, publicNote, m0, period, year,
-            principal
+            principal, rejected, rejectedNote, rejectedOn
     )
 }
 

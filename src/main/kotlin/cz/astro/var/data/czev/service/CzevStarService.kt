@@ -14,24 +14,25 @@ import java.util.*
 
 interface CzevStarService {
     fun getAllForList(): List<CzevStarListModel>
-    fun getStarDetails(id: Long): CzevStarDetailsModel
+    fun getStarDetails(id: Long): Optional<CzevStarDetailsModel>
     fun getByCoordinatesForList(coordinates: CosmicCoordinatesModel, radius: BigDecimal): List<DistanceModel<CzevStarListModel>>
     fun getAllForExport(): List<CzevStarExportModel>
     fun getByIdentification(identification: String): Optional<CzevStarListModel>
-    fun update(model: CzevStarDetailsModel): CzevStarDetailsModel
+    fun update(model: CzevStarUpdateModel): CzevStarDetailsModel
 }
 
 interface CzevStarDraftService {
     fun approve(approvalModel: CzevStarApprovalModel): Optional<CzevStarDetailsModel>
-    fun reject(rejection: CzevStarDraftRejectionModel)
-    fun insert(draft: CzevStarDraftNewModel)
+    fun reject(rejection: CzevStarDraftRejectionModel): Boolean
+    fun insert(draft: CzevStarDraftNewModel): CzevStarDraftModel
     fun insertAll(drafts: List<CzevStarDraftNewModel>)
+    fun importCsv(import: CsvImportModel): CsvImportResultModel
     fun getById(id: Long): Optional<CzevStarDraftModel>
     fun getAll(): List<CzevStarDraftModel>
     fun getAllForCurrentUser(): List<CzevStarDraftModel>
     fun deleteAll(ids: List<Long>)
-    fun delete(id: Long)
-    fun update(model: CzevStarDraftModel): CzevStarDraftModel
+    fun delete(id: Long): Boolean
+    fun update(model: CzevStarDraftUpdateModel): CzevStarDraftModel
 }
 
 interface AccessVoter {
@@ -63,9 +64,69 @@ class CzevStarDraftServiceImpl(
         private val czevStarRepository: CzevStarRepository,
         private val czevStarDraftRepository: CzevStarDraftRepository,
         private val securityService: SecurityService,
-        private val typeRepository: StarTypeRepository
+        private val typeRepository: StarTypeRepository,
+        private val czevStarDraftCsvImportReader: CzevStarDraftCsvImportReader,
+
+        private val constellationRepository: ConstellationRepository,
+        private val observerRepository: StarObserverRepository,
+        private val filterBandRepository: FilterBandRepository,
+        private val starIdentificationRepository: StarIdentificationRepository
 ) : CzevStarDraftService {
-    override fun update(model: CzevStarDraftModel): CzevStarDraftModel {
+
+    @PreAuthorize("hasRole('USER')")
+    override fun importCsv(import: CsvImportModel): CsvImportResultModel {
+        val (result, errors) = czevStarDraftCsvImportReader.read(import.fileInputStream)
+        if (result.isNotEmpty()) {
+            val constellationsMap = constellationRepository.findAll().toMap { it.name.toLowerCase() }
+            val filterBandMap = filterBandRepository.findAll().toMap { it.name.toLowerCase() }
+            val types = typeRepository.findAll()
+            val mutableErrors = errors.toMutableList()
+
+            val newDrafts = ArrayList<CzevStarDraft>()
+            val typeValidator = StarTypeValidatorImpl(types.map { it.name }.toSet())
+            result.forEach {
+                val error = ImportRecordError(it.recordNumber)
+                val record = it.record
+                val constellation = constellationsMap[record.constellation.toLowerCase()]
+                val filterband = filterBandMap[record.filterBand.toLowerCase()]
+                val typeValid = typeValidator.validate(record.type)
+                val type = if (!typeValid) typeValidator.tryFixCase(record.type) else record.type
+
+                val discoverers = observerRepository.findByAbbreviationIn(record.discoverers).toMutableSet()
+
+                if (constellation != null) {
+                    if (!starIdentificationRepository.existsByNameIn(record.crossIds)) {
+                        val principal = securityService.currentUser
+                        val user = User(principal.id)
+                        newDrafts.add(
+                                CzevStarDraft(
+                                        constellation, type, filterband, record.amplitude, record.coordinates.toEntity(), record.crossIds.map { id -> StarIdentification(id, null) }.toMutableSet(),
+                                        record.m0, record.period, discoverers, record.year, record.privateNote, record.publicNote, user)
+                        )
+                    } else {
+                        error.messages.add("Star with cross-id ${record.crossIds.joinToString()} already exists in the catalogue")
+                    }
+                } else {
+                    error.messages.add("Constellation '${record.constellation}' doesn't exist")
+                }
+                if (error.messages.isNotEmpty()) {
+                    mutableErrors.add(error)
+                }
+            }
+
+            czevStarDraftRepository.saveAll(newDrafts)
+
+            return CsvImportResultModel(
+                    newDrafts.size, mutableErrors.sortedBy { it.recordNumber }
+            )
+        }
+        return CsvImportResultModel(
+                0, errors
+        )
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or @accessVoter.isDraftOwner(#id, principal)")
+    override fun update(model: CzevStarDraftUpdateModel): CzevStarDraftModel {
         val updatedEntity = czevStarDraftRepository.getOne(model.id)
         updatedEntity.apply {
 
@@ -96,10 +157,11 @@ class CzevStarDraftServiceImpl(
     }
 
     @PreAuthorize("hasRole('ADMIN') or @accessVoter.isDraftOwner(#id, principal)")
-    override fun delete(id: Long) {
-        czevStarDraftRepository.findById(id).ifPresent {
+    override fun delete(id: Long): Boolean {
+        return czevStarDraftRepository.findById(id).map {
             czevStarDraftRepository.delete(it)
-        }
+            true
+        }.orElse(false)
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -114,22 +176,28 @@ class CzevStarDraftServiceImpl(
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    override fun reject(rejection: CzevStarDraftRejectionModel) {
-        czevStarDraftRepository.findById(rejection.id).ifPresent {
+    override fun reject(rejection: CzevStarDraftRejectionModel): Boolean {
+        return czevStarDraftRepository.findById(rejection.id).map {
             it.rejected = true
             it.rejectedBy = User(securityService.currentUser.id)
             it.rejectedNote = rejection.rejectionNote
             it.rejectedOn = LocalDateTime.now()
 
             czevStarDraftRepository.save(it)
-        }
+            true
+        }.orElse(false)
     }
 
     @PreAuthorize("hasRole('USER')")
-    override fun insert(draft: CzevStarDraftNewModel) {
+    override fun insert(draft: CzevStarDraftNewModel): CzevStarDraftModel {
         val user = securityService.currentUser!!
         val typeValidator = StarTypeValidatorImpl(typeRepository.findAll().map { it.name }.toSet())
-        czevStarDraftRepository.save(draft.toEntity(User(user.id), typeValidator))
+        val entity = draft.toEntity(User(user.id), typeValidator)
+        if (starIdentificationRepository.existsByNameIn(draft.crossIdentifications)) {
+            // TODO
+            throw ServiceException("Already exists")
+        }
+        return czevStarDraftRepository.save(entity).toModel()
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -178,6 +246,7 @@ class CzevStarDraftServiceImpl(
     }
 
     private fun CzevStarDraftNewModel.toEntity(user: User, typeValidator: StarTypeValidator): CzevStarDraft {
+        // TODO: i guess it should be fetched from db first and fail with custom exception
         val observers = discoverers.toEntities()
         val newConstellation = constellation.toEntity()
         val newFilterBand = filterBand.toEntity()

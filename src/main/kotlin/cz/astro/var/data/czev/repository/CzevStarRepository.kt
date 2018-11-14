@@ -50,8 +50,15 @@ interface CzevStarDraftRepository : JpaRepository<CzevStarDraft, Long> {
     fun findByIdFetched(@Param("id") id: Long): Optional<CzevStarDraft>
 }
 
+interface StarObserverRepository: JpaRepository<StarObserver, Long> {
+
+    fun findByAbbreviationIn(abbreviations: Collection<String>): List<StarObserver>
+}
+
+interface StarIdentificationRepository: JpaRepository<StarIdentification, Long> {
+    fun existsByNameIn(names: Collection<String>): Boolean
+}
+
 interface ConstellationRepository : JpaRepository<Constellation, Long>
 interface StarTypeRepository: JpaRepository<StarType, Long>
 interface FilterBandRepository: JpaRepository<FilterBand, Long>
-interface StarObserverRepository: JpaRepository<StarObserver, Long>
-interface StarIdentificationRepository: JpaRepository<StarIdentification, Long>

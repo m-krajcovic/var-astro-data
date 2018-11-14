@@ -13,7 +13,7 @@ import java.util.*
 class CzevStarServiceImpl(
         private val czevStarRepository: CzevStarRepository
 ) : CzevStarService {
-    override fun update(model: CzevStarDetailsModel): CzevStarDetailsModel {
+    override fun update(model: CzevStarUpdateModel): CzevStarDetailsModel {
         val updatedEntity = czevStarRepository.getOne(model.czevId)
         updatedEntity.apply {
 
@@ -60,10 +60,10 @@ class CzevStarServiceImpl(
     }
 
     @Transactional(readOnly = true)
-    override fun getStarDetails(id: Long): CzevStarDetailsModel {
+    override fun getStarDetails(id: Long): Optional<CzevStarDetailsModel> {
         return czevStarRepository.findByIdFetched(id).map {
             it.toDetailsModel()
-        }.orElse(null)
+        }
     }
 
     @Transactional(readOnly = true)

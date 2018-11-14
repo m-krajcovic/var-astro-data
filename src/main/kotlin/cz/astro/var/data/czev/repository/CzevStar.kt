@@ -271,9 +271,13 @@ class StarIdentification(
         @NotAudited
         @ManyToOne(fetch = FetchType.LAZY)
         var format: CdsFormat?
-) : CzevEntity() {
+) {
     @ManyToOne(fetch = FetchType.LAZY)
     lateinit var star: CzevStar
+
+    @Id
+    @GeneratedValue
+    var id: Long = -1
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -354,5 +358,5 @@ fun decStringToDegrees(decString: String): BigDecimal {
 
     val op: (BigDecimal, BigDecimal) -> BigDecimal = if (degrees > BigDecimal.ZERO) { a, b -> a + b } else { a, b -> a - b }
 
-    return op(degrees, op(arcmin.divide(BigDecimal(60), 7, RoundingMode.HALF_UP), arcsec.divide(BigDecimal(3600), 7, RoundingMode.HALF_UP)))
+    return op(degrees, (arcmin.divide(BigDecimal(60), 7, RoundingMode.HALF_UP) + arcsec.divide(BigDecimal(3600), 7, RoundingMode.HALF_UP)))
 }
