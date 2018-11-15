@@ -93,51 +93,58 @@ fun cosmicDistance(ra1: Double, dec1: Double, ra2: Double, dec2: Double): Double
     return Math.toDegrees(Math.acos(Math.sin(dec1Rads) * Math.sin(dec2Rads) + Math.cos(dec1Rads) * Math.cos(dec2Rads) * Math.cos(ra1Rads - ra2Rads)))
 }
 
-class CzevStarFilterSpec(val spec: CzevCatalogFilter): Specification<CzevStar> {
+class CzevStarFilterSpec(val spec: CzevCatalogFilter) : Specification<CzevStar> {
     override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
-        val clazz = query.resultType
-        if (clazz == Long::class.java || clazz == Long::class.javaPrimitiveType)
-            return null
-
         val predicates = ArrayList<Predicate>()
         root.fetch<CzevStar, Constellation>(CzevStar::constellation.name, JoinType.LEFT)
-        val discovererJoin = root.fetch<CzevStar, StarObserver>(CzevStar::discoverers.name, JoinType.LEFT) as Join<*, *>
+        root.fetch<CzevStar, StarObserver>(CzevStar::discoverers.name, JoinType.LEFT) as Join<*, *>
         root.fetch<CzevStar, StarIdentification>(CzevStar::crossIdentifications.name, JoinType.LEFT)
         root.fetch<CzevStar, FilterBand>(CzevStar::filterBand.name, JoinType.LEFT)
         query.distinct(true)
         query.orderBy(criteriaBuilder.asc(root.get<Long>(CzevStar::czevId.name)))
         spec.apply {
-            czevIdFrom.ifPresent {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root[CzevStar::czevId.name], it))
-            }
-            czevIdTo.ifPresent {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root[CzevStar::czevId.name], it))
-            }
+            predicates.addAll(between(criteriaBuilder, czevIdFrom, czevIdTo, root[CzevStar::czevId.name]))
+            predicates.addAll(between(criteriaBuilder, yearFrom, yearTo, root[CzevStar::year.name]))
+            predicates.addAll(between(criteriaBuilder, amplitudeFrom, amplitudeTo, root[CzevStar::amplitude.name]))
+
             type.ifPresent {
                 predicates.add(criteriaBuilder.like(root.get<String>(CzevStar::type.name), it))
-            }
-            yearFrom.ifPresent {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root[CzevStar::year.name], it))
-            }
-            yearTo.ifPresent {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root[CzevStar::year.name], it))
-            }
-            amplitudeFrom.ifPresent {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root[CzevStar::amplitude.name], it))
-            }
-            amplitudeTo.ifPresent {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root[CzevStar::amplitude.name], it))
             }
             constellation.ifPresent {
                 predicates.add(criteriaBuilder.equal(root.get<Constellation>(CzevStar::constellation.name).get<Long>(Constellation::id.name), it))
             }
             filterBand.ifPresent {
-                predicates.add(criteriaBuilder.equal(root.get<FilterBand>(CzevStar::filterBand.name).get<Long>(FilterBand::id.name), it))
+                if (it == -1L) {
+                    predicates.add(criteriaBuilder.isNull(root.get<FilterBand>(CzevStar::filterBand.name)))
+                } else {
+                    predicates.add(criteriaBuilder.equal(root.get<FilterBand>(CzevStar::filterBand.name).get<Long>(FilterBand::id.name), it))
+                }
             }
             discoverer.ifPresent {
-                predicates.add(criteriaBuilder.equal(discovererJoin.get<Long>(StarObserver::id.name), it))
+                val subQuery: Subquery<Long> = query.subquery(Long::class.java)
+                val subEntity = subQuery.from(CzevStar::class.java)
+                val subJoin = subEntity.join<CzevStar, StarObserver>(CzevStar::discoverers.name)
+
+                subQuery.select(criteriaBuilder.literal(1)).where(
+                        criteriaBuilder.and(
+                                criteriaBuilder.equal(root.get<Long>(CzevStar::czevId.name), subEntity.get<Long>(CzevStar::czevId.name)),
+                                criteriaBuilder.equal(subJoin.get<Long>(StarObserver::id.name), it))
+                )
+
+                predicates.add(criteriaBuilder.exists(subQuery))
             }
         }
         return criteriaBuilder.and(*predicates.toTypedArray())
+    }
+
+    private fun <T : Number> between(criteriaBuilder: CriteriaBuilder, from: Optional<T>, to: Optional<T>, attribute: Expression<out T>): List<Predicate> {
+        val predicates = arrayListOf<Predicate>()
+        from.ifPresent {
+            predicates.add(criteriaBuilder.ge(attribute, it))
+        }
+        to.ifPresent {
+            predicates.add(criteriaBuilder.le(attribute, it))
+        }
+        return predicates
     }
 }
