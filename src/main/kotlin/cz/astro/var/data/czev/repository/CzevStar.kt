@@ -1,13 +1,13 @@
 package cz.astro.`var`.data.czev.repository
 
+import cz.astro.`var`.data.czev.decStringToDegrees
+import cz.astro.`var`.data.czev.raStringToDegrees
 import org.hibernate.annotations.NaturalId
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.util.*
-import java.util.regex.Pattern
 import javax.persistence.*
 
 @Entity
@@ -333,30 +333,4 @@ class CosmicCoordinates(
         @Column(precision = 10, scale = 7) var declination: BigDecimal
 ) {
     constructor(raString: String, decString: String) : this(raStringToDegrees(raString), decStringToDegrees(decString))
-}
-
-fun raStringToDegrees(raString: String): BigDecimal {
-    val raSplit = raString.split(Pattern.compile("\\s|:"))
-    if (raSplit.size != 3) {
-        throw IllegalArgumentException("Given string doesn't have correct format")
-    }
-    val hours = raSplit[0].toBigDecimal()
-    val minutes = raSplit[1].toBigDecimal()
-    val seconds = raSplit[2].toBigDecimal()
-
-    return hours.multiply(BigDecimal(15)) + minutes.divide(BigDecimal(4), 7, RoundingMode.HALF_UP) + seconds.divide(BigDecimal(240), 7, RoundingMode.HALF_UP)
-}
-
-fun decStringToDegrees(decString: String): BigDecimal {
-    val decSplit = decString.split(Pattern.compile("\\s|:"))
-    if (decSplit.size != 3) {
-        throw IllegalArgumentException("Given string doesn't have correct format")
-    }
-    val degrees = decSplit[0].toBigDecimal()
-    val arcmin = decSplit[1].toBigDecimal()
-    val arcsec = decSplit[2].toBigDecimal()
-
-    val op: (BigDecimal, BigDecimal) -> BigDecimal = if (degrees > BigDecimal.ZERO) { a, b -> a + b } else { a, b -> a - b }
-
-    return op(degrees, (arcmin.divide(BigDecimal(60), 7, RoundingMode.HALF_UP) + arcsec.divide(BigDecimal(3600), 7, RoundingMode.HALF_UP)))
 }

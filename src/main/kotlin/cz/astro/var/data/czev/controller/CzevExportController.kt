@@ -3,21 +3,27 @@ package cz.astro.`var`.data.czev.controller
 import cz.astro.`var`.data.czev.controller.DownloadableTextMessageConverter.Companion.TEXT_CSV
 import cz.astro.`var`.data.czev.service.CzevStarCsvExportFormatterService
 import cz.astro.`var`.data.czev.service.CzevStarService
+import cz.astro.`var`.data.czev.validation.Declination
+import cz.astro.`var`.data.czev.validation.RightAscension
 import org.springframework.http.HttpInputMessage
 import org.springframework.http.HttpOutputMessage
 import org.springframework.http.MediaType
 import org.springframework.http.converter.AbstractHttpMessageConverter
 import org.springframework.stereotype.Controller
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseBody
+import java.math.BigDecimal
 import java.nio.charset.Charset
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
+
 @Controller
 @RequestMapping("api/czev/export")
+@Validated
 class CzevExportController(
         private val starService: CzevStarService,
         private val exportFormatterService: CzevStarCsvExportFormatterService
@@ -54,7 +60,10 @@ data class CzevCatalogFilter(
         val filterBand: Optional<Long> = Optional.empty(),
         val yearFrom: Optional<Int> = Optional.empty(),
         val yearTo: Optional<Int> = Optional.empty(),
-        val discoverer: Optional<Long> = Optional.empty()
+        val discoverer: Optional<Long> = Optional.empty(),
+        @RightAscension val ra: Optional<BigDecimal> = Optional.empty(),
+        @Declination val dec: Optional<BigDecimal> = Optional.empty(),
+        val radius: Double = 0.01
 )
 
 class DownloadableTextMessageConverter : AbstractHttpMessageConverter<DownloadableTextResponse>(MediaType.TEXT_PLAIN, TEXT_CSV, TEXT_LATEX) {

@@ -4,20 +4,21 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.fge.jsonpatch.JsonPatch
 import com.github.fge.jsonpatch.JsonPatchException
-import cz.astro.`var`.data.czev.repository.decStringToDegrees
-import cz.astro.`var`.data.czev.repository.raStringToDegrees
 import cz.astro.`var`.data.czev.service.*
 import org.codehaus.jackson.JsonProcessingException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
-import java.math.BigDecimal
 import java.util.*
+import java.util.concurrent.CompletableFuture
+import javax.validation.Valid
 
 @RestController
 @CrossOrigin(origins = ["http://localhost:3000"])
 @RequestMapping("api/czev")
+@Validated
 class CzevController(
         private val starService: CzevStarService,
         private val draftService: CzevStarDraftService,
@@ -48,7 +49,7 @@ class CzevController(
     fun getDraft(@PathVariable id: Long): ResponseEntity<CzevStarDraftModel> = draftService.getById(id).toOkOrNotFound()
 
     @PostMapping("drafts")
-    fun insertDraft(@RequestBody draft: CzevStarDraftNewModel): CzevStarDraftModel {
+    fun insertDraft(@Valid @RequestBody draft: CzevStarDraftNewModel): CzevStarDraftModel {
         return draftService.insert(draft)
     }
 
@@ -96,13 +97,13 @@ class CzevController(
     }
 
     @PostMapping("drafts/{id}/rejection")
-    fun rejectDraft(@PathVariable id: Long, @RequestBody model: CzevStarDraftRejectionModel): Boolean {
+    fun rejectDraft(@PathVariable id: Long, @Valid @RequestBody model: CzevStarDraftRejectionModel): Boolean {
         model.id = id
         return draftService.reject(model)
     }
 
     @PostMapping("stars")
-    fun approveDraft(@RequestBody model: CzevStarApprovalModel): ResponseEntity<CzevStarDetailsModel> {
+    fun approveDraft(@Valid @RequestBody model: CzevStarApprovalModel): ResponseEntity<CzevStarDetailsModel> {
         return draftService.approve(model).toOkOrNotFound()
     }
 
@@ -111,31 +112,34 @@ class CzevController(
         val trimmedName = name.trim()
         val vsxResult = vsxResolver.findByName(trimmedName)
         val sesameResult = sesameResolver.findByName(trimmedName)
-        val ucac4Result = ucac4Resolver.findByIdentifier(trimmedName).orElseGet {
-            val ucacId = ucac4Resolver.selectIdentifier(trimmedName)
-            sesameResult.map {
-                it.names.firstOrNull { n ->
-                    n.startsWith("UCAC4") &&
-                            (!ucacId.isPresent || ucac4Resolver.selectIdentifier(n).map { u -> u != ucacId.get() }.orElse(false))
-                }?.let { id ->
-                    ucac4Resolver.findByIdentifier(id).orElse(null)
-                }
-            }.orElse(null)
-        }
+        val ucac4Result = ucac4Resolver.findByIdentifier(trimmedName)
+//                .orElseGet {
+//            val ucacId = ucac4Resolver.selectIdentifier(trimmedName)
+//            sesameResult.map {
+//                it.names.firstOrNull { n ->
+//                    n.startsWith("UCAC4") &&
+//                            (!ucacId.isPresent || ucac4Resolver.selectIdentifier(n).map { u -> u != ucacId.get() }.orElse(false))
+//                }?.let { id ->
+//                    ucac4Resolver.findByIdentifier(id).orElse(null)
+//                }
+//            }.orElse(null)
+//        }
 
         val czevResult = starService.getByIdentification(trimmedName)
 
+        CompletableFuture.allOf(vsxResult, sesameResult)
+
         return StarInformationByNameResponse(
-                vsxResult.orElse(null),
-                sesameResult.orElse(null),
-                ucac4Result,
+                vsxResult.get().orElse(null),
+                sesameResult.get().orElse(null),
+                ucac4Result.orElse(null),
                 czevResult.orElse(null)
         )
     }
 
     @GetMapping("cds", params = ["ra", "dec"])
-    fun getStarInformationByCoords(@RequestParam("ra") ra: String, @RequestParam("dec") dec: String): ResponseEntity<*> {
-        return parseCoordinates(ra, dec).map {
+    fun getStarInformationByCoords(coordinates: CosmicCoordinatesModel): ResponseEntity<*> {
+        return coordinates.let {
             val ucacResult = ucac4Resolver.findByCoordinates(it, 0.01)
             val vsxResult = vsxResolver.findByCoordinates(it, 0.01)
             val czevResult = starService.getByCoordinatesForList(it, 0.01.toBigDecimal())
@@ -145,7 +149,7 @@ class CzevController(
                     vsxResult,
                     czevResult
             ).toOk()
-        }.orElse(ResponseEntity.badRequest().build())
+        }
         // TODO: Other formats like these?
         // GSC 01234-06789 (5 digits before and after the dash, use leading zeroes if necessary)
         //2MASS J11431012-5804040 (use a J before the coordinates)
@@ -154,28 +158,6 @@ class CzevController(
         //GSC2.3 S111210165373
         //UCAC4 810-003941
     }
-}
-
-fun parseCoordinates(ra: String, dec: String): Optional<CosmicCoordinatesModel> {
-    val raDegreesPattern = Regex("\\d*(\\.\\d+)?")
-    val decDegreesPattern = Regex("[+\\-]?\\d*(\\.\\d+)?")
-    val raStringPattern = Regex("\\d{1,2}[\\s:]\\d{1,2}[\\s:]\\d{0,2}(\\.\\d+)?")
-    val decStringPattern = Regex("[+\\-]?\\d{1,2}[\\s:]\\d{1,2}[\\s:]\\d{0,2}(\\.\\d+)?")
-    val raTrimmed = ra.trim()
-    val decTrimmed = dec.trim()
-    val raDegrees: BigDecimal
-    val decDegrees: BigDecimal
-    if (raDegreesPattern.matches(raTrimmed) && decDegreesPattern.matches(decTrimmed)) {
-        raDegrees = BigDecimal(raTrimmed)
-        decDegrees = BigDecimal(decTrimmed)
-    } else if (raStringPattern.matches(raTrimmed) && decStringPattern.matches(decTrimmed)) {
-        raDegrees = raStringToDegrees(raTrimmed)
-        decDegrees = decStringToDegrees(decTrimmed)
-    } else {
-        return Optional.empty()
-    }
-    val coords = CosmicCoordinatesModel(raDegrees, decDegrees)
-    return Optional.of(coords)
 }
 
 data class StarInformationByNameResponse(

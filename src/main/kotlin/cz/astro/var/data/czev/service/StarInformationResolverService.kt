@@ -1,17 +1,19 @@
 package cz.astro.`var`.data.czev.service
 
-import cz.astro.`var`.data.czev.repository.decStringToDegrees
-import cz.astro.`var`.data.czev.repository.raStringToDegrees
+import cz.astro.`var`.data.czev.conversion.DeclinationHolder
+import cz.astro.`var`.data.czev.conversion.RightAscensionHolder
 import cz.astro.`var`.data.czev.repository.sesame.SesameResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.core.convert.ConversionService
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
-import org.springframework.web.client.RestClientException
-import org.springframework.web.client.RestTemplate
-import org.springframework.web.client.getForObject
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientException
 import java.io.StringReader
 import java.math.BigDecimal
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBException
 import javax.xml.bind.UnmarshalException
@@ -23,11 +25,11 @@ interface VariableStarInformationCoordinatesResolverService {
 }
 
 interface VariableStarInformationNameResolverService {
-    fun findByName(name: String): Optional<VariableStarInformationModel>
+    fun findByName(name: String): CompletableFuture<Optional<VariableStarInformationModel>>
 }
 
 interface StarInformationResolverService {
-    fun findByIdentifier(identifier: String): Optional<StarInformationModel>
+    fun findByIdentifier(identifier: String): CompletableFuture<Optional<StarInformationModel>>
     fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<DistanceModel<StarInformationModel>>
     fun findNearest(coordinates: CosmicCoordinatesModel): Optional<DistanceModel<StarInformationModel>>
 }
@@ -82,11 +84,13 @@ class Ucac4StarInformationResolverServiceImpl(
         return IDENTIFIER_PATTERN.matches(identifier)
     }
 
-    override fun findByIdentifier(identifier: String): Optional<StarInformationModel> {
+    override fun findByIdentifier(identifier: String): CompletableFuture<Optional<StarInformationModel>> {
         return selectIdentifier(identifier).map {
             val query = "SELECT TOP 1 $QUERY_FIELDS FROM $UCAC4_CAT WHERE $UCAC4_CAT.UCAC4 = '${it.replace("'", "''")}'"
-            tapVizierService.query(query).map { it.toSingleModel() }.orElse(null)
-        }
+            tapVizierService.query(query).thenApplyAsync { opt ->
+                opt.map<StarInformationModel> { result -> result.toSingleModel() }
+            }
+        }.orElse(CompletableFuture.completedFuture(Optional.empty<StarInformationModel>()))
     }
 
     override fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<DistanceModel<StarInformationModel>> {
@@ -100,7 +104,7 @@ class Ucac4StarInformationResolverServiceImpl(
     private fun findByCoordinates(coordinates: CosmicCoordinatesModel, limit: Int, radiusDegrees: Double): List<DistanceModel<StarInformationModel>> {
         return tapVizierService.query(TAPVizierService.buildDistanceQuery(
                 UCAC4_CAT, QUERY_FIELDS, coordinates, radiusDegrees, limit
-        )).map { it.toDistanceModels() }.orElse(ArrayList())
+        )).get().map { it.toDistanceModels() }.orElse(ArrayList())
     }
 
     private fun TAPVizierResult.toDistanceModels(): List<DistanceModel<StarInformationModel>> {
@@ -161,57 +165,76 @@ interface SesameVariableStarInformationResolverService : VariableStarInformation
 
 @Component
 class SesameVariableStarInformationResolverServiceImpl(
-        private val restTemplate: RestTemplate
+        private val conversionService: ConversionService
 ) : SesameVariableStarInformationResolverService {
 
     companion object {
         val logger = LoggerFactory.getLogger(SesameVariableStarInformationResolverService::class.java)
     }
 
-    override fun findByName(name: String): Optional<VariableStarInformationModel> {
-        logger.debug(name)
-        val uriVariables = mapOf(Pair("name", name))
-        val rawResult: String = restTemplate.getForObject("http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oxpI/S?{name}", uriVariables)
-                ?: throw ServiceException("Sesame resolver failed")
-        val context = JAXBContext.newInstance(SesameResult::class.java)
-        val um = context.createUnmarshaller()
-        val result: SesameResult
+    @Async
+    override fun findByName(name: String): CompletableFuture<Optional<VariableStarInformationModel>> {
         try {
-            result = um.unmarshal(StringReader(rawResult)) as SesameResult
-        } catch (e: JAXBException) {
-            throw ServiceException("Sesame resolver failed")
-        } catch (e: UnmarshalException) {
-            throw ServiceException("Sesame resolver failed")
-        }
+            logger.debug("Start sesame query for '{}'", name)
+//        val uriVariables = mapOf(Pair("name", name))
+            val webClient = WebClient.create()
+            val responseFuture = webClient.get()
+                    .uri {
+                        it.scheme("http")
+                                .host("cdsweb.u-strasbg.fr")
+                                .path("cgi-bin/nph-sesame/-oxpI/S")
+                                .queryParam(name, *emptyArray())
+                                .build()
+                    }
+                    .retrieve().bodyToMono(String::class.java).toFuture()
 
-        if (result.targets == null || result.targets.isEmpty()) {
-            return Optional.empty()
-        }
-        val target = result.targets.first()
-        if (target.resolvers == null || target.resolvers.isEmpty()) {
-            return Optional.empty()
-        }
-        val resolver = target.resolvers.first()
-        var coordinates: CosmicCoordinatesModel? = null
-        if (!resolver.raDegrees.isNullOrBlank() && !resolver.decDegrees.isNullOrBlank()) {
-            coordinates = CosmicCoordinatesModel(resolver.raDegrees.toBigDecimal(), resolver.decDegrees.toBigDecimal())
-        } else if (!resolver.coordinates.isNullOrBlank()) {
-            val coordsSplit = resolver.coordinates.split(" ")
-            if (coordsSplit.size == 2) {
-                val ra = raStringToDegrees(coordsSplit[0])
-                val dec = decStringToDegrees(coordsSplit[1])
-                coordinates = CosmicCoordinatesModel(ra, dec)
+            return responseFuture.thenApplyAsync { rawResult ->
+
+                val context = JAXBContext.newInstance(SesameResult::class.java)
+                val um = context.createUnmarshaller()
+                val result: SesameResult
+                try {
+                    result = um.unmarshal(StringReader(rawResult)) as SesameResult
+                } catch (e: JAXBException) {
+                    throw ServiceException("Sesame resolver failed")
+                } catch (e: UnmarshalException) {
+                    throw ServiceException("Sesame resolver failed")
+                }
+
+                if (result.targets == null || result.targets.isEmpty()) {
+                    Optional.empty<VariableStarInformationModel>()
+                }
+                val target = result.targets.first()
+                if (target.resolvers == null || target.resolvers.isEmpty()) {
+                    Optional.empty<VariableStarInformationModel>()
+                }
+                val resolver = target.resolvers.first()
+                var coordinates: CosmicCoordinatesModel? = null
+                if (!resolver.raDegrees.isNullOrBlank() && !resolver.decDegrees.isNullOrBlank()) {
+                    coordinates = CosmicCoordinatesModel(resolver.raDegrees.toBigDecimal(), resolver.decDegrees.toBigDecimal())
+                } else if (!resolver.coordinates.isNullOrBlank()) {
+                    val coordsSplit = resolver.coordinates.split(" ")
+                    if (coordsSplit.size == 2) {
+                        val ra = conversionService.convert(coordsSplit[0], RightAscensionHolder::class.java)
+                        val dec = conversionService.convert(coordsSplit[1], DeclinationHolder::class.java)
+                        if (ra != null && dec != null) {
+                            coordinates = CosmicCoordinatesModel(ra.value, dec.value)
+                        }
+                    }
+
+                }
+                logger.debug("Finished querying for '{}'", name)
+                Optional.of(VariableStarInformationModel(
+                        coordinates,
+                        resolver.originalName,
+                        resolver.aliases.toSet(),
+                        resolver.type,
+                        null, null, null
+                ))
             }
-
+        } catch (e: WebClientException) {
+            return CompletableFuture.completedFuture(Optional.empty())
         }
-
-        return Optional.of(VariableStarInformationModel(
-                coordinates,
-                resolver.originalName,
-                resolver.aliases.toSet(),
-                resolver.type,
-                null, null, null
-        ))
     }
 }
 
@@ -225,11 +248,20 @@ class VsxVariableStarInformationResolverServiceImpl(
     companion object {
         const val VSX_CAT: String = "\"B/vsx/vsx\""
         const val QUERY_FIELDS: String = "$VSX_CAT.OID,  $VSX_CAT.Name,  $VSX_CAT.Type, $VSX_CAT.Epoch, $VSX_CAT.Period, $VSX_CAT.RAJ2000,  $VSX_CAT.DEJ2000"
+        val logger = LoggerFactory.getLogger(VsxVariableStarInformationResolverService::class.java)
     }
 
-    override fun findByName(name: String): Optional<VariableStarInformationModel> {
+    @Async
+    override fun findByName(name: String): CompletableFuture<Optional<VariableStarInformationModel>> {
         val query = "SELECT TOP 1 $QUERY_FIELDS FROM $VSX_CAT WHERE $VSX_CAT.Name = '${name.replace("'", "''")}'"
-        return tapVizierService.query(query).map { it.toSingleModel(0) }
+        logger.debug("Start vsx query for '{}'", name)
+        return tapVizierService.query(query)
+                .thenApplyAsync {
+                    logger.debug("Finish query for '{}'", name)
+                    it.map<VariableStarInformationModel> { result ->
+                        result.toSingleModel(0)
+                    }
+                }
     }
 
     override fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): List<DistanceModel<VariableStarInformationModel>> {
@@ -239,7 +271,7 @@ class VsxVariableStarInformationResolverServiceImpl(
     private fun findByCoordinates(coordinates: CosmicCoordinatesModel, limit: Int, radiusDegrees: Double): List<DistanceModel<VariableStarInformationModel>> {
         return tapVizierService.query(TAPVizierService.buildDistanceQuery(
                 VSX_CAT, QUERY_FIELDS, coordinates, radiusDegrees, limit
-        )).map { it.toDistanceModels() }.orElse(ArrayList())
+        )).get().map { it.toDistanceModels() }.orElse(ArrayList())
     }
 
     override fun findNearest(coordinates: CosmicCoordinatesModel): Optional<DistanceModel<VariableStarInformationModel>> {
@@ -297,7 +329,7 @@ class VsxVariableStarInformationResolverServiceImpl(
 }
 
 interface TAPVizierService {
-    fun query(query: String): Optional<TAPVizierResult>
+    fun query(query: String): CompletableFuture<Optional<TAPVizierResult>>
 
     companion object {
         fun buildDistanceQuery(catalogue: String, queryFields: String, coordinates: CosmicCoordinatesModel, radiusDegrees: Double, limit: Int): String {
@@ -321,24 +353,34 @@ class TAPVizierMetadata(
 )
 
 @Component
-class TAPVizierServiceImpl(
-        private val restTemplate: RestTemplate
-) : TAPVizierService {
+class TAPVizierServiceImpl : TAPVizierService {
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(TAPVizierServiceImpl::class.java)
     }
 
-    override fun query(query: String): Optional<TAPVizierResult> {
-        logger.debug(query)
-        val url = "http://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync?request=doQuery&lang=adql&format=json&query={query}"
-
+    @Async
+    override fun query(query: String): CompletableFuture<Optional<TAPVizierResult>> {
         try {
-            val tapVizierResult: TAPVizierResult = restTemplate.getForObject(url, query) ?: return Optional.empty()
-            return Optional.of(tapVizierResult)
-        } catch (e: RestClientException) {
-            // TODO log
-            return Optional.empty()
+            logger.debug(query)
+            val webClient = WebClient.create()
+            return webClient.get()
+                    .uri {
+                        it.scheme("http")
+                                .host("tapvizier.u-strasbg.fr")
+                                .path("TAPVizieR/tap/sync")
+                                .queryParam("request", "doQuery")
+                                .queryParam("lang", "adql")
+                                .queryParam("format", "json")
+                                .queryParam("query", query)
+                                .build()
+                    }
+                    .retrieve().bodyToMono(TAPVizierResult::class.java).toFuture()
+                    .thenApplyAsync {
+                        Optional.of(it)
+                    }
+        } catch (e: WebClientException) {
+            return CompletableFuture.completedFuture(Optional.empty())
         }
     }
 }

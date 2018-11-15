@@ -1,8 +1,10 @@
 package cz.astro.`var`.data.czev.service
 
 import cz.astro.`var`.data.czev.controller.CzevCatalogFilter
+import cz.astro.`var`.data.czev.cosmicDistance
 import cz.astro.`var`.data.czev.repository.*
 import org.springframework.data.jpa.domain.Specification
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -18,6 +20,7 @@ class CzevStarServiceImpl(
         private val filterBandRepository: FilterBandRepository,
         private val starIdentificationRepository: StarIdentificationRepository
 ) : CzevStarService {
+    @PreAuthorize("hasRole('USER')")
     override fun update(model: CzevStarUpdateModel): CzevStarDetailsModel {
         val updatedEntity = czevStarRepository.getOne(model.czevId)
         updatedEntity.apply {
@@ -59,6 +62,7 @@ class CzevStarServiceImpl(
         return czevStarRepository.findByStarIdentificationPartlyFetched(identification.trim()).map { it.toListModel() }
     }
 
+    @PreAuthorize("hasRole('USER')")
     override fun getAllForExport(filter: CzevCatalogFilter): List<CzevStarExportModel> {
         return czevStarRepository.findAll(CzevStarFilterSpec(filter)).asSequence().map { it.toExportModel() }.toList()
     }
@@ -83,14 +87,6 @@ class CzevStarServiceImpl(
     override fun getAllForList(filter: CzevCatalogFilter): List<CzevStarListModel> {
         return czevStarRepository.findAll(CzevStarFilterSpec(filter)).asSequence().map { it.toListModel() }.toList()
     }
-}
-
-fun cosmicDistance(ra1: Double, dec1: Double, ra2: Double, dec2: Double): Double {
-    val ra1Rads = Math.toRadians(ra1)
-    val ra2Rads = Math.toRadians(ra2)
-    val dec1Rads = Math.toRadians(dec1)
-    val dec2Rads = Math.toRadians(dec2)
-    return Math.toDegrees(Math.acos(Math.sin(dec1Rads) * Math.sin(dec2Rads) + Math.cos(dec1Rads) * Math.cos(dec2Rads) * Math.cos(ra1Rads - ra2Rads)))
 }
 
 class CzevStarFilterSpec(val spec: CzevCatalogFilter) : Specification<CzevStar> {
@@ -132,6 +128,15 @@ class CzevStarFilterSpec(val spec: CzevCatalogFilter) : Specification<CzevStar> 
                 )
 
                 predicates.add(criteriaBuilder.exists(subQuery))
+            }
+
+            if (ra.isPresent && dec.isPresent) {
+                val raMin = ra.get() - radius.toBigDecimal()
+                val raMax = ra.get() + radius.toBigDecimal()
+                val decMin = dec.get() - radius.toBigDecimal()
+                val decMax = dec.get() + radius.toBigDecimal()
+                predicates.add(criteriaBuilder.between(root.get<CosmicCoordinates>(CzevStar::coordinates.name).get<BigDecimal>(CosmicCoordinates::rightAscension.name), raMin, raMax))
+                predicates.add(criteriaBuilder.between(root.get<CosmicCoordinates>(CzevStar::coordinates.name).get<BigDecimal>(CosmicCoordinates::declination.name), decMin, decMax))
             }
         }
         return criteriaBuilder.and(*predicates.toTypedArray())

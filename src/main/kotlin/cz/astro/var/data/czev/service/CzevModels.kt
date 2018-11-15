@@ -1,6 +1,8 @@
 package cz.astro.`var`.data.czev.service
 
 import cz.astro.`var`.data.czev.repository.*
+import cz.astro.`var`.data.czev.validation.Declination
+import cz.astro.`var`.data.czev.validation.RightAscension
 import cz.astro.`var`.data.security.UserPrincipal
 import org.codehaus.jackson.annotate.JsonIgnore
 import java.io.InputStream
@@ -198,10 +200,11 @@ data class CzevStarListModel(
 )
 
 data class CosmicCoordinatesModel(
-        val ra: BigDecimal,
-        val dec: BigDecimal
+        @RightAscension val ra: BigDecimal,
+        @Declination val dec: BigDecimal
 ) {
 
+    // TODO move to helper?
     fun toStringRa(): String {
         val hours = ra.divide(BigDecimal(15), RoundingMode.HALF_UP).setScale(0, RoundingMode.DOWN)
         val minutes = (ra - hours * BigDecimal(15)).multiply(BigDecimal(4))
