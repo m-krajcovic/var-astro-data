@@ -3,6 +3,8 @@ package cz.astro.`var`.data.czev.service
 import cz.astro.`var`.data.czev.controller.CzevCatalogFilter
 import cz.astro.`var`.data.czev.cosmicDistance
 import cz.astro.`var`.data.czev.repository.*
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -84,20 +86,27 @@ class CzevStarServiceImpl(
     }
 
     @Transactional(readOnly = true)
-    override fun getAllForList(filter: CzevCatalogFilter): List<CzevStarListModel> {
-        return czevStarRepository.findAll(CzevStarFilterSpec(filter)).asSequence().map { it.toListModel() }.toList()
+    override fun getAllForList(filter: CzevCatalogFilter, page: Pageable): Page<CzevStarListModel> {
+        val page = czevStarRepository.findAll(CzevStarFilterSpec(filter), page)
+        return page.map { it.toListModel() }
     }
 }
 
 class CzevStarFilterSpec(val spec: CzevCatalogFilter) : Specification<CzevStar> {
     override fun toPredicate(root: Root<CzevStar>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
         val predicates = ArrayList<Predicate>()
-        root.fetch<CzevStar, Constellation>(CzevStar::constellation.name, JoinType.LEFT)
-        root.fetch<CzevStar, StarObserver>(CzevStar::discoverers.name, JoinType.LEFT) as Join<*, *>
-        root.fetch<CzevStar, StarIdentification>(CzevStar::crossIdentifications.name, JoinType.LEFT)
-        root.fetch<CzevStar, FilterBand>(CzevStar::filterBand.name, JoinType.LEFT)
+
+        val clazz = query.resultType
+        if (clazz == Long::class.java || clazz == Long::class.javaPrimitiveType || clazz == Long::class.javaObjectType) {
+        } else {
+            root.fetch<CzevStar, Constellation>(CzevStar::constellation.name, JoinType.LEFT)
+            root.fetch<CzevStar, StarObserver>(CzevStar::discoverers.name, JoinType.LEFT) as Join<*, *>
+            root.fetch<CzevStar, StarIdentification>(CzevStar::crossIdentifications.name, JoinType.LEFT)
+            root.fetch<CzevStar, FilterBand>(CzevStar::filterBand.name, JoinType.LEFT)
+        }
+
         query.distinct(true)
-        query.orderBy(criteriaBuilder.asc(root.get<Long>(CzevStar::czevId.name)))
+//        query.orderBy(criteriaBuilder.asc(root.get<Long>(CzevStar::czevId.name)))
         spec.apply {
             predicates.addAll(between(criteriaBuilder, czevIdFrom, czevIdTo, root[CzevStar::czevId.name]))
             predicates.addAll(between(criteriaBuilder, yearFrom, yearTo, root[CzevStar::year.name]))
@@ -139,7 +148,10 @@ class CzevStarFilterSpec(val spec: CzevCatalogFilter) : Specification<CzevStar> 
                 predicates.add(criteriaBuilder.between(root.get<CosmicCoordinates>(CzevStar::coordinates.name).get<BigDecimal>(CosmicCoordinates::declination.name), decMin, decMax))
             }
         }
-        return criteriaBuilder.and(*predicates.toTypedArray())
+        if (predicates.isNotEmpty()) {
+            return criteriaBuilder.and(*predicates.toTypedArray())
+        }
+        return null
     }
 
     private fun <T : Number> between(criteriaBuilder: CriteriaBuilder, from: Optional<T>, to: Optional<T>, attribute: Expression<out T>): List<Predicate> {

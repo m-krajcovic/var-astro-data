@@ -4,6 +4,8 @@ import cz.astro.`var`.data.czev.controller.CzevCatalogFilter
 import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.security.SecurityService
 import cz.astro.`var`.data.security.UserPrincipal
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
@@ -14,7 +16,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 interface CzevStarService {
-    fun getAllForList(filter: CzevCatalogFilter): List<CzevStarListModel>
+    fun getAllForList(filter: CzevCatalogFilter, page: Pageable): Page<CzevStarListModel>
     fun getStarDetails(id: Long): Optional<CzevStarDetailsModel>
     fun getByCoordinatesForList(coordinates: CosmicCoordinatesModel, radius: BigDecimal): List<DistanceModel<CzevStarListModel>>
     fun getAllForExport(filter: CzevCatalogFilter): List<CzevStarExportModel>

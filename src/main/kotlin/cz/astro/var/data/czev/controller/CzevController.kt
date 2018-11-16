@@ -6,6 +6,8 @@ import com.github.fge.jsonpatch.JsonPatch
 import com.github.fge.jsonpatch.JsonPatchException
 import cz.astro.`var`.data.czev.service.*
 import org.codehaus.jackson.JsonProcessingException
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
@@ -28,8 +30,8 @@ class CzevController(
         private val objectMapper: ObjectMapper) {
 
     @GetMapping("stars")
-    fun getApprovedStars(filter: CzevCatalogFilter): List<CzevStarListModel> {
-        return starService.getAllForList(filter)
+    fun getApprovedStars(filter: CzevCatalogFilter, page: Pageable): Page<CzevStarListModel> {
+        return starService.getAllForList(filter, page)
     }
 
     @GetMapping("stars/{id}")
