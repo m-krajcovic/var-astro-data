@@ -3,22 +3,23 @@ package cz.astro.var.data.czev.repository.sesame;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SesameResolver {
     @XmlElement(name = "otype")
-    private String type;
+    private String type = "";
     @XmlElement(name = "oname")
-    private String originalName;
+    private String originalName = "";
     @XmlElement(name = "alias")
-    private List<String> aliases;
+    private List<String> aliases = new ArrayList<>();
     @XmlElement(name = "jradeg")
     private String raDegrees = null;
     @XmlElement(name = "jdedeg")
     private String decDegrees = null;
     @XmlElement(name = "jpos")
-    private String coordinates;
+    private String coordinates = "";
 
     public String getType() {
         return type;

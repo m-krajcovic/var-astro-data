@@ -11,8 +11,9 @@ import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import reactor.core.publisher.Mono
+import reactor.core.publisher.toMono
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import javax.validation.Valid
 
 @RestController
@@ -109,44 +110,46 @@ class CzevController(
 
     @GetMapping("cds", params = ["name"])
     fun getStarInformationByName(@RequestParam("name") name: String): StarInformationByNameResponse {
+        // TODO: Perhaps just use async completable futures instead of reactor?
         val trimmedName = name.trim()
         val vsxResult = vsxResolver.findByName(trimmedName)
+                .onErrorResume { Mono.empty() }
+        var ucac4Result = ucac4Resolver.findByIdentifier(trimmedName)
+                .onErrorResume { Mono.empty() }
         val sesameResult = sesameResolver.findByName(trimmedName)
-        val ucac4Result = ucac4Resolver.findByIdentifier(trimmedName)
-//                .orElseGet {
-//            val ucacId = ucac4Resolver.selectIdentifier(trimmedName)
-//            sesameResult.map {
-//                it.names.firstOrNull { n ->
-//                    n.startsWith("UCAC4") &&
-//                            (!ucacId.isPresent || ucac4Resolver.selectIdentifier(n).map { u -> u != ucacId.get() }.orElse(false))
-//                }?.let { id ->
-//                    ucac4Resolver.findByIdentifier(id).orElse(null)
-//                }
-//            }.orElse(null)
-//        }
+                .onErrorResume { Mono.empty() }
+        val czevResult = starService.getByIdentification(trimmedName).orElse(null)
 
-        val czevResult = starService.getByIdentification(trimmedName)
-
-        CompletableFuture.allOf(vsxResult, sesameResult)
-
+        val sesame = sesameResult.block()
+                ?.apply {
+            names.firstOrNull { n ->
+                n.startsWith("UCAC4")
+            }?.let { id ->
+                ucac4Result = ucac4Result.switchIfEmpty(ucac4Resolver.findByIdentifier(id))
+            }
+        }
         return StarInformationByNameResponse(
-                vsxResult.get().orElse(null),
-                sesameResult.get().orElse(null),
-                ucac4Result.orElse(null),
-                czevResult.orElse(null)
+                vsxResult.block(),
+                sesame,
+                ucac4Result.block(),
+                czevResult
         )
     }
 
     @GetMapping("cds", params = ["ra", "dec"])
     fun getStarInformationByCoords(coordinates: CosmicCoordinatesModel): ResponseEntity<*> {
         return coordinates.let {
-            val ucacResult = ucac4Resolver.findByCoordinates(it, 0.01)
+            val ucac4Result = ucac4Resolver.findByCoordinates(it, 0.01)
+                    .onErrorResume { Mono.empty() }
             val vsxResult = vsxResolver.findByCoordinates(it, 0.01)
+                    .onErrorResume { Mono.empty() }
             val czevResult = starService.getByCoordinatesForList(it, 0.01.toBigDecimal())
 
+            Mono.`when`(vsxResult, ucac4Result).block()
+
             StarInformationByCoordsResponse(
-                    ucacResult,
-                    vsxResult,
+                    ucac4Result.collectList().blockOptional().orElse(emptyList()),
+                    vsxResult.collectList().blockOptional().orElse(emptyList()),
                     czevResult
             ).toOk()
         }
@@ -181,4 +184,12 @@ fun <T> Optional<T>.toOkOrNotFound(): ResponseEntity<T> {
     return this.map {
         ResponseEntity.ok().body<T>(it)
     }.orElse(ResponseEntity.notFound().build<T>())
+}
+
+fun main(args: Array<String>) {
+    val switchIfEmpty = Mono.empty<String>().switchIfEmpty("Hi".toMono())
+    switchIfEmpty.subscribe {
+        println(it)
+    }
+    switchIfEmpty.block()
 }
