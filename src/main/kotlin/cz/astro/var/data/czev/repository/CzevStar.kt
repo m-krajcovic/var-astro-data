@@ -301,7 +301,7 @@ class CdsFormat(
         var name: String,
         @ElementCollection
         @CollectionTable(name = "czev_CdsFormat_Patterns", joinColumns = [JoinColumn(name = "format_id")])
-        @Column(name = "pattern")
+        @Column(name = "DEC_STRING_PATTERN")
         var patterns: MutableSet<String>
 ) : CzevEntity()
 

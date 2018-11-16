@@ -1,5 +1,7 @@
 package cz.astro.`var`.data.czev.validation
 
+import cz.astro.`var`.data.czev.DEC_NUMBER_OR_STRING_REGEX
+import cz.astro.`var`.data.czev.RA_NUMBER_OR_STRING_REGEX
 import java.math.BigDecimal
 import javax.validation.Constraint
 import javax.validation.ConstraintValidator
@@ -20,10 +22,8 @@ annotation class RightAscension(
 
 class RightAscensionStringValidator : ConstraintValidator<RightAscension, String> {
 
-    private val regex: Regex = Regex("^(\\d*(\\.\\d+)?)|(\\d{1,2}[\\s:]\\d{1,2}[\\s:]\\d{0,2}(\\.\\d+)?)$")
-
     override fun isValid(value: String?, context: ConstraintValidatorContext?): Boolean {
-        return value != null && value.matches(regex)
+        return value != null && value.matches(RA_NUMBER_OR_STRING_REGEX)
     }
 }
 
@@ -47,10 +47,8 @@ annotation class Declination(
 
 class DeclinationValidator : ConstraintValidator<Declination, String> {
 
-    private val regex: Regex = Regex("^([+\\-]?\\d*(\\.\\d+)?)|([+\\-]?\\d{1,2}[\\s:]\\d{1,2}[\\s:]\\d{0,2}(\\.\\d+)?)$")
-
     override fun isValid(value: String?, context: ConstraintValidatorContext?): Boolean {
-        return value != null && value.matches(regex)
+        return value != null && value.matches(DEC_NUMBER_OR_STRING_REGEX)
     }
 }
 

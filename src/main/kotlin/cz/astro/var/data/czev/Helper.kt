@@ -3,12 +3,18 @@ package cz.astro.`var`.data.czev
 import java.math.BigDecimal
 import java.math.RoundingMode
 
+const val RA_NUMBER_PATTERN = "(\\d*(\\.\\d+)?)"
+const val DEC_NUMBER_PATTERN = "([+\\-]?\\d*(\\.\\d+)?)"
+const val RA_STRING_PATTERN = "(\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}(\\.\\d+)?)"
+const val DEC_STRING_PATTERN = "([+\\-]?\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}(\\.\\d+)?)"
 
-val raRegex = Regex("(\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}(\\.\\d+)?)")
-val decRegex = Regex("([+\\-]?\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}(\\.\\d+)?)")
+val RA_STRING_REGEX = Regex(RA_STRING_PATTERN)
+val DEC_STRING_REGEX = Regex(DEC_STRING_PATTERN)
+val RA_NUMBER_OR_STRING_REGEX = Regex("^$RA_NUMBER_PATTERN|$DEC_STRING_PATTERN$")
+val DEC_NUMBER_OR_STRING_REGEX: Regex = Regex("^$DEC_NUMBER_PATTERN|$DEC_STRING_PATTERN$")
 
 fun raStringToDegrees(raString: String): BigDecimal {
-    val match = raRegex.matchEntire(raString) ?: throw IllegalArgumentException("Given string doesn't have correct format")
+    val match = RA_STRING_REGEX.matchEntire(raString) ?: throw IllegalArgumentException("Given string doesn't have correct format")
     val hours = match.groupValues[1].toBigDecimal()
     val minutes = match.groupValues[2].toBigDecimal()
     val seconds = match.groupValues[3].toBigDecimal()
@@ -17,7 +23,7 @@ fun raStringToDegrees(raString: String): BigDecimal {
 }
 
 fun decStringToDegrees(decString: String): BigDecimal {
-    val match = decRegex.matchEntire(decString) ?: throw IllegalArgumentException("Given string doesn't have correct format")
+    val match = DEC_STRING_REGEX.matchEntire(decString) ?: throw IllegalArgumentException("Given string doesn't have correct format")
 
     val degrees = match.groupValues[1].toBigDecimal()
     val arcmin = match.groupValues[2].toBigDecimal()

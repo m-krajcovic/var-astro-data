@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import javax.validation.Valid
 
 @RestController
@@ -110,48 +111,55 @@ class CzevController(
 
     @GetMapping("cds", params = ["name"])
     fun getStarInformationByName(@RequestParam("name") name: String): StarInformationByNameResponse {
-        // TODO: Perhaps just use async completable futures instead of reactor?
         val trimmedName = name.trim()
         val vsxResult = vsxResolver.findByName(trimmedName)
-                .onErrorResume { Mono.empty() }
+                .exceptionally { Optional.empty() }
         var ucac4Result = ucac4Resolver.findByIdentifier(trimmedName)
-                .onErrorResume { Mono.empty() }
+                .exceptionally { Optional.empty() }
         val sesameResult = sesameResolver.findByName(trimmedName)
-                .onErrorResume { Mono.empty() }
+                .exceptionally { Optional.empty() }
+
         val czevResult = starService.getByIdentification(trimmedName).orElse(null)
 
-        val sesame = sesameResult.block()
-                ?.apply {
-            names.firstOrNull { n ->
-                n.startsWith("UCAC4")
-            }?.let { id ->
-                ucac4Result = ucac4Result.switchIfEmpty(ucac4Resolver.findByIdentifier(id))
-            }
-        }
+        val ucacSesameFuture = CompletableFuture.allOf(ucac4Result, sesameResult)
+                .thenRun {
+                    val u = ucac4Result.get()
+                    val s = sesameResult.get()
+                    if (!u.isPresent && s.isPresent) {
+                        s.get().names.firstOrNull { n ->
+                            n.startsWith("UCAC4")
+                        }?.let { id ->
+                            ucac4Result = ucac4Resolver.findByIdentifier(id)
+                        }
+                    }
+                }
+
+        CompletableFuture.allOf(ucacSesameFuture, ucac4Result, vsxResult).get()
+
         return StarInformationByNameResponse(
-                vsxResult.block(),
-                sesame,
-                ucac4Result.block(),
+                vsxResult.get().orElse(null),
+                sesameResult.get().orElse(null),
+                ucac4Result.get().orElse(null),
                 czevResult
         )
     }
 
     @GetMapping("cds", params = ["ra", "dec"])
-    fun getStarInformationByCoords(coordinates: CosmicCoordinatesModel): ResponseEntity<*> {
+    fun getStarInformationByCoords(coordinates: CosmicCoordinatesModel): StarInformationByCoordsResponse {
         return coordinates.let {
             val ucac4Result = ucac4Resolver.findByCoordinates(it, 0.01)
-                    .onErrorResume { Mono.empty() }
+                    .exceptionally { emptyList() }
             val vsxResult = vsxResolver.findByCoordinates(it, 0.01)
-                    .onErrorResume { Mono.empty() }
+                    .exceptionally { emptyList() }
             val czevResult = starService.getByCoordinatesForList(it, 0.01.toBigDecimal())
 
-            Mono.`when`(vsxResult, ucac4Result).block()
-
+            val allOf = CompletableFuture.allOf(ucac4Result, vsxResult)
+            allOf.get()
             StarInformationByCoordsResponse(
-                    ucac4Result.collectList().blockOptional().orElse(emptyList()),
-                    vsxResult.collectList().blockOptional().orElse(emptyList()),
+                    ucac4Result.get(),
+                    vsxResult.get(),
                     czevResult
-            ).toOk()
+            )
         }
         // TODO: Other formats like these?
         // GSC 01234-06789 (5 digits before and after the dash, use leading zeroes if necessary)

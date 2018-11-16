@@ -29,7 +29,7 @@ class RightAscensionConverter : ConditionalGenericConverter {
                 }
             }
         }
-        return null
+        throw IllegalArgumentException("Source must be string")
     }
 
     override fun matches(sourceType: TypeDescriptor, targetType: TypeDescriptor): Boolean {
@@ -57,7 +57,7 @@ class DeclinationConverter : ConditionalGenericConverter {
                 }
             }
         }
-        return null
+        throw IllegalArgumentException("Source must be string")
     }
 
     override fun matches(sourceType: TypeDescriptor, targetType: TypeDescriptor): Boolean {
