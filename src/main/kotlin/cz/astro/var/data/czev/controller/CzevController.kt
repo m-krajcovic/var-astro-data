@@ -11,8 +11,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
-import reactor.core.publisher.Mono
-import reactor.core.publisher.toMono
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.validation.Valid
@@ -61,7 +59,8 @@ class CzevController(
     }
 
     @DeleteMapping("drafts/{id}")
-    fun deleteDraft(@PathVariable id: Long) = draftService.delete(id)
+    fun deleteDraft(@PathVariable id: Long): ResponseEntity<*> =
+            if (draftService.delete(id)) ResponseEntity.noContent().build<Any>() else ResponseEntity.notFound().build<Any>()
 
     @PatchMapping("drafts/{id}")
     fun patchDraft(@PathVariable id: Long, patch: JsonPatch): ResponseEntity<*> {
@@ -99,9 +98,9 @@ class CzevController(
     }
 
     @PostMapping("drafts/{id}/rejection")
-    fun rejectDraft(@PathVariable id: Long, @Valid @RequestBody model: CzevStarDraftRejectionModel): Boolean {
+    fun rejectDraft(@PathVariable id: Long, @Valid @RequestBody model: CzevStarDraftRejectionModel): ResponseEntity<*> {
         model.id = id
-        return draftService.reject(model)
+        return if (draftService.reject(model)) ResponseEntity.noContent().build<Any>() else ResponseEntity.notFound().build<Any>()
     }
 
     @PostMapping("stars")
@@ -162,7 +161,7 @@ class CzevController(
             )
         }
         // TODO: Other formats like these?
-        // GSC 01234-06789 (5 digits before and after the dash, use leading zeroes if necessary)
+        //GSC 01234-06789 (5 digits before and after the dash, use leading zeroes if necessary)
         //2MASS J11431012-5804040 (use a J before the coordinates)
         //USNO-A2.0 0300-13671194
         //USNO-B1.0 0319-0360318 (use a dash between USNO and the catalog version, it is part of the acronym)
@@ -192,12 +191,4 @@ fun <T> Optional<T>.toOkOrNotFound(): ResponseEntity<T> {
     return this.map {
         ResponseEntity.ok().body<T>(it)
     }.orElse(ResponseEntity.notFound().build<T>())
-}
-
-fun main(args: Array<String>) {
-    val switchIfEmpty = Mono.empty<String>().switchIfEmpty("Hi".toMono())
-    switchIfEmpty.subscribe {
-        println(it)
-    }
-    switchIfEmpty.block()
 }

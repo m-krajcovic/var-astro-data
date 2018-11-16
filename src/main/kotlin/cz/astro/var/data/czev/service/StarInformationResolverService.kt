@@ -240,7 +240,6 @@ class SesameVariableStarInformationResolverServiceImpl(
                     }
                     result
                 }
-//                .filter { it.targets != null && it.targets.isNotEmpty() && it.targets.first().resolvers != null && it.targets.first().resolvers.isNotEmpty() }
                 .thenApplyAsync {
                     if (it.targets != null && it.targets.isNotEmpty() && it.targets.first().resolvers != null && it.targets.first().resolvers.isNotEmpty()) {
                         val resolver = it.targets.first().resolvers.first()
@@ -267,7 +266,7 @@ class SesameVariableStarInformationResolverServiceImpl(
                                 null, null, null
                         ))
                     } else {
-                        Optional.empty<VariableStarInformationModel>()
+                        Optional.empty()
                     }
                 }
     }
@@ -298,7 +297,6 @@ class VsxVariableStarInformationResolverServiceImpl(
                 }
     }
 
-
     @Async
     override fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): CompletableFuture<List<DistanceModel<VariableStarInformationModel>>> {
         return findByCoordinates(coordinates, 10, radiusDegrees)
@@ -313,7 +311,6 @@ class VsxVariableStarInformationResolverServiceImpl(
             it.toDistanceModels()
         }
     }
-
 
     @Async
     override fun findNearest(coordinates: CosmicCoordinatesModel): CompletableFuture<Optional<DistanceModel<VariableStarInformationModel>>> {

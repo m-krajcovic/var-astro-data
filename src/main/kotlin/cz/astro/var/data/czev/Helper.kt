@@ -10,7 +10,7 @@ const val DEC_STRING_PATTERN = "([+\\-]?\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}
 
 val RA_STRING_REGEX = Regex(RA_STRING_PATTERN)
 val DEC_STRING_REGEX = Regex(DEC_STRING_PATTERN)
-val RA_NUMBER_OR_STRING_REGEX = Regex("^$RA_NUMBER_PATTERN|$DEC_STRING_PATTERN$")
+val RA_NUMBER_OR_STRING_REGEX = Regex("^$RA_NUMBER_PATTERN|$RA_STRING_PATTERN$")
 val DEC_NUMBER_OR_STRING_REGEX: Regex = Regex("^$DEC_NUMBER_PATTERN|$DEC_STRING_PATTERN$")
 
 fun raStringToDegrees(raString: String): BigDecimal {
