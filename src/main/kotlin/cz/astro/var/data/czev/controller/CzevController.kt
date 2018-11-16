@@ -49,11 +49,13 @@ class CzevController(
     fun getDraft(@PathVariable id: Long): ResponseEntity<CzevStarDraftModel> = draftService.getById(id).toOkOrNotFound()
 
     @PostMapping("drafts")
+    @ResponseStatus(HttpStatus.CREATED)
     fun insertDraft(@Valid @RequestBody draft: CzevStarDraftNewModel): CzevStarDraftModel {
         return draftService.insert(draft)
     }
 
     @PostMapping("drafts/import")
+    @ResponseStatus(HttpStatus.CREATED)
     fun insertDrafts(@RequestParam("file") file: MultipartFile): CsvImportResultModel {
         return draftService.importCsv(CsvImportModel(file.inputStream))
     }
