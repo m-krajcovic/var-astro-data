@@ -1,0 +1,15 @@
+input.coord-wrapper {
+    font-family: monospace;
+    font-size: 1rem;
+    border: 0;
+    cursor: pointer;
+    width: 110px;
+}
+
+input.coord-wrapper:hover {
+    color: #1890ff;
+}
+
+.column-czevid {
+    cursor: pointer;
+}

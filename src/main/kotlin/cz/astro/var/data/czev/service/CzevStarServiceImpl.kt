@@ -87,8 +87,7 @@ class CzevStarServiceImpl(
 
     @Transactional(readOnly = true)
     override fun getAllForList(filter: CzevCatalogFilter, page: Pageable): Page<CzevStarListModel> {
-        val page = czevStarRepository.findAll(CzevStarFilterSpec(filter), page)
-        return page.map { it.toListModel() }
+        return czevStarRepository.findAll(CzevStarFilterSpec(filter), page).map { it.toListModel() }
     }
 }
 

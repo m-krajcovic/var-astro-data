@@ -318,7 +318,7 @@ fun CzevStarDraft.toModel(): CzevStarDraftModel {
 
 fun MutableSet<StarIdentification>.intersectIds(newIds: Iterable<String>): MutableSet<String> {
     val modelIdsSet = newIds.toSet()
-    val newIds = HashSet<String>()
+    val intersection = HashSet<String>()
     modelIdsSet.forEach {
         val identification = StarIdentification(it, null)
         if (!contains(identification)) {
@@ -326,7 +326,7 @@ fun MutableSet<StarIdentification>.intersectIds(newIds: Iterable<String>): Mutab
         }
     }
     removeIf { !modelIdsSet.contains(it.name) }
-    return newIds
+    return intersection
 }
 
 fun ConstellationModel.toEntity(): Constellation {

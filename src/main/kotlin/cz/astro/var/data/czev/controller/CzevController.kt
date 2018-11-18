@@ -112,7 +112,7 @@ class CzevController(
         return draftService.approve(model).toOkOrNotFound()
     }
 
-    @GetMapping("cds", params = ["name"])
+    @GetMapping("cds/all", params = ["name"])
     fun getStarInformationByName(@RequestParam("name") name: String): StarInformationByNameResponse {
         val trimmedName = name.trim()
         val vsxResult = vsxResolver.findByName(trimmedName)
@@ -147,7 +147,7 @@ class CzevController(
         )
     }
 
-    @GetMapping("cds", params = ["ra", "dec"])
+    @GetMapping("cds/all", params = ["ra", "dec"])
     fun getStarInformationByCoords(coordinates: CosmicCoordinatesModel): StarInformationByCoordsResponse {
         return coordinates.let {
             val ucac4Result = ucac4Resolver.findByCoordinates(it, 0.01)
