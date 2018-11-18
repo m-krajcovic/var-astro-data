@@ -110,7 +110,8 @@ export class CzevCatalogue extends Component {
             data: [], loading: true, pagination: {
                 size: 'small',
                 pageSizeOptions: ['10', '20', '50'],
-                showSizeChanger: true
+                showSizeChanger: true,
+                showQuickJumper: true
             }
         }
     }
@@ -223,3 +224,14 @@ export class CzevStarDetail extends Component {
         )
     }
 }
+
+
+
+// table - filters
+// table - export
+// insert draft
+// insert multiple drafts
+// drafts list for user/admin
+// draft details for admin - approving / rejecting
+// edit drafts
+// edit stars
