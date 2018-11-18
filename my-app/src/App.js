@@ -1,6 +1,4 @@
 import React, {Component} from 'react';
-// import './App.css';
-// import './components/ocgate/StarList.css';
 import ConstellationList from "./components/ocgate/ConstellationList";
 import {BASE_URL} from "./api-endpoint";
 import StarList from "./components/ocgate/StarList";
@@ -18,12 +16,14 @@ const {Header, Content, Footer, Sider} = Layout;
 
 const LinkMenu = withRouter(props => {
         const {location} = props;
+        const pathSnippets = location.pathname.split("/").filter(i => i);
+        const selectedKeys = pathSnippets.map((_, index) => `/${pathSnippets.slice(0, index + 1).join('/')}`);
         return (
             <Menu
                 theme="dark"
                 mode="horizontal"
                 style={{lineHeight: '64px'}}
-                selectedKeys={[location.pathname]}
+                selectedKeys={selectedKeys}
             >
                 <Menu.Item key="/oc">
                     <NavLink to="/oc"><span className="header-link">O-C Gate</span></NavLink>
@@ -46,9 +46,9 @@ class App extends Component {
                     </Header>
                         <Switch>
                             <Route path="/oc" component={OcGate}/>
-                            <Route path="/czev" component={Czev}/>
                             <Route path="/brno" component={Brno}/>
                             <Route path="/predictions" component={Predictions}/>
+                            <Route path="/czev" component={Czev}/>
                             <Redirect to="/oc"/>
                         </Switch>
                     <Footer style={{textAlign: 'center'}}>

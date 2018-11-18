@@ -1,11 +1,11 @@
 package cz.astro.`var`.data.czev.controller
 
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.fge.jsonpatch.JsonPatch
 import com.github.fge.jsonpatch.JsonPatchException
 import cz.astro.`var`.data.czev.service.*
-import org.codehaus.jackson.JsonProcessingException
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus

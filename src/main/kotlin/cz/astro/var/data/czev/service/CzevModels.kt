@@ -1,10 +1,11 @@
 package cz.astro.`var`.data.czev.service
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.czev.validation.Declination
 import cz.astro.`var`.data.czev.validation.RightAscension
 import cz.astro.`var`.data.security.UserPrincipal
-import org.codehaus.jackson.annotate.JsonIgnore
 import java.io.InputStream
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -205,6 +206,7 @@ data class CosmicCoordinatesModel(
 ) {
 
     // TODO move to helper?
+    @JsonProperty("raString")
     fun toStringRa(): String {
         val hours = ra.divide(BigDecimal(15), RoundingMode.HALF_UP).setScale(0, RoundingMode.DOWN)
         val minutes = (ra - hours * BigDecimal(15)).multiply(BigDecimal(4))
@@ -218,6 +220,7 @@ data class CosmicCoordinatesModel(
         return "${ic.format(hours)} ${ic.format(minutesRounded)} ${dc.format(seconds)}"
     }
 
+    @JsonProperty("decString")
     fun toStringDec(): String {
         val degrees = dec.setScale(0, RoundingMode.DOWN)
         val degreesRemainder = dec.abs().remainder(BigDecimal.ONE)
