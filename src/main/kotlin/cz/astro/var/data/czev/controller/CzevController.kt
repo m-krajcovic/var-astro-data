@@ -27,6 +27,10 @@ class CzevController(
         private val ucac4Resolver: Ucac4StarInformationResolverService,
         private val vsxResolver: VsxVariableStarInformationResolverService,
         private val sesameResolver: SesameVariableStarInformationResolverService,
+        private val constellationService: ConstellationService,
+        private val typeService: StarTypeService,
+        private val filterBandService: FilterBandService,
+        private val starObserverService: StarObserverService,
         private val objectMapper: ObjectMapper) {
 
     @GetMapping("stars")
@@ -172,6 +176,27 @@ class CzevController(
         //GSC2.3 S111210165373
         //UCAC4 810-003941
     }
+
+    @GetMapping("constellations")
+    fun getAllConstellations(): List<ConstellationModel> {
+        return constellationService.getAll()
+    }
+
+    @GetMapping("observers")
+    fun getAllStarObservers(): List<StarObserverModel> {
+        return starObserverService.getAll()
+    }
+
+    @GetMapping("types")
+    fun getAllStarTypes(): List<String> {
+        return typeService.getAll()
+    }
+
+    @GetMapping("filterbands")
+    fun getAllFilterBands(): List<FilterBandModel> {
+        return filterBandService.getAll()
+    }
+
 }
 
 data class StarInformationByNameResponse(

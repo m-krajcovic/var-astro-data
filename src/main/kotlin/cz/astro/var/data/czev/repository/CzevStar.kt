@@ -108,7 +108,10 @@ class CzevStarDraft(
 class Constellation(
         @NaturalId
         @Column(nullable = false, unique = true)
-        var name: String
+        var name: String,
+        @NaturalId
+        @Column(nullable = false, unique = true)
+        var abbreviation: String
 ) : CzevEntity() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

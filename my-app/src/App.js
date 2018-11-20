@@ -52,7 +52,7 @@ class App extends Component {
                             <Redirect to="/oc"/>
                         </Switch>
                     <Footer style={{textAlign: 'center'}}>
-                        Michal Krajčovič ©2018
+                        ©2018
                     </Footer>
                 </Layout>
             </Router>

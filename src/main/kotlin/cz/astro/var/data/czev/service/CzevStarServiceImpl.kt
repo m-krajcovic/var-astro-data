@@ -105,7 +105,6 @@ class CzevStarFilterSpec(val spec: CzevCatalogFilter) : Specification<CzevStar> 
         }
 
         query.distinct(true)
-//        query.orderBy(criteriaBuilder.asc(root.get<Long>(CzevStar::czevId.name)))
         spec.apply {
             predicates.addAll(between(criteriaBuilder, czevIdFrom, czevIdTo, root[CzevStar::czevId.name]))
             predicates.addAll(between(criteriaBuilder, yearFrom, yearTo, root[CzevStar::year.name]))

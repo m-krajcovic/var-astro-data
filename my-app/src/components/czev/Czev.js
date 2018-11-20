@@ -9,13 +9,14 @@ import {
     Row,
     Spin,
     Table,
-    message,
-    Tooltip,
     Popover,
     Button,
     Form,
     Input,
-    TextArea, InputNumber
+    InputNumber,
+    Select,
+    Icon,
+    AutoComplete, Checkbox, Alert, Collapse
 } from 'antd';
 import {BASE_URL} from "../../api-endpoint";
 import axios from "axios";
@@ -24,6 +25,7 @@ import {Link, Route, Switch} from "react-router-dom";
 import "./Czev.css";
 
 const {Content} = Layout;
+const Option = Select.Option;
 
 
 const breadcrumbNameMap = {
@@ -52,9 +54,10 @@ export default class Czev extends Component {
                             {breadcrumbs}
                         </Breadcrumb>
                     </Col>
-                    <Col span={12} style={{textAlign: "right"}}>
-                        <Button type="primary" size="small"><Link to="/czev/new">Add new variable star</Link></Button>
-                    </Col>
+                    {this.props.location.pathname !== "/czev/new" && (<Col span={12} style={{textAlign: "right"}}>
+                        <Button type="primary" size="small"><Link to="/czev/new">Submit new variable
+                            star</Link></Button>
+                    </Col>)}
                 </Row>
                 <Card style={{width: "100%"}}>
                     <Switch>
@@ -96,7 +99,7 @@ export class CzevCatalogue extends Component {
                 dataIndex: 'czevId',
                 sorter: true,
                 render: czevId => (
-                    <a>{czevId}</a>
+                    <span style={{color: "#1890ff"}}>{czevId}</span>
                 ),
                 onCell: record => {
                     return {
@@ -109,7 +112,7 @@ export class CzevCatalogue extends Component {
             },
             {
                 title: 'Constellation',
-                dataIndex: 'constellation.name',
+                dataIndex: 'constellation.abbreviation',
                 sorter: true
             },
             {
@@ -245,7 +248,7 @@ export class CzevStarDetail extends Component {
         if (data) {
             body = (<Row gutter={8}>
                 <Col span={24} xl={{span: 8}} md={{span: 12}}>
-                    <h3>CzeV {data.czevId} {data.constellation.name}</h3>
+                    <h3>CzeV {data.czevId} {data.constellation.abbreviation}</h3>
                     <div>{data.crossIdentifications.join(" / ")}</div>
                     <div><b>Type: </b>{data.type}</div>
                     <div><b>J: </b>{data.jmagnitude}</div>
@@ -329,60 +332,417 @@ export class CoordinateWrapper extends Component {
 export class CzevNewStar extends Component {
     constructor(props) {
         super(props);
-        this.coordinatesRegexp = new RegExp("^((\\d*(\\.\\d+)?)\\s+([+\\-]?\\d*(\\.\\d+)?))|((\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}(\\.\\d+)?)\\s([+\\-]?\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}(\\.\\d+)?))$");
+        this.defaultTypes = ["EB", "EW", "EA", "DSCT", "HADS", "RRAB", "RRC", "ELL", "UV", "M", "SR", "CV", "ACV", "DCEP"];
+        this.state = {
+            constellations: [],
+            observers: [],
+            types: [],
+            filterbands: [],
+            constellationsLoading: false,
+            filterbandsLoading: false,
+            typesLoading: false,
+            observersLoading: false,
+
+            typeOptions: this.defaultTypes,
+            typeUncertain: false,
+            typeValid: true,
+
+            coordsInfoParams: {},
+            coordsInfoLoading: false,
+            coordsInfoResult: null
+        };
+        this.crossIdRegexp = /((UCAC4\s\d{3}-\d{6})|(USNO-B[12]\.0\s\d{4}-\d{7}))/;
+        // this.coordinatesRegexp = /((\\d*(\\.\\d+)?)\\s+([+\\-]?\\d*(\\.\\d+)?))|((\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}(\\.\\d+)?)\\s([+\\-]?\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}(\\.\\d+)?))$/;
+        this.coordinatesRaRegexp = /^((\d*(\.\d+)?)|((\d{1,2})[\s:](\d{1,2})[\s:](\d{0,2}(\.\d+)?)))$/;
+        this.coordinatesDecRegexp = /^(([+-]?\d*(\.\d+)?)|(([+-]?\d{1,2})[\s:](\d{1,2})[\s:](\d{0,2}(\.\d+)?)))$/;
     }
+
+    componentDidMount() {
+        this.setState({
+            ...this.state,
+            constellationsLoading: true,
+            observersLoading: true,
+            filterbandsLoading: true,
+            typesLoading: true
+        });
+        axios.get(BASE_URL + "/czev/constellations")
+            .then(result => {
+                this.setState({...this.state, constellationsLoading: false, constellations: result.data});
+            });
+        axios.get(BASE_URL + "/czev/types")
+            .then(result => {
+                this.setState({...this.state, typesLoading: false, types: new Set(result.data)});
+            });
+        axios.get(BASE_URL + "/czev/filterbands")
+            .then(result => {
+                this.setState({...this.state, filterbandsLoading: false, filterbands: result.data});
+            });
+        axios.get(BASE_URL + "/czev/observers")
+            .then(result => {
+                this.setState({...this.state, observersLoading: false, observers: result.data});
+            });
+    }
+
+    removeCrossId = (k) => {
+        const {form} = this.props;
+        // can use data-binding to get
+        const crossidKeys = form.getFieldValue('crossidKeys');
+        // We need at least one passenger
+        if (crossidKeys.length === 1) {
+            return;
+        }
+
+        // can use data-binding to set
+        form.setFieldsValue({
+            crossidKeys: crossidKeys.filter(key => key !== k),
+        });
+    };
+
+    addCrossId = () => {
+        const {form} = this.props;
+        // can use data-binding to get
+        const crossidKeys = form.getFieldValue('crossidKeys');
+        const nextKeys = crossidKeys.concat(crossidKeys[crossidKeys.length - 1] + 1);
+        // can use data-binding to set
+        // important! notify form to detect changes
+        form.setFieldsValue({
+            crossidKeys: nextKeys,
+        });
+    };
+
+    handleSubmit = (e) => {
+        e.preventDefault();
+        this.props.form.validateFieldsAndScroll((err, values) => {
+            console.log(err);
+            console.log(values);
+            if (!err) {
+                console.log('Received values of form: ', values);
+            }
+        });
+    };
+
+    handleTypeSearch = (value) => {
+        if (!value) {
+            this.setState({...this.state, typeOptions: this.defaultTypes})
+        } else {
+            let filtered = this.defaultTypes.filter(t => t.toLowerCase().includes(value.toLowerCase()));
+            if (filtered.length === 1) {
+                filtered = filtered.concat([
+                    `${filtered[0]}:`,
+                    `${filtered[0]}/`,
+                    `${filtered[0]}|`,
+                    `${filtered[0]}+`,
+                ])
+            }
+            this.setState({...this.state, typeOptions: filtered});
+        }
+    };
+
+    handleTypeUncertainChange = (e) => {
+        const uncertain = e.target.checked;
+        this.setState({...this.state, typeUncertain: uncertain});
+        const {form} = this.props;
+        let type = form.getFieldValue('type');
+        if (!type) {
+            type = ""
+        }
+        if ((uncertain && type.endsWith(':')) || (!uncertain && !type.endsWith(':'))) {
+        } else {
+            if (uncertain) {
+                form.setFieldsValue({
+                    type: type + ":"
+                });
+            } else {
+                form.setFieldsValue({
+                    type: type.substring(0, type.length - 1)
+                });
+            }
+        }
+    };
+
+    handleTypeChange = (value) => {
+        const uncertain = this.state.typeUncertain;
+        if (!value) {
+            value = "";
+        } else {
+            let typeValid = true;
+            const certainType = value[value.length - 1] === ':' ? value.substring(0, value.length - 1) : value;
+            const types = certainType.split(/[|+/]/);
+            types.forEach(type => {
+                if (!this.state.types.has(type)) {
+                    typeValid = false;
+                }
+            });
+            this.setState({...this.state, typeValid: typeValid});
+        }
+        if (uncertain && !value.endsWith(':')) {
+            this.setState({...this.state, typeUncertain: false});
+        } else if (!uncertain && value.endsWith(':')) {
+            this.setState({...this.state, typeUncertain: true});
+        }
+    };
+
+    handleCoordsBlur = () => {
+        const {form: {validateFields}} = this.props;
+        validateFields(["coordinatesRa", "coordinatesDec"], (err, values) => {
+            console.log({err, values});
+            if (!err && values && values.coordinatesRa && values.coordinatesDec) {
+                if (this.state.coordsInfoParams.coordinatesRa !== values.coordinatesRa
+                    || this.state.coordsInfoParams.coordinatesDec !== values.coordinatesDec) {
+                    this.setState({...this.state, coordsInfoParams: values, coordsInfoLoading: true});
+                    axios.get(BASE_URL + "/czev/cds/all", {
+                        params: {
+                            ra: values.coordinatesRa,
+                            dec: values.coordinatesDec
+                        }
+                    }).then(result => {
+                        this.setState({...this.state, coordsInfoResult: result.data, coordsInfoLoading: false})
+                    })
+                }
+            }
+        });
+    };
+
+    handleCrossIdBlur = () => {
+        const {form: {validateFields}} = this.props;
+        validateFields(["crossids[0]"], (err, values) => {
+            console.log({err, values});
+        });
+    };
+
+    validateDecRange = (rule, value, callback) => {
+        callback();
+    };
+
+    validateRaRange = (rule, value, callback) => {
+        callback();
+    };
+
+    handleValueTransfer = (field, value) => {
+        const {form: {validateFields}, form} = this.props;
+        const change = {};
+        change[field] = value;
+        form.setFieldsValue(change);
+        form.validateFieldsAndScroll((err, values) => {
+
+        });
+    };
 
     render() {
         const formItemLayout = {
             labelCol: {
                 xs: {span: 24},
-                sm: {span: 8},
+                sm: {span: 6},
             },
             wrapperCol: {
                 xs: {span: 24},
-                sm: {span: 16},
+                sm: {span: 18},
+            },
+        };
+        const formItemLayoutWithOutLabel = {
+            wrapperCol: {
+                xs: {span: 24, offset: 0},
+                sm: {span: 18, offset: 6},
             },
         };
         const currentYear = new Date().getFullYear();
+        const {getFieldDecorator, getFieldValue} = this.props.form;
 
-        const {getFieldDecorator} = this.props.form;
+
+        getFieldDecorator('crossidKeys', {initialValue: [0]});
+        const crossids = getFieldValue('crossidKeys');
+
+        const crossIdFormItems = crossids.map((k, index) => {
+            return (
+                <Form.Item
+                    {...(index === 0 ? formItemLayout : formItemLayoutWithOutLabel)}
+                    label={index === 0 ? 'Cross identifications' : ''}
+                    required={true}
+                    key={k}
+                >
+                    {getFieldDecorator(`crossids[${k}]`, {
+                        validateTrigger: ['onChange', 'onBlur'],
+                        rules: [{
+                            required: true,
+                            whitespace: true,
+                            message: k === 0 ? "Please input valid UCAC4/USNO-B identification" : "Please input valid cross id or delete this field.",
+                        }].concat(k === 0 ? {
+                            pattern: this.crossIdRegexp, message: "Please input valid UCAC4/USNO-B identification"
+                        } : []),
+                    })(
+                        <Input onBlur={() => {
+                            if (k === 0) {
+                                this.handleCrossIdBlur()
+                            }
+                        }} placeholder="Cross id" style={{width: "90%", marginRight: 8}}/>
+                    )}
+                    {k > 0 ? (
+                        <Icon
+                            className="dynamic-delete-button"
+                            type="minus-circle-o"
+                            disabled={crossids.length === 1}
+                            onClick={() => this.removeCrossId(k)}
+                        />
+                    ) : null}
+                </Form.Item>
+            )
+        });
+
         return (
-            <Row>
-                <Col span={24} md={{span: 16}}>
-                    <Form>
-                        <Form.Item {...formItemLayout} label="Coordinates">
-                            {getFieldDecorator('coordinates', {
-                                rules: [{
-                                    pattern: this.coordinatesRegexp, message: 'The input are not valid coordinates!',
-                                }, {
-                                    required: true, message: 'Please input the coordinates!',
-                                }],
+            <Row gutter={8}>
+                <Col span={24} sm={{span: 16}}>
+                    <Form onSubmit={this.handleSubmit}>
+                        <Form.Item {...formItemLayout} label="Coordinates (J2000)" required={true}>
+                            <Col span={12}>
+                                <Form.Item>
+                                    {getFieldDecorator('coordinatesRa', {
+                                        rules: [{
+                                            pattern: this.coordinatesRaRegexp,
+                                            message: 'The input is not valid right ascension!',
+                                        }, {
+                                            required: true, message: 'Please input the right ascension!',
+                                        }, {
+                                            validator: this.validateRaRange
+                                        }],
+                                    })(
+                                        <Input placeholder="Right ascension" onBlur={this.handleCoordsBlur}
+                                               style={{borderTopRightRadius: 0, borderBottomRightRadius: 0}}/>
+                                    )}
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item>
+                                    {getFieldDecorator('coordinatesDec', {
+                                        rules: [{
+                                            pattern: this.coordinatesDecRegexp,
+                                            message: 'The input is not valid declination!',
+                                        }, {
+                                            required: true, message: 'Please input the declination!',
+                                        }, {
+                                            validator: this.validateDecRange
+                                        }],
+                                    })(
+                                        <Input placeholder="Declination" onBlur={this.handleCoordsBlur}
+                                               style={{borderBottomLeftRadius: 0, borderTopLeftRadius: 0}}/>
+                                    )}
+                                </Form.Item>
+                            </Col>
+                        </Form.Item>
+                        {crossIdFormItems}
+                        <Form.Item {...formItemLayoutWithOutLabel}>
+                            <Button type="dashed" onClick={this.addCrossId} style={{width: "90%"}}>
+                                <Icon type="plus"/> Add Cross id
+                            </Button>
+                        </Form.Item>
+                        <Form.Item {...formItemLayout} label="Constellation">
+                            <Spin spinning={this.state.constellationsLoading}>
+                                {
+                                    getFieldDecorator('constellation', {
+                                        rules: [
+                                            {required: true, message: "Please choose a constellation"}
+                                        ]
+                                    })(
+                                        <Select
+                                            showSearch
+                                            placeholder="Select a constellation"
+                                            optionFilterProp="children"
+                                        >
+                                            {this.state.constellations.map(cons => {
+                                                return (
+                                                    <Option key={cons.id}>{cons.abbreviation} ({cons.name})</Option>
+                                                )
+                                            })}
+                                        </Select>
+                                    )
+                                }
+                            </Spin>
+                        </Form.Item>
+                        <Form.Item {...formItemLayout} label="Discoverers">
+                            <Spin spinning={this.state.observersLoading}>
+                                {
+                                    getFieldDecorator('discoverers', {
+                                        rules: [
+                                            {required: true, type: "array", message: "Choose at least one discoverer"}
+                                        ]
+                                    })(
+                                        <Select
+                                            showSearch
+                                            mode="multiple"
+                                            placeholder="Select discoverers"
+                                            optionFilterProp="children"
+                                        >
+                                            {this.state.observers.map(obs => {
+                                                return (
+                                                    <Option key={obs.id}>{obs.firstName} {obs.lastName}</Option>
+                                                )
+                                            })}
+                                        </Select>
+                                    )
+                                }
+                            </Spin>
+                        </Form.Item>
+                        <Form.Item {...formItemLayout} label="Year">
+                            {getFieldDecorator('year', {
+                                rules: [{required: true, message: "Year of discovery is required"}],
+                                initialValue: currentYear
                             })(
-                                <Input/>
+                                <InputNumber max={currentYear}/>
                             )}
                         </Form.Item>
-                        <Form.Item {...formItemLayout} label="Cross Identification"><Input/></Form.Item>
-                        <Form.Item {...formItemLayout} label="Type"><Input/></Form.Item>
-                        <Form.Item {...formItemLayout} label="Constellation"><Input/></Form.Item>
+                        <Form.Item style={{marginBottom: 0}} {...formItemLayout} label="Type"
+                                   validateStatus={!this.state.typeValid ? "warning" : ""}
+                                   help={!this.state.typeValid ? "This is not a valid VSX variable star type, but you can still submit it" : ""}
+                                   hasFeedback>
+                            {getFieldDecorator('type', {})(
+                                <AutoComplete
+                                    onSearch={this.handleTypeSearch}
+                                    dataSource={this.state.typeOptions}
+                                    onChange={this.handleTypeChange}>
+                                    <Input/>
+                                </AutoComplete>
+                            )}
+                        </Form.Item>
+                        <Form.Item {...formItemLayoutWithOutLabel} extra={(
+                            <span>You can find more information about types <a target="_blank" rel="noopener noreferrer"
+                                                                               href="https://www.aavso.org/vsx/index.php?view=about.vartypes">here</a></span>)}>
+                            <Checkbox onChange={this.handleTypeUncertainChange} checked={this.state.typeUncertain}>Type
+                                uncertain</Checkbox>
+                        </Form.Item>
                         <Form.Item {...formItemLayout} label="Amplitude">
                             {getFieldDecorator('amplitude', {
                                 rules: [{
                                     type: "number", message: "The input is not valid amplitude"
                                 }],
                             })(
-                                <InputNumber/>
+                                <InputNumber style={{width: "100%"}}/>
                             )}
                         </Form.Item>
-                        <Form.Item {...formItemLayout} label="Filter band"><Input/></Form.Item>
-                        <Form.Item {...formItemLayout} label="Discoverers"><Input/></Form.Item>
-                        <Form.Item {...formItemLayout} label="Year"><InputNumber max={currentYear} defaultValue={currentYear}/></Form.Item>
+                        <Form.Item {...formItemLayout} label="Filter band">
+                            <Spin spinning={this.state.filterbandsLoading}>
+                                {getFieldDecorator('filterband', {})(
+                                    <Select
+                                        showSearch
+                                        placeholder="Select a filter band"
+                                        optionFilterProp="children"
+                                    >
+                                        {this.state.filterbands.map(fb => {
+                                            return (
+                                                <Option key={fb.id}>{fb.name}</Option>
+                                            )
+                                        })}
+                                    </Select>
+                                )}
+                            </Spin>
+                        </Form.Item>
                         <Form.Item {...formItemLayout} label="Epoch">
                             {getFieldDecorator('epoch', {
                                 rules: [{
                                     type: "number", message: "The input is not valid epoch"
                                 }],
                             })(
-                                <InputNumber/>
+                                <InputNumber
+                                    min={2400000}
+                                    style={{width: "100%"}}/>
                             )}
                         </Form.Item>
                         <Form.Item {...formItemLayout} label="Period">
@@ -391,16 +751,127 @@ export class CzevNewStar extends Component {
                                     type: "number", message: "The input is not valid period"
                                 }],
                             })(
-                                <InputNumber/>
+                                <InputNumber style={{width: "100%"}}/>
                             )}
                         </Form.Item>
-                        <Form.Item {...formItemLayout} label="Note"><Input.TextArea/></Form.Item>
+                        <Form.Item {...formItemLayout} label="Note">
+                            {getFieldDecorator('note', {})(
+                                <Input.TextArea/>
+                            )}
+                        </Form.Item>
+                        <Form.Item {...formItemLayoutWithOutLabel}>
+                            <Button type="primary" htmlType="submit">Submit for approval</Button>
+                        </Form.Item>
                     </Form>
+                </Col>
+                <Col span={24} sm={{span: 8}}>
+                    <Spin spinning={this.state.coordsInfoLoading}>
+                        <div>
+                            {this.state.coordsInfoResult ? (
+                                <CoordsInfoResultWrapper result={this.state.coordsInfoResult}/>
+                            ) : (
+                                <div></div>
+                            )}
+                        </div>
+                    </Spin>
                 </Col>
             </Row>
         )
     }
 }
+
+const customSuccessPanelStyle = {
+    border: "1px solid #b7eb8f",
+    background: "#f6ffed",
+    marginBottom: 4,
+    borderRadius: 4
+};
+
+const customWarningPanelStyle = {
+    border: "1px solid #ffe58f",
+    background: "#fffbe6",
+    marginBottom: 4,
+    borderRadius: 4
+};
+
+class CoordsInfoResultWrapper extends Component {
+    render() {
+        const {result} = this.props;
+        if (!result) {
+            return (<div/>);
+        }
+        const {vsx, czev, ucac4} = result;
+        return (
+            <div>
+                <h4>Coordinates search</h4>
+                <Collapse bordered={false} defaultActiveKey={ucac4.length > 0 ? ['ucac'] : []}>
+                    {vsx.length === 0 ? (
+                        <Collapse.Panel
+                            header={(
+                                <span style={{color: "rgba(0, 0, 0, 0.85)"}}><Icon style={{
+                                    color: "#52c41a",
+                                    marginRight: 4
+                                }} theme="filled" type="check-circle"/><b>VSX: </b> 0 stars nearby</span>
+                            )}
+                            key="vsx" disabled showArrow={false} style={customSuccessPanelStyle}/>
+                    ) : (
+                        <Collapse.Panel
+                            header={(
+                                <span><Icon style={{
+                                    color: "#faad14",
+                                    marginRight: 4
+                                }} type="exclamation-circle"
+                                            theme="filled"/><b>VSX: </b> {vsx.length} star{vsx.length > 1 ? "s" : ""} nearby</span>
+                            )}
+                            key="vsx" style={customWarningPanelStyle}/>
+                    )}
+                    {czev.length === 0 ? (
+                        <Collapse.Panel
+                            header={(
+                                <span style={{color: "rgba(0, 0, 0, 0.85)"}}><Icon style={{
+                                    color: "#52c41a",
+                                    marginRight: 4
+                                }} theme="filled" type="check-circle"/><b>CzeV: </b> 0 stars nearby</span>
+                            )}
+                            key="czev" disabled showArrow={false} style={customSuccessPanelStyle}/>
+                    ) : (
+                        <Collapse.Panel
+                            header={(
+                                <span><Icon style={{
+                                    color: "#faad14",
+                                    marginRight: 4
+                                }} type="exclamation-circle"
+                                            theme="filled"/><b>CzeV: </b> {czev.length} star{czev.length > 1 ? "s" : ""} nearby</span>
+                            )}
+                            key="czev" style={customWarningPanelStyle}/>
+                    )}
+                    {ucac4.length === 0 ? (
+                        <Collapse.Panel
+                            header={(
+                                <span style={{color: "rgba(0, 0, 0, 0.85)"}}><Icon style={{
+                                    color: "#faad14",
+                                    marginRight: 4
+                                }} type="exclamation-circle" theme="filled"/><b>UCAC4: </b> 0 stars nearby</span>
+                            )}
+                            disabled key="ucac" showArrow={false} style={customWarningPanelStyle}/>
+                    ) : (
+                        <Collapse.Panel
+                            header={(
+                                <span><Icon style={{
+                                    color: "#52c41a",
+                                    marginRight: 4
+                                }} theme="filled"
+                                            type="check-circle"/><b>UCAC4: </b> {ucac4.length} star{ucac4.length > 1 ? "s" : ""} nearby</span>
+                            )}
+                            key="ucac" style={customSuccessPanelStyle}/>
+                    )}
+                </Collapse>
+            </div>
+        );
+    }
+}
+
+// <Icon type="download" />
 
 const WrappedCzevNewStar = Form.create()(CzevNewStar);
 
@@ -410,7 +881,6 @@ const WrappedCzevNewStar = Form.create()(CzevNewStar);
 // - all observers
 // - all bands
 // - validate type somehow
-
 
 
 // table - filters

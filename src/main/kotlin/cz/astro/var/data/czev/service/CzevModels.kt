@@ -239,7 +239,8 @@ data class CosmicCoordinatesModel(
 
 data class ConstellationModel(
         val id: Long,
-        val name: String
+        val name: String,
+        val abbreviation: String
 )
 
 data class FilterBandModel(
@@ -299,10 +300,10 @@ fun CosmicCoordinates.toModel(): CosmicCoordinatesModel {
 }
 
 fun Constellation.toModel(): ConstellationModel {
-    return ConstellationModel(id, name)
+    return ConstellationModel(id, name, abbreviation)
 }
 
-fun Set<StarObserver>.toModels(): List<StarObserverModel> {
+fun Iterable<StarObserver>.toModels(): List<StarObserverModel> {
     return this.asSequence().map { StarObserverModel(it.id, it.firstName, it.lastName, it.abbreviation) }.toList()
 }
 
@@ -330,7 +331,7 @@ fun MutableSet<StarIdentification>.intersectIds(newIds: Iterable<String>): Mutab
 }
 
 fun ConstellationModel.toEntity(): Constellation {
-    val constellation = Constellation(name)
+    val constellation = Constellation(name, abbreviation)
     constellation.id = id
     return constellation
 }

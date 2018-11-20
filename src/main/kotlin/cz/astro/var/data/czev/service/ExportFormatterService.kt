@@ -34,7 +34,7 @@ class CzevStarCsvExportFormatterServiceImpl : CzevStarCsvExportFormatterService 
                             it.vsxName,
                             it.coordinates.toStringRa(),
                             it.coordinates.toStringDec(),
-                            it.constellation.name,
+                            it.constellation.abbreviation,
                             it.type,
                             it.vMagnitude ?: "",
                             it.jMagnitude ?: "",
