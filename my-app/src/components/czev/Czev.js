@@ -16,13 +16,14 @@ import {
     InputNumber,
     Select,
     Icon,
-    AutoComplete, Checkbox, Alert, Collapse
+    AutoComplete, Checkbox, Alert, Collapse, Tabs, List, Tooltip, Modal
 } from 'antd';
 import {BASE_URL} from "../../api-endpoint";
 import axios from "axios";
 import {Link, Route, Switch} from "react-router-dom";
 
 import "./Czev.css";
+import AnimateHeight from "react-animate-height";
 
 const {Content} = Layout;
 const Option = Select.Option;
@@ -59,13 +60,11 @@ export default class Czev extends Component {
                             star</Link></Button>
                     </Col>)}
                 </Row>
-                <Card style={{width: "100%"}}>
-                    <Switch>
-                        <Route path="/czev/new" component={WrappedCzevNewStar}/>
-                        <Route path="/czev/:id" component={CzevStarDetail}/>
-                        <Route path="/czev" component={CzevCatalogue}/>
-                    </Switch>
-                </Card>
+                <Switch>
+                    <Route path="/czev/new" component={WrappedCzevNewStar}/>
+                    <Route path="/czev/:id" component={CzevStarDetail}/>
+                    <Route path="/czev" component={CzevCatalogue}/>
+                </Switch>
             </Content>
         )
     }
@@ -206,14 +205,14 @@ export class CzevCatalogue extends Component {
 
     render() {
         return (
-            <Fragment>
+            <Card>
                 <Table size="small" rowKey="czevId" columns={this.columns} dataSource={this.state.data}
                        loading={this.state.loading} pagination={this.state.pagination}
                        onChange={this.handleTableChange}/>
                 <Button loading={this.state.downloadLoading}
                         style={{position: "absolute", bottom: "24px", marginBottom: 16}} onClick={this.handleDownload}
                         type="ghost" icon="download" size="small">Download</Button>
-            </Fragment>
+            </Card>
         )
     }
 }
@@ -278,27 +277,34 @@ export class CzevStarDetail extends Component {
             }
         }
         return (
-            <Fragment>
+            <Card>
                 <Spin spinning={this.state.loading}>
                     {body}
                 </Spin>
-            </Fragment>
+            </Card>
         )
     }
 }
 
-export class CoordinateWrapper extends Component {
+function CoordinateWrapper(props) {
+    return (
+        <Copyable value={props.value} style={{fontFamily: "monospace", fontSize: "1rem"}}/>
+    )
+}
 
+class Copyable extends Component {
     constructor(props) {
         super(props);
         this.state = {popoverVisible: false};
-        this.inputRef = React.createRef();
     }
 
-    copy = (e) => {
-        this.inputRef.current.select();
+    handleOnClick = () => {
+        const el = document.createElement('textarea');
+        el.value = this.props.value;
+        document.body.appendChild(el);
+        el.select();
         document.execCommand('copy');
-        e.target.focus();
+        document.body.removeChild(el);
         this.setState({popoverVisible: true});
         setTimeout(() => {
             this.setState({popoverVisible: false});
@@ -306,10 +312,16 @@ export class CoordinateWrapper extends Component {
     };
 
     render() {
+        const style = {
+            cursor: "pointer"
+        };
+        if (this.props.style) {
+            Object.assign(style, this.props.style);
+        }
+
         return (
             <Popover trigger="click" content="Copied" visible={this.state.popoverVisible}>
-                <input ref={this.inputRef} className="coord-wrapper" onClick={this.copy} type="text" readOnly={true}
-                       value={this.props.value}/>
+                <span className="copyable" onClick={this.handleOnClick} style={style}>{this.props.value}</span>
             </Popover>
         )
     }
@@ -349,7 +361,11 @@ export class CzevNewStar extends Component {
 
             coordsInfoParams: {},
             coordsInfoLoading: false,
-            coordsInfoResult: null
+            coordsInfoResult: null,
+
+            nameInfoParams: {},
+            nameInfoLoading: false,
+            nameInfoResult: null
         };
         this.crossIdRegexp = /((UCAC4\s\d{3}-\d{6})|(USNO-B[12]\.0\s\d{4}-\d{7}))/;
         // this.coordinatesRegexp = /((\\d*(\\.\\d+)?)\\s+([+\\-]?\\d*(\\.\\d+)?))|((\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}(\\.\\d+)?)\\s([+\\-]?\\d{1,2})[\\s:](\\d{1,2})[\\s:](\\d{0,2}(\\.\\d+)?))$/;
@@ -413,10 +429,20 @@ export class CzevNewStar extends Component {
     handleSubmit = (e) => {
         e.preventDefault();
         this.props.form.validateFieldsAndScroll((err, values) => {
-            console.log(err);
-            console.log(values);
             if (!err) {
-                console.log('Received values of form: ', values);
+                Modal.confirm({
+                    title: 'Are you sure you want to submit this form?',
+                    content: '',
+                    okText: 'Yes',
+                    cancelText: 'No',
+                    onOk() {
+                        console.log('OK');
+                        console.log(values);
+                    },
+                    onCancel() {
+                        console.log('Cancel');
+                    },
+                });
             }
         });
     };
@@ -485,7 +511,6 @@ export class CzevNewStar extends Component {
     handleCoordsBlur = () => {
         const {form: {validateFields}} = this.props;
         validateFields(["coordinatesRa", "coordinatesDec"], (err, values) => {
-            console.log({err, values});
             if (!err && values && values.coordinatesRa && values.coordinatesDec) {
                 if (this.state.coordsInfoParams.coordinatesRa !== values.coordinatesRa
                     || this.state.coordsInfoParams.coordinatesDec !== values.coordinatesDec) {
@@ -506,8 +531,38 @@ export class CzevNewStar extends Component {
     handleCrossIdBlur = () => {
         const {form: {validateFields}} = this.props;
         validateFields(["crossids[0]"], (err, values) => {
-            console.log({err, values});
+            if (!err && values && values.crossids[0]) {
+                if (this.state.nameInfoParams !== values.crossids[0]) {
+                    this.setState({...this.state, nameInfoParams: values.crossids[0], nameInfoLoading: true});
+                    axios.get(BASE_URL + "/czev/cds/all", {
+                        params: {
+                            name: values.crossids[0],
+                        }
+                    }).then(result => {
+                        if (this.state.nameInfoParams === values.crossids[0]) {
+                            this.setState({...this.state, nameInfoResult: result.data, nameInfoLoading: false})
+                        }
+                    })
+                }
+            }
         });
+    };
+
+    handleCrossIdSearch = (id) => {
+        if (id) {
+            if (this.state.nameInfoParams !== id) {
+                this.setState({...this.state, nameInfoParams: id, nameInfoLoading: true});
+                axios.get(BASE_URL + "/czev/cds/all", {
+                    params: {
+                        name: id,
+                    }
+                }).then(result => {
+                    if (this.state.nameInfoParams === id) {
+                        this.setState({...this.state, nameInfoResult: result.data, nameInfoLoading: false})
+                    }
+                })
+            }
+        }
     };
 
     validateDecRange = (rule, value, callback) => {
@@ -518,15 +573,17 @@ export class CzevNewStar extends Component {
         callback();
     };
 
-    handleValueTransfer = (field, value) => {
-        const {form: {validateFields}, form} = this.props;
-        const change = {};
-        change[field] = value;
-        form.setFieldsValue(change);
-        form.validateFieldsAndScroll((err, values) => {
-
+    handleUcacCopy = (model) => {
+        const {form} = this.props;
+        form.setFieldsValue({
+            coordinatesRa: model.coordinates.ra,
+            coordinatesDec: model.coordinates.dec,
+            "crossids[0]": `UCAC4 ${model.identifier}`,
         });
+        this.handleCoordsBlur();
+        this.handleCrossIdBlur();
     };
+
 
     render() {
         const formItemLayout = {
@@ -574,7 +631,10 @@ export class CzevNewStar extends Component {
                             if (k === 0) {
                                 this.handleCrossIdBlur()
                             }
-                        }} placeholder="Cross id" style={{width: "90%", marginRight: 8}}/>
+                        }} placeholder="Cross id" style={{width: "90%", marginRight: 8}}
+                               suffix={(
+                                   <Tooltip title="Search in catalogues"><Icon type="search" className="clickable-icon"
+                                                                               onClick={() => this.handleCrossIdSearch(getFieldValue(`crossids[${k}]`))}/></Tooltip>)}/>
                     )}
                     {k > 0 ? (
                         <Icon
@@ -589,212 +649,410 @@ export class CzevNewStar extends Component {
         });
 
         return (
-            <Row gutter={8}>
-                <Col span={24} sm={{span: 16}}>
-                    <Form onSubmit={this.handleSubmit}>
-                        <Form.Item {...formItemLayout} label="Coordinates (J2000)" required={true}>
-                            <Col span={12}>
-                                <Form.Item>
-                                    {getFieldDecorator('coordinatesRa', {
-                                        rules: [{
-                                            pattern: this.coordinatesRaRegexp,
-                                            message: 'The input is not valid right ascension!',
-                                        }, {
-                                            required: true, message: 'Please input the right ascension!',
-                                        }, {
-                                            validator: this.validateRaRange
-                                        }],
-                                    })(
-                                        <Input placeholder="Right ascension" onBlur={this.handleCoordsBlur}
-                                               style={{borderTopRightRadius: 0, borderBottomRightRadius: 0}}/>
-                                    )}
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item>
-                                    {getFieldDecorator('coordinatesDec', {
-                                        rules: [{
-                                            pattern: this.coordinatesDecRegexp,
-                                            message: 'The input is not valid declination!',
-                                        }, {
-                                            required: true, message: 'Please input the declination!',
-                                        }, {
-                                            validator: this.validateDecRange
-                                        }],
-                                    })(
-                                        <Input placeholder="Declination" onBlur={this.handleCoordsBlur}
-                                               style={{borderBottomLeftRadius: 0, borderTopLeftRadius: 0}}/>
-                                    )}
-                                </Form.Item>
-                            </Col>
-                        </Form.Item>
-                        {crossIdFormItems}
-                        <Form.Item {...formItemLayoutWithOutLabel}>
-                            <Button type="dashed" onClick={this.addCrossId} style={{width: "90%"}}>
-                                <Icon type="plus"/> Add Cross id
-                            </Button>
-                        </Form.Item>
-                        <Form.Item {...formItemLayout} label="Constellation">
-                            <Spin spinning={this.state.constellationsLoading}>
-                                {
-                                    getFieldDecorator('constellation', {
-                                        rules: [
-                                            {required: true, message: "Please choose a constellation"}
-                                        ]
-                                    })(
-                                        <Select
-                                            showSearch
-                                            placeholder="Select a constellation"
-                                            optionFilterProp="children"
-                                        >
-                                            {this.state.constellations.map(cons => {
-                                                return (
-                                                    <Option key={cons.id}>{cons.abbreviation} ({cons.name})</Option>
+            <div className="card-container">
+                <Tabs type="card">
+                    <Tabs.TabPane tab="Single" key={1}>
+                        <Row gutter={8}>
+                            <Col span={24} sm={{span: 16}}>
+                                <Form onSubmit={this.handleSubmit}>
+                                    <Form.Item {...formItemLayout} label="Coordinates (J2000)" required={true}>
+                                        <Col span={12}>
+                                            <Form.Item>
+                                                {getFieldDecorator('coordinatesRa', {
+                                                    rules: [{
+                                                        pattern: this.coordinatesRaRegexp,
+                                                        message: 'The input is not valid right ascension!',
+                                                    }, {
+                                                        required: true, message: 'Please input the right ascension!',
+                                                    }, {
+                                                        validator: this.validateRaRange
+                                                    }],
+                                                })(
+                                                    <Input placeholder="Right ascension" onBlur={this.handleCoordsBlur}
+                                                           style={{
+                                                               borderTopRightRadius: 0,
+                                                               borderBottomRightRadius: 0
+                                                           }}/>
+                                                )}
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={12}>
+                                            <Form.Item>
+                                                {getFieldDecorator('coordinatesDec', {
+                                                    rules: [{
+                                                        pattern: this.coordinatesDecRegexp,
+                                                        message: 'The input is not valid declination!',
+                                                    }, {
+                                                        required: true, message: 'Please input the declination!',
+                                                    }, {
+                                                        validator: this.validateDecRange
+                                                    }],
+                                                })(
+                                                    <Input placeholder="Declination" onBlur={this.handleCoordsBlur}
+                                                           style={{borderBottomLeftRadius: 0, borderTopLeftRadius: 0}}/>
+                                                )}
+                                            </Form.Item>
+                                        </Col>
+                                    </Form.Item>
+                                    {crossIdFormItems}
+                                    <Form.Item {...formItemLayoutWithOutLabel}>
+                                        <Button type="dashed" onClick={this.addCrossId} style={{width: "90%"}}>
+                                            <Icon type="plus"/> Add Cross id
+                                        </Button>
+                                    </Form.Item>
+                                    <Form.Item {...formItemLayout} label="Constellation">
+                                        <Spin spinning={this.state.constellationsLoading}>
+                                            {
+                                                getFieldDecorator('constellation', {
+                                                    rules: [
+                                                        {required: true, message: "Please choose a constellation"}
+                                                    ]
+                                                })(
+                                                    <Select
+                                                        showSearch
+                                                        placeholder="Select a constellation"
+                                                        optionFilterProp="children"
+                                                    >
+                                                        {this.state.constellations.map(cons => {
+                                                            return (
+                                                                <Option
+                                                                    key={cons.id}>{cons.abbreviation} ({cons.name})</Option>
+                                                            )
+                                                        })}
+                                                    </Select>
                                                 )
-                                            })}
-                                        </Select>
-                                    )
-                                }
-                            </Spin>
-                        </Form.Item>
-                        <Form.Item {...formItemLayout} label="Discoverers">
-                            <Spin spinning={this.state.observersLoading}>
-                                {
-                                    getFieldDecorator('discoverers', {
-                                        rules: [
-                                            {required: true, type: "array", message: "Choose at least one discoverer"}
-                                        ]
-                                    })(
-                                        <Select
-                                            showSearch
-                                            mode="multiple"
-                                            placeholder="Select discoverers"
-                                            optionFilterProp="children"
-                                        >
-                                            {this.state.observers.map(obs => {
-                                                return (
-                                                    <Option key={obs.id}>{obs.firstName} {obs.lastName}</Option>
+                                            }
+                                        </Spin>
+                                    </Form.Item>
+                                    <Form.Item {...formItemLayout} label="Discoverers">
+                                        <Spin spinning={this.state.observersLoading}>
+                                            {
+                                                getFieldDecorator('discoverers', {
+                                                    rules: [
+                                                        {
+                                                            required: true,
+                                                            type: "array",
+                                                            message: "Choose at least one discoverer"
+                                                        }
+                                                    ]
+                                                })(
+                                                    <Select
+                                                        showSearch
+                                                        mode="multiple"
+                                                        placeholder="Select discoverers"
+                                                        optionFilterProp="children"
+                                                    >
+                                                        {this.state.observers.map(obs => {
+                                                            return (
+                                                                <Option
+                                                                    key={obs.id}>{obs.firstName} {obs.lastName}</Option>
+                                                            )
+                                                        })}
+                                                    </Select>
                                                 )
-                                            })}
-                                        </Select>
-                                    )
-                                }
-                            </Spin>
-                        </Form.Item>
-                        <Form.Item {...formItemLayout} label="Year">
-                            {getFieldDecorator('year', {
-                                rules: [{required: true, message: "Year of discovery is required"}],
-                                initialValue: currentYear
-                            })(
-                                <InputNumber max={currentYear}/>
-                            )}
-                        </Form.Item>
-                        <Form.Item style={{marginBottom: 0}} {...formItemLayout} label="Type"
-                                   validateStatus={!this.state.typeValid ? "warning" : ""}
-                                   help={!this.state.typeValid ? "This is not a valid VSX variable star type, but you can still submit it" : ""}
-                                   hasFeedback>
-                            {getFieldDecorator('type', {})(
-                                <AutoComplete
-                                    onSearch={this.handleTypeSearch}
-                                    dataSource={this.state.typeOptions}
-                                    onChange={this.handleTypeChange}>
-                                    <Input/>
-                                </AutoComplete>
-                            )}
-                        </Form.Item>
-                        <Form.Item {...formItemLayoutWithOutLabel} extra={(
-                            <span>You can find more information about types <a target="_blank" rel="noopener noreferrer"
-                                                                               href="https://www.aavso.org/vsx/index.php?view=about.vartypes">here</a></span>)}>
-                            <Checkbox onChange={this.handleTypeUncertainChange} checked={this.state.typeUncertain}>Type
-                                uncertain</Checkbox>
-                        </Form.Item>
-                        <Form.Item {...formItemLayout} label="Amplitude">
-                            {getFieldDecorator('amplitude', {
-                                rules: [{
-                                    type: "number", message: "The input is not valid amplitude"
-                                }],
-                            })(
-                                <InputNumber style={{width: "100%"}}/>
-                            )}
-                        </Form.Item>
-                        <Form.Item {...formItemLayout} label="Filter band">
-                            <Spin spinning={this.state.filterbandsLoading}>
-                                {getFieldDecorator('filterband', {})(
-                                    <Select
-                                        showSearch
-                                        placeholder="Select a filter band"
-                                        optionFilterProp="children"
-                                    >
-                                        {this.state.filterbands.map(fb => {
-                                            return (
-                                                <Option key={fb.id}>{fb.name}</Option>
-                                            )
-                                        })}
-                                    </Select>
-                                )}
-                            </Spin>
-                        </Form.Item>
-                        <Form.Item {...formItemLayout} label="Epoch">
-                            {getFieldDecorator('epoch', {
-                                rules: [{
-                                    type: "number", message: "The input is not valid epoch"
-                                }],
-                            })(
-                                <InputNumber
-                                    min={2400000}
-                                    style={{width: "100%"}}/>
-                            )}
-                        </Form.Item>
-                        <Form.Item {...formItemLayout} label="Period">
-                            {getFieldDecorator('period', {
-                                rules: [{
-                                    type: "number", message: "The input is not valid period"
-                                }],
-                            })(
-                                <InputNumber style={{width: "100%"}}/>
-                            )}
-                        </Form.Item>
-                        <Form.Item {...formItemLayout} label="Note">
-                            {getFieldDecorator('note', {})(
-                                <Input.TextArea/>
-                            )}
-                        </Form.Item>
-                        <Form.Item {...formItemLayoutWithOutLabel}>
-                            <Button type="primary" htmlType="submit">Submit for approval</Button>
-                        </Form.Item>
-                    </Form>
-                </Col>
-                <Col span={24} sm={{span: 8}}>
-                    <Spin spinning={this.state.coordsInfoLoading}>
-                        <div>
-                            {this.state.coordsInfoResult ? (
-                                <CoordsInfoResultWrapper result={this.state.coordsInfoResult}/>
-                            ) : (
-                                <div></div>
-                            )}
-                        </div>
-                    </Spin>
-                </Col>
-            </Row>
+                                            }
+                                        </Spin>
+                                    </Form.Item>
+                                    <Form.Item {...formItemLayout} label="Year">
+                                        {getFieldDecorator('year', {
+                                            rules: [{required: true, message: "Year of discovery is required"}],
+                                            initialValue: currentYear
+                                        })(
+                                            <InputNumber max={currentYear}/>
+                                        )}
+                                    </Form.Item>
+                                    <Form.Item style={{marginBottom: 0}} {...formItemLayout} label="Type"
+                                               validateStatus={!this.state.typeValid ? "warning" : ""}
+                                               help={!this.state.typeValid ? "This is not a valid VSX variable star type, but you can still submit it" : ""}
+                                               hasFeedback>
+                                        {getFieldDecorator('type', {})(
+                                            <AutoComplete
+                                                onSearch={this.handleTypeSearch}
+                                                dataSource={this.state.typeOptions}
+                                                onChange={this.handleTypeChange}>
+                                                <Input/>
+                                            </AutoComplete>
+                                        )}
+                                    </Form.Item>
+                                    <Form.Item {...formItemLayoutWithOutLabel} extra={(
+                                        <span>You can find more information about types <a target="_blank"
+                                                                                           rel="noopener noreferrer"
+                                                                                           href="https://www.aavso.org/vsx/index.php?view=about.vartypes">here</a></span>)}>
+                                        <Checkbox onChange={this.handleTypeUncertainChange}
+                                                  checked={this.state.typeUncertain}>Type
+                                            uncertain</Checkbox>
+                                    </Form.Item>
+                                    <Form.Item {...formItemLayout} label="Amplitude">
+                                        {getFieldDecorator('amplitude', {
+                                            rules: [{
+                                                type: "number", message: "The input is not valid amplitude"
+                                            }],
+                                        })(
+                                            <InputNumber style={{width: "100%"}}/>
+                                        )}
+                                    </Form.Item>
+                                    <Form.Item {...formItemLayout} label="Filter band">
+                                        <Spin spinning={this.state.filterbandsLoading}>
+                                            {getFieldDecorator('filterband', {})(
+                                                <Select
+                                                    allowClear
+                                                    showSearch
+                                                    placeholder="Select a filter band"
+                                                    optionFilterProp="children"
+                                                >
+                                                    {this.state.filterbands.map(fb => {
+                                                        return (
+                                                            <Option key={fb.id}>{fb.name}</Option>
+                                                        )
+                                                    })}
+                                                </Select>
+                                            )}
+                                        </Spin>
+                                    </Form.Item>
+                                    <Form.Item {...formItemLayout} label="Epoch">
+                                        {getFieldDecorator('epoch', {
+                                            rules: [{
+                                                type: "number", message: "The input is not valid epoch"
+                                            }],
+                                        })(
+                                            <InputNumber
+                                                min={2400000}
+                                                style={{width: "100%"}}/>
+                                        )}
+                                    </Form.Item>
+                                    <Form.Item {...formItemLayout} label="Period">
+                                        {getFieldDecorator('period', {
+                                            rules: [{
+                                                type: "number", message: "The input is not valid period"
+                                            }],
+                                        })(
+                                            <InputNumber style={{width: "100%"}}/>
+                                        )}
+                                    </Form.Item>
+                                    <Form.Item {...formItemLayout} label="Note">
+                                        {getFieldDecorator('note', {})(
+                                            <Input.TextArea/>
+                                        )}
+                                    </Form.Item>
+                                    <Form.Item {...formItemLayoutWithOutLabel}>
+                                        <Button type="primary" htmlType="submit">Submit for approval</Button>
+                                    </Form.Item>
+                                </Form>
+                            </Col>
+                            <Col span={24} sm={{span: 8}}>
+                                <Spin style={{minHeight: "100px", width: "100%"}}
+                                      tip="Searching other catalogues by coordinates"
+                                      spinning={this.state.coordsInfoLoading}>
+                                    {this.state.coordsInfoResult && (
+                                        <CoordsInfoResultsWrapper onUcacCopy={this.handleUcacCopy}
+                                                                  coords={this.state.coordsInfoParams}
+                                                                  result={this.state.coordsInfoResult}/>
+                                    )}
+                                </Spin>
+                                <Spin spinning={this.state.nameInfoLoading} style={{minHeight: 100, width: "100%"}}
+                                      tip="Searching other catalogues by id">
+                                    {this.state.nameInfoResult && (
+                                        <NameInfoResultsWrapper onUcacCopy={this.handleUcacCopy}
+                                                                name={this.state.nameInfoParams}
+                                                                result={this.state.nameInfoResult}/>
+                                    )}
+                                </Spin>
+                            </Col>
+                        </Row>
+                    </Tabs.TabPane>
+                    <Tabs.TabPane tab="Import multiple" key={2}></Tabs.TabPane>
+                </Tabs>
+            </div>
         )
     }
 }
 
-const customSuccessPanelStyle = {
-    border: "1px solid #b7eb8f",
-    background: "#f6ffed",
-    marginBottom: 4,
-    borderRadius: 4
-};
+function DistanceWrapper(props) {
+    return (
+        <span
+            style={{display: "inline-block", marginLeft: 4}}>({(props.distance * 3600).toFixed(4)} arcsec)</span>
+    )
+}
 
-const customWarningPanelStyle = {
-    border: "1px solid #ffe58f",
-    background: "#fffbe6",
-    marginBottom: 4,
-    borderRadius: 4
-};
+class NameInfoResultsWrapper extends Component {
+    render() {
+        const {result} = this.props;
+        if (!result) {
+            return (<div/>);
+        }
+        const {vsx, czev, ucac4, sesame} = result;
+        return (
+            <div style={{marginBottom: 8}}>
+                <h4>Cross id search ({this.props.name})</h4>
+                <StarInfoResultWrapper
+                    title="CzeV"
+                    successOnZero
+                    results={czev ? [czev] : []}
+                    style={{marginBottom: 4}}
+                    message={(<span><b>CzeV: </b>{!czev && "No result"}</span>)}
+                    renderItem={item => (
+                        <List.Item>
+                            <div>
+                                <Link to={`/czev/${item.czevId}`}
+                                      target="_blank">CzeV {item.czevId} {item.constellation.abbreviation}</Link>
+                            </div>
+                        </List.Item>
+                    )}
+                />
+                <StarInfoResultWrapper
+                    title="VSX"
+                    successOnZero
+                    results={vsx ? [vsx] : []}
+                    style={{marginBottom: 4}}
+                    message={(<span><b>VSX: </b>{!vsx && "No result"}</span>)}
+                    renderItem={item => (
+                        <List.Item>
+                            <div>
+                                <a target="_blank"
+                                   rel="noopener noreferrer"
+                                   href={"https://www.aavso.org/vsx/index.php?view=detail.top&oid=" + item.vsxId}>{item.originalName}</a>
+                            </div>
+                        </List.Item>
+                    )}/>
+                <StarInfoResultWrapper
+                    title="UCAC4"
+                    successOnZero={false}
+                    results={ucac4 ? [ucac4] : []}
+                    style={{marginBottom: 4}}
+                    message={(<span><b>UCAC4: </b>{!ucac4 && "No result"}</span>)}
+                    renderItem={item => (
+                        <List.Item>
+                            <div>
+                                <div>
+                                    <a>UCAC4 {item.identifier}</a>
+                                </div>
+                                <div>
+                                                       <span style={{display: "inline-block", marginRight: 4}}>
+                                                            RA: <CoordinateWrapper value={item.coordinates.ra}/>
+                                                       </span>
+                                    <span style={{display: "inline-block"}}>
+                                                           DEC: <CoordinateWrapper value={item.coordinates.dec}/>
+                                                       </span>
+                                </div>
+                            </div>
+                            <Tooltip title="Copy to form">
+                                <Button
+                                    onClick={() => {
+                                        if (this.props.onUcacCopy) {
+                                            this.props.onUcacCopy(item)
+                                        }
+                                    }}
+                                    style={{alignSelf: "center", marginLeft: 12}} type="ghost"
+                                    shape="circle"
+                                    icon="copy"/>
+                            </Tooltip>
+                        </List.Item>
+                    )}/>
+                <SesameResultWrapper sesame={sesame}/>
+            </div>
+        )
+    }
+}
 
-class CoordsInfoResultWrapper extends Component {
+class SesameResultWrapper extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {showAll: false}
+    }
+
+    render() {
+        const {sesame} = this.props;
+        return (
+            <StarInfoResultWrapper
+                title="SESAME"
+                successOnZero={false}
+                results={sesame ? [sesame] : []}
+                style={{marginBottom: 4}}
+                renderItem={item => {
+                    item.names.sort((a, b) => {
+                        if (a.startsWith("UCAC4")) {
+                            return -2;
+                        }
+                        if (a.startsWith("USNO")) {
+                            return -1;
+                        }
+                        return 0;
+                    });
+                    const importantNames = [];
+                    const otherNames = [];
+                    item.names.forEach(i => {
+                        if (i.startsWith("UCAC4") || i.startsWith("USNO")) {
+                            importantNames.push(i)
+                        } else {
+                            otherNames.push(i);
+                        }
+                    });
+                    return (
+                        <List.Item>
+                            <div>
+                                <div>
+                                    <span style={{display: "inline-block", marginRight: 4}}>
+                                        RA: <CoordinateWrapper value={item.coordinates.ra}/>
+                                    </span>
+                                    <span style={{display: "inline-block"}}>
+                                            DEC: <CoordinateWrapper value={item.coordinates.dec}/>
+                                        </span>
+                                </div>
+                                <List size="small" dataSource={importantNames}
+                                      renderItem={i => (<List.Item><Copyable value={i}/></List.Item>)}/>
+                                <AnimateHeight duration={500} height={this.state.showAll ? "auto" : 0}>
+                                    <List size="small" dataSource={otherNames}
+                                          style={{borderTop: "1px solid #e8e8e8"}}
+                                          renderItem={i => (<List.Item>{i}</List.Item>)}/>
+                                </AnimateHeight>
+                                <div style={{textAlign: "center"}}>
+                                    <span className="clickable-icon"
+                                          onClick={() => this.setState({showAll: !this.state.showAll})}>{this.state.showAll ? "Show less" : "Show more"}</span>
+                                </div>
+                            </div>
+                        </List.Item>
+                    )
+                }
+                }
+                message={(<span><b>SESAME: </b>{!sesame && "No result"}</span>)}
+            />
+        )
+    }
+}
+
+function StarInfoResultWrapper(props) {
+    const {results, title, renderItem, successOnZero} = props;
+
+    const style = {};
+    if (props.style) {
+        Object.assign(style, props.style);
+    }
+    let message;
+    if (props.message) {
+        message = props.message
+    } else {
+        message = (
+            <span><b>{title}: </b> {results.length} star{results.length !== 1 && "s"} nearby</span>
+        );
+    }
+    return (
+        <Alert
+            style={style}
+            type={((results.length === 0) && successOnZero) || (results.length > 0 && !successOnZero) ? "success" : "warning"}
+            showIcon
+            message={message}
+            description={results.length === 0 ? null : (
+                <List
+                    size="small"
+                    dataSource={results}
+                    renderItem={renderItem}
+                />
+            )}
+        />
+    );
+}
+
+class CoordsInfoResultsWrapper extends Component {
     render() {
         const {result} = this.props;
         if (!result) {
@@ -802,76 +1060,63 @@ class CoordsInfoResultWrapper extends Component {
         }
         const {vsx, czev, ucac4} = result;
         return (
-            <div>
+            <div style={{marginBottom: 8}}>
                 <h4>Coordinates search</h4>
-                <Collapse bordered={false} defaultActiveKey={ucac4.length > 0 ? ['ucac'] : []}>
-                    {vsx.length === 0 ? (
-                        <Collapse.Panel
-                            header={(
-                                <span style={{color: "rgba(0, 0, 0, 0.85)"}}><Icon style={{
-                                    color: "#52c41a",
-                                    marginRight: 4
-                                }} theme="filled" type="check-circle"/><b>VSX: </b> 0 stars nearby</span>
-                            )}
-                            key="vsx" disabled showArrow={false} style={customSuccessPanelStyle}/>
-                    ) : (
-                        <Collapse.Panel
-                            header={(
-                                <span><Icon style={{
-                                    color: "#faad14",
-                                    marginRight: 4
-                                }} type="exclamation-circle"
-                                            theme="filled"/><b>VSX: </b> {vsx.length} star{vsx.length > 1 ? "s" : ""} nearby</span>
-                            )}
-                            key="vsx" style={customWarningPanelStyle}/>
-                    )}
-                    {czev.length === 0 ? (
-                        <Collapse.Panel
-                            header={(
-                                <span style={{color: "rgba(0, 0, 0, 0.85)"}}><Icon style={{
-                                    color: "#52c41a",
-                                    marginRight: 4
-                                }} theme="filled" type="check-circle"/><b>CzeV: </b> 0 stars nearby</span>
-                            )}
-                            key="czev" disabled showArrow={false} style={customSuccessPanelStyle}/>
-                    ) : (
-                        <Collapse.Panel
-                            header={(
-                                <span><Icon style={{
-                                    color: "#faad14",
-                                    marginRight: 4
-                                }} type="exclamation-circle"
-                                            theme="filled"/><b>CzeV: </b> {czev.length} star{czev.length > 1 ? "s" : ""} nearby</span>
-                            )}
-                            key="czev" style={customWarningPanelStyle}/>
-                    )}
-                    {ucac4.length === 0 ? (
-                        <Collapse.Panel
-                            header={(
-                                <span style={{color: "rgba(0, 0, 0, 0.85)"}}><Icon style={{
-                                    color: "#faad14",
-                                    marginRight: 4
-                                }} type="exclamation-circle" theme="filled"/><b>UCAC4: </b> 0 stars nearby</span>
-                            )}
-                            disabled key="ucac" showArrow={false} style={customWarningPanelStyle}/>
-                    ) : (
-                        <Collapse.Panel
-                            header={(
-                                <span><Icon style={{
-                                    color: "#52c41a",
-                                    marginRight: 4
-                                }} theme="filled"
-                                            type="check-circle"/><b>UCAC4: </b> {ucac4.length} star{ucac4.length > 1 ? "s" : ""} nearby</span>
-                            )}
-                            key="ucac" style={customSuccessPanelStyle}/>
-                    )}
-                </Collapse>
+                <StarInfoResultWrapper results={czev} title="CzeV" successOnZero style={{marginBottom: 4}}
+                                       renderItem={item => (
+                                           <List.Item>
+                                               <div>
+                                                   <Link to={`/czev/${item.model.czevId}`}
+                                                         target="_blank">CzeV {item.model.czevId} {item.model.constellation.abbreviation}</Link>
+                                                   <DistanceWrapper distance={item.distance}/>
+                                               </div>
+                                           </List.Item>)}
+                />
+                <StarInfoResultWrapper results={vsx} title="VSX" successOnZero style={{marginBottom: 4}}
+                                       renderItem={item => (
+                                           <List.Item>
+                                               <div>
+                                                   <a target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      href={"https://www.aavso.org/vsx/index.php?view=detail.top&oid=" + item.model.vsxId}>{item.model.originalName}</a>
+                                                   <DistanceWrapper distance={item.distance}/>
+                                               </div>
+                                           </List.Item>)}
+                />
+                <StarInfoResultWrapper results={ucac4} title="UCAC4" successOnZero={false}
+                                       renderItem={item => (
+                                           <List.Item>
+                                               <div>
+                                                   <div>
+                                                       <a>UCAC4 {item.model.identifier}</a>
+                                                       <DistanceWrapper distance={item.distance}/>
+                                                   </div>
+                                                   <div>
+                                                       <span style={{display: "inline-block", marginRight: 4}}>
+                                                            RA: <CoordinateWrapper value={item.model.coordinates.ra}/>
+                                                       </span>
+                                                       <span style={{display: "inline-block"}}>
+                                                           DEC: <CoordinateWrapper value={item.model.coordinates.dec}/>
+                                                       </span>
+                                                   </div>
+                                               </div>
+                                               <Tooltip title="Copy to form">
+                                                   <Button
+                                                       onClick={() => {
+                                                           if (this.props.onUcacCopy) {
+                                                               this.props.onUcacCopy(item.model)
+                                                           }
+                                                       }}
+                                                       style={{alignSelf: "center", marginLeft: 12}} type="ghost"
+                                                       shape="circle"
+                                                       icon="copy"/>
+                                               </Tooltip>
+                                           </List.Item>)}
+                />
             </div>
         );
     }
 }
-
-// <Icon type="download" />
 
 const WrappedCzevNewStar = Form.create()(CzevNewStar);
 
