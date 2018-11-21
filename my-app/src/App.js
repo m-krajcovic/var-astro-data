@@ -64,7 +64,7 @@ class App extends Component {
                         <Route exact path="/predictions" component={Predictions}/>
                         <Route exact path="/czev/admin" component={CzevAdmin}/>
                         <Route exact path="/czev/user" component={CzevUser}/>
-                        <Route exact path="/czev" component={Czev}/>
+                        <Route path="/czev" component={Czev}/>
                         <Redirect to="/czev"/>
                     </Switch>
                     <Footer style={{textAlign: 'center'}}>

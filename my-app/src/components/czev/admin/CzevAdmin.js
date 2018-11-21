@@ -1,6 +1,5 @@
 import React, {Component} from "react";
 import {Route, Switch} from "react-router-dom";
-import {CzevCatalogue, CzevNewStar, CzevStarDetail} from "../Czev";
 import {Layout} from "antd";
 
 export default class CzevAdmin extends Component {
@@ -11,6 +10,23 @@ export default class CzevAdmin extends Component {
                     <Route path="/czev/admin/drafts" component={CzevAdminDrafts}/>
                     <Route path="/czev/admin/drafts/:id" component={CzevAdminDraftDetail}/>
                 </Switch>
-            </Layout.Content>)
+            </Layout.Content>
+        )
+    }
+}
+
+export class CzevAdminDrafts extends Component {
+    render() {
+        return (
+            <div></div>
+        )
+    }
+}
+
+export class CzevAdminDraftDetail extends Component {
+    render() {
+        return (
+            <div></div>
+        )
     }
 }
