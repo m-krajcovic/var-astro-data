@@ -80,7 +80,7 @@ class CzevStarDraftServiceImpl(
     override fun importCsv(import: CsvImportModel): CsvImportResultModel {
         val (result, errors) = czevStarDraftCsvImportReader.read(import.fileInputStream)
         if (result.isNotEmpty()) {
-            val constellationsMap = constellationRepository.findAll().toMap { it.name.toLowerCase() }
+            val constellationsMap = constellationRepository.findAll().toMap { it.abbreviation.toLowerCase() }
             val filterBandMap = filterBandRepository.findAll().toMap { it.name.toLowerCase() }
             val types = typeRepository.findAll()
             val mutableErrors = errors.toMutableList()
@@ -117,10 +117,14 @@ class CzevStarDraftServiceImpl(
                 }
             }
 
-            czevStarDraftRepository.saveAll(newDrafts)
-
+            if (mutableErrors.isEmpty()) {
+                czevStarDraftRepository.saveAll(newDrafts)
+                return CsvImportResultModel(
+                        newDrafts.size, emptyList()
+                )
+            }
             return CsvImportResultModel(
-                    newDrafts.size, mutableErrors.sortedBy { it.recordNumber }
+                    0, mutableErrors.sortedBy { it.recordNumber }
             )
         }
         return CsvImportResultModel(

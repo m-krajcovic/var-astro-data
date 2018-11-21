@@ -67,7 +67,7 @@ class CzevStarDraftCsvImportReaderImpl(
 ) : CzevStarDraftCsvImportReader {
     override fun read(input: InputStream): ImportResult<CzevStarDraftImportModel> {
         val csvReader = CSVParser(InputStreamReader(input), CSVFormat.DEFAULT)
-        // RA, DEC, constellation name, type, amplitude, filterBand?, crossIds (? split by , ?), year, discoverers (abbreviations), m0?, period?, privateNote, publicNote
+        // *RA (J2000), *DEC (J2000), *Cross-ids (split with ';'), *Constellation (abbreviation), *Discoverers (abbreviations, split by ';'), *Year, Type, Amplitude, Filter Band, Epoch, Period, Note
         val errors = ArrayList<ImportRecordError>()
         val result = ArrayList<ImportRecord<CzevStarDraftImportModel>>()
         csvReader.use {
@@ -75,8 +75,8 @@ class CzevStarDraftCsvImportReaderImpl(
                 val error = ImportRecordError(csvRecord.recordNumber)
                 try {
                     val size = csvRecord.size()
-                    if (size < 13) {
-                        error.messages.add("Number of columns expected: 13, actual: $size")
+                    if (size < 12) {
+                        error.messages.add("Number of columns expected: 12, actual: $size")
                     } else {
 
                         val ra = csvRecord[0].trim()
@@ -87,24 +87,25 @@ class CzevStarDraftCsvImportReaderImpl(
                             val decHolder = conversionService.convert(dec, DeclinationHolder::class.java)!!
                             CosmicCoordinatesModel(raHolder.value, decHolder.value)
                         } catch (e: Exception) {
-                            error.messages.add("Failed to parse coordinates")
+                            error.messages.add("Failed to parse coordinates RA: '${csvRecord[0]}' DEC: '${csvRecord[1]}'")
                             CosmicCoordinatesModel(BigDecimal.ZERO, BigDecimal.ZERO)
                         }
 
-                        val constellationName = csvRecord[2].trim()
-                        val type = csvRecord[3].trim()
-                        val amplitude = csvRecord[4].toDoubleOrNull()
-                        val filterBand = csvRecord[5].trim()
-                        val crossIds = csvRecord[6].split(',').map { i -> i.trim() }.toSet()
-                        val year = csvRecord[7].toIntOrNull()
+                        val crossIds = csvRecord[2].split(';').map { i -> i.trim() }.toSet()
+                        val constellationName = csvRecord[3].trim()
+                        val discoverers = csvRecord[4].split(';').map { d -> d.trim() }.toSet()
+                        val year = csvRecord[5].toIntOrNull()
                         if (year == null) {
-                            error.messages.add("Failed to parse year of discovery")
+                            error.messages.add("Failed to parse year of discovery '${csvRecord[5]}'")
                         }
-                        val discoverers = csvRecord[8].split(',').map { d -> d.trim() }.toSet()
+
+                        val type = csvRecord[6].trim()
+                        val amplitude = csvRecord[7].toDoubleOrNull()
+                        val filterBand = csvRecord[8].trim()
                         val m0 = csvRecord[9].toBigDecimalOrNull()
                         val period = csvRecord[10].toBigDecimalOrNull()
-                        val privateNote = csvRecord[11]
-                        val publicNote = csvRecord[12]
+                        val privateNote = ""
+                        val publicNote = csvRecord[11]
 
                         if (error.messages.isEmpty()) {
                             result.add(ImportRecord(csvRecord.recordNumber, CzevStarDraftImportModel(

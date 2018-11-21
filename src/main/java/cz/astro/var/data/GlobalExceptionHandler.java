@@ -1,11 +1,23 @@
 package cz.astro.var.data;
 
+import cz.astro.var.data.czev.service.ServiceException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 @ControllerAdvice
 @Component
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ServiceException.class)
+    public void handleException(ServiceException e, HttpServletResponse response) throws IOException {
+        response.sendError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+    }
+
 //    @ExceptionHandler
 //    @ResponseBody
 //    @ResponseStatus(HttpStatus.BAD_REQUEST)

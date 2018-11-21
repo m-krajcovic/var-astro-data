@@ -10,7 +10,9 @@ import Czev from "./components/czev/Czev";
 import "./App.css"
 import "antd/dist/antd.css";
 
-import {Layout, Menu } from 'antd';
+import {Layout, Menu} from 'antd';
+import CzevAdmin from "./components/czev/admin/CzevAdmin";
+import CzevUser from "./components/czev/user/CzevUser";
 
 const {Header, Content, Footer, Sider} = Layout;
 
@@ -23,14 +25,26 @@ const LinkMenu = withRouter(props => {
                 theme="dark"
                 mode="horizontal"
                 style={{lineHeight: '64px'}}
-                selectedKeys={selectedKeys}
+                selectedKeys={[selectedKeys[selectedKeys.length - 1]]}
             >
                 <Menu.Item key="/oc">
                     <NavLink to="/oc"><span className="header-link">O-C Gate</span></NavLink>
                 </Menu.Item>
-                <Menu.Item key="/czev">
-                    <NavLink to="/czev"><span className="header-link">CzeV</span></NavLink>
-                </Menu.Item>
+                <Menu.SubMenu title={<NavLink to="/czev">CzeV</NavLink>}>
+                    <Menu.Item key="/czev">
+                        <NavLink to="/czev">Catalogue</NavLink>
+                    </Menu.Item>
+                    <Menu.SubMenu title="User">
+                        <Menu.Item key="/czev/user/drafts">
+                            <NavLink to="/czev/user/drafts">Drafts</NavLink>
+                        </Menu.Item>
+                    </Menu.SubMenu>
+                    <Menu.SubMenu title="Admin">
+                        <Menu.Item key="/czev/admin/drafts">
+                            <NavLink to="/czev/admin/drafts">Drafts</NavLink>
+                        </Menu.Item>
+                    </Menu.SubMenu>
+                </Menu.SubMenu>
             </Menu>
         );
     }
@@ -44,13 +58,15 @@ class App extends Component {
                     <Header style={{width: "100%"}}>
                         <LinkMenu/>
                     </Header>
-                        <Switch>
-                            <Route path="/oc" component={OcGate}/>
-                            <Route path="/brno" component={Brno}/>
-                            <Route path="/predictions" component={Predictions}/>
-                            <Route path="/czev" component={Czev}/>
-                            <Redirect to="/oc"/>
-                        </Switch>
+                    <Switch>
+                        <Route exact path="/oc" component={OcGate}/>
+                        <Route exact path="/brno" component={Brno}/>
+                        <Route exact path="/predictions" component={Predictions}/>
+                        <Route exact path="/czev/admin" component={CzevAdmin}/>
+                        <Route exact path="/czev/user" component={CzevUser}/>
+                        <Route exact path="/czev" component={Czev}/>
+                        <Redirect to="/czev"/>
+                    </Switch>
                     <Footer style={{textAlign: 'center'}}>
                         ©2018
                     </Footer>
@@ -93,16 +109,25 @@ class OcGate extends Component {
     render() {
         return (
             <Content>
-                <Sider theme="light" style={{overflow: 'auto', height: 'calc(100vh - 64px)', position: 'fixed',top:64, left: 0}}>
+                <Sider theme="light"
+                       style={{overflow: 'auto', height: 'calc(100vh - 64px)', position: 'fixed', top: 64, left: 0}}>
                     <ConstellationList constellations={this.state.constellations}
                                        onSelected={constellation => this.onConstellationSelected(constellation)}
                                        loading={this.state.constellationsLoading}/>
                 </Sider>
-                <Sider theme="light" style={{overflow: 'auto', height: 'calc(100vh - 64px)', position: 'fixed',top:64, left: 200}}>
+                <Sider theme="light"
+                       style={{overflow: 'auto', height: 'calc(100vh - 64px)', position: 'fixed', top: 64, left: 200}}>
                     <StarList stars={this.state.stars} onSelected={star => this.onStarSelected(star)}
                               loading={this.state.starsLoading}/>
                 </Sider>
-                <div className="stars-detail-wrapper" style={{overflow: 'auto', height: 'calc(100vh - 64px)', position: 'fixed', top:64, left: 400, right: 0}}>
+                <div className="stars-detail-wrapper" style={{
+                    overflow: 'auto',
+                    height: 'calc(100vh - 64px)',
+                    position: 'fixed',
+                    top: 64,
+                    left: 400,
+                    right: 0
+                }}>
                     <StarDetail selectedElement={this.state.selectedElement} star={this.state.selectedStar}
                                 loading={this.state.starLoading} onElementChange={(element) => {
                         this.setState({...this.state, selectedElement: element})

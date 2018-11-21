@@ -7,11 +7,11 @@ const prependZero = function(length, number) {
         numberStr = "0" + numberStr;
     }
     return numberStr;
-}
-
-const coordinatesToString = function(coords) {
-    return `${prependZero(2, coords.raHours)} ${prependZero(2, coords.raMinutes)} ${prependZero(2, coords.raSeconds)} ${coords.decSign}${prependZero(2, coords.decDegrees)} ${prependZero(2, coords.decMinutes)} ${prependZero(2, coords.decSeconds)}`;
 };
+
+// const coordinatesToString = function(coords) {
+//     return `${prependZero(2, coords.raHours)} ${prependZero(2, coords.raMinutes)} ${prependZero(2, coords.raSeconds)} ${coords.decSign}${prependZero(2, coords.decDegrees)} ${prependZero(2, coords.decMinutes)} ${prependZero(2, coords.decSeconds)}`;
+// };
 
 const coordinatesToStringRa = function(coords) {
     return `${prependZero(2, coords.raHours)} ${prependZero(2, coords.raMinutes)} ${prependZero(2, coords.raSeconds)}`;
