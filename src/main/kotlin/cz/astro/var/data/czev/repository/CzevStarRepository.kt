@@ -25,8 +25,8 @@ interface CzevStarRepository : JpaRepository<CzevStar, Long>, JpaSpecificationEx
     @Query("SELECT DISTINCT s FROM CzevStar s LEFT JOIN FETCH s.constellation LEFT JOIN FETCH s.filterBand LEFT JOIN FETCH s.crossIdentifications LEFT JOIN FETCH s.discoverers")
     fun findAllFetched(): List<CzevStar>
 
-    @Query("SELECT DISTINCT s FROM CzevStar s LEFT JOIN FETCH s.constellation LEFT JOIN FETCH s.discoverers LEFT JOIN FETCH s.crossIdentifications i WHERE UPPER(i.name) LIKE UPPER(:identification) LIMIT 1")
-    fun findByStarIdentificationPartlyFetched(@Param("identification") identification: String): Optional<CzevStar>
+    @Query("SELECT DISTINCT s FROM CzevStar s LEFT JOIN FETCH s.constellation LEFT JOIN FETCH s.discoverers LEFT JOIN FETCH s.crossIdentifications i WHERE UPPER(i.name) LIKE UPPER(:identification)")
+    fun findByStarIdentificationPartlyFetched(@Param("identification") identification: String): List<CzevStar>
 }
 
 interface UserRepository: JpaRepository<User, Long> {
@@ -34,6 +34,7 @@ interface UserRepository: JpaRepository<User, Long> {
     fun findByIdFetched(@Param("id") id: Long): Optional<User>
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.email = :email")
     fun findByEmailFetched(@Param("email") email: String): Optional<User>
+
     fun existsByEmail(email: String): Boolean
 }
 

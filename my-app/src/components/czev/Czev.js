@@ -327,20 +327,7 @@ class Copyable extends Component {
     }
 }
 
-/*
-        val constellation: ConstellationModel,
-        val type: String,
-        val discoverers: List<StarObserverModel>,
-        val amplitude: Double?,
-        val filterBand: FilterBandModel?,
-        val crossIdentifications: Set<String>,
-        val coordinates: CosmicCoordinatesModel,
-        val privateNote: String,
-        val publicNote: String,
-        val m0: BigDecimal?,
-        val period: BigDecimal?,
-        val year: Int
-*/
+
 export class CzevNewStar extends Component {
     constructor(props) {
         super(props);
@@ -349,9 +336,9 @@ export class CzevNewStar extends Component {
             constellations: [],
             observers: [],
             types: [],
-            filterbands: [],
+            filterBands: [],
             constellationsLoading: false,
-            filterbandsLoading: false,
+            filterBandsLoading: false,
             typesLoading: false,
             observersLoading: false,
 
@@ -378,7 +365,7 @@ export class CzevNewStar extends Component {
             ...this.state,
             constellationsLoading: true,
             observersLoading: true,
-            filterbandsLoading: true,
+            filterBandsLoading: true,
             typesLoading: true
         });
         axios.get(BASE_URL + "/czev/constellations")
@@ -389,9 +376,9 @@ export class CzevNewStar extends Component {
             .then(result => {
                 this.setState({...this.state, typesLoading: false, types: new Set(result.data)});
             });
-        axios.get(BASE_URL + "/czev/filterbands")
+        axios.get(BASE_URL + "/czev/filterBands")
             .then(result => {
-                this.setState({...this.state, filterbandsLoading: false, filterbands: result.data});
+                this.setState({...this.state, filterBandsLoading: false, filterBands: result.data});
             });
         axios.get(BASE_URL + "/czev/observers")
             .then(result => {
@@ -438,6 +425,23 @@ export class CzevNewStar extends Component {
                     onOk() {
                         console.log('OK');
                         console.log(values);
+                        const body = {
+                            constellation: values.constellation,
+                            type: values.type ? values.type : "",
+                            discoverers: values.discoverers,
+                            amplitude: values.amplitude,
+                            filterBand: values.filterBand,
+                            crossIdentifications: values.crossIds,
+                            coordinates: {ra: values.coordinatesRa, dec: values.coordinatesDec},
+                            publicNote: values.note ? values.note : "",
+                            privateNote: "",
+                            m0: values.epoch,
+                            period: values.period,
+                            year: values.year
+                        };
+                        console.log(body);
+                        return axios.post(BASE_URL + "/czev/drafts", body)
+
                     },
                     onCancel() {
                         console.log('Cancel');
@@ -530,16 +534,16 @@ export class CzevNewStar extends Component {
 
     handleCrossIdBlur = () => {
         const {form: {validateFields}} = this.props;
-        validateFields(["crossids[0]"], (err, values) => {
-            if (!err && values && values.crossids[0]) {
-                if (this.state.nameInfoParams !== values.crossids[0]) {
-                    this.setState({...this.state, nameInfoParams: values.crossids[0], nameInfoLoading: true});
+        validateFields(["crossIds[0]"], (err, values) => {
+            if (!err && values && values.crossIds[0]) {
+                if (this.state.nameInfoParams !== values.crossIds[0]) {
+                    this.setState({...this.state, nameInfoParams: values.crossIds[0], nameInfoLoading: true});
                     axios.get(BASE_URL + "/czev/cds/all", {
                         params: {
-                            name: values.crossids[0],
+                            name: values.crossIds[0],
                         }
                     }).then(result => {
-                        if (this.state.nameInfoParams === values.crossids[0]) {
+                        if (this.state.nameInfoParams === values.crossIds[0]) {
                             this.setState({...this.state, nameInfoResult: result.data, nameInfoLoading: false})
                         }
                     })
@@ -578,7 +582,7 @@ export class CzevNewStar extends Component {
         form.setFieldsValue({
             coordinatesRa: model.coordinates.ra,
             coordinatesDec: model.coordinates.dec,
-            "crossids[0]": `UCAC4 ${model.identifier}`,
+            "crossIds[0]": `UCAC4 ${model.identifier}`,
         });
         this.handleCoordsBlur();
         this.handleCrossIdBlur();
@@ -607,9 +611,9 @@ export class CzevNewStar extends Component {
 
 
         getFieldDecorator('crossidKeys', {initialValue: [0]});
-        const crossids = getFieldValue('crossidKeys');
+        const crossIds = getFieldValue('crossidKeys');
 
-        const crossIdFormItems = crossids.map((k, index) => {
+        const crossIdFormItems = crossIds.map((k, index) => {
             return (
                 <Form.Item
                     {...(index === 0 ? formItemLayout : formItemLayoutWithOutLabel)}
@@ -617,7 +621,7 @@ export class CzevNewStar extends Component {
                     required={true}
                     key={k}
                 >
-                    {getFieldDecorator(`crossids[${k}]`, {
+                    {getFieldDecorator(`crossIds[${k}]`, {
                         validateTrigger: ['onChange', 'onBlur'],
                         rules: [{
                             required: true,
@@ -634,13 +638,13 @@ export class CzevNewStar extends Component {
                         }} placeholder="Cross id" style={{width: "90%", marginRight: 8}}
                                suffix={(
                                    <Tooltip title="Search in catalogues"><Icon type="search" className="clickable-icon"
-                                                                               onClick={() => this.handleCrossIdSearch(getFieldValue(`crossids[${k}]`))}/></Tooltip>)}/>
+                                                                               onClick={() => this.handleCrossIdSearch(getFieldValue(`crossIds[${k}]`))}/></Tooltip>)}/>
                     )}
                     {k > 0 ? (
                         <Icon
                             className="dynamic-delete-button"
                             type="minus-circle-o"
-                            disabled={crossids.length === 1}
+                            disabled={crossIds.length === 1}
                             onClick={() => this.removeCrossId(k)}
                         />
                     ) : null}
@@ -792,15 +796,15 @@ export class CzevNewStar extends Component {
                                         )}
                                     </Form.Item>
                                     <Form.Item {...formItemLayout} label="Filter band">
-                                        <Spin spinning={this.state.filterbandsLoading}>
-                                            {getFieldDecorator('filterband', {})(
+                                        <Spin spinning={this.state.filterBandsLoading}>
+                                            {getFieldDecorator('filterBand', {})(
                                                 <Select
                                                     allowClear
                                                     showSearch
                                                     placeholder="Select a filter band"
                                                     optionFilterProp="children"
                                                 >
-                                                    {this.state.filterbands.map(fb => {
+                                                    {this.state.filterBands.map(fb => {
                                                         return (
                                                             <Option key={fb.id}>{fb.name}</Option>
                                                         )

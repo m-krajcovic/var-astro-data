@@ -261,12 +261,12 @@ class CzevStarDraftServiceImpl(
     }
 
     private fun CzevStarDraftNewModel.toEntity(user: User, typeValidator: StarTypeValidator): CzevStarDraft {
-        val observers = observerRepository.findAllById(discoverers.map { it.id }).toMutableSet()
+        val observers = observerRepository.findAllById(discoverers).toMutableSet()
         if (observers.size == 0 || observers.size != discoverers.size) {
             throw ServiceException("Some of discoverers don't exist")
         }
-        val newConstellation = constellationRepository.findById(constellation.id).orElseThrow { ServiceException("Constellation does not exist") }
-        val newFilterBand = filterBand?.let { filterBandRepository.findById(it.id).orElseThrow { ServiceException("Filter band does not exist") } }
+        val newConstellation = constellationRepository.findById(constellation).orElseThrow { ServiceException("Constellation does not exist") }
+        val newFilterBand = filterBand?.let { filterBandRepository.findById(it).orElseThrow { ServiceException("Filter band does not exist") } }
         val crossIds = crossIdentifications.map { StarIdentification(it, null) }.toMutableSet()
 
         if (starIdentificationRepository.existsByNameIn(crossIdentifications)) {

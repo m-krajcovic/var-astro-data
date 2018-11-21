@@ -61,7 +61,7 @@ class CzevStarServiceImpl(
     }
 
     override fun getByIdentification(identification: String): Optional<CzevStarListModel> {
-        return czevStarRepository.findByStarIdentificationPartlyFetched(identification.trim()).map { it.toListModel() }
+        return Optional.ofNullable(czevStarRepository.findByStarIdentificationPartlyFetched(identification.trim()).firstOrNull()?.toListModel())
     }
 
     @PreAuthorize("hasRole('USER')")

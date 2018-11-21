@@ -51,11 +51,11 @@ data class CzevStarDraftUpdateModel(
 )
 
 data class CzevStarDraftNewModel(
-        val constellation: ConstellationModel,
+        val constellation: Long,
         val type: String,
-        val discoverers: List<StarObserverModel>,
+        val discoverers: List<Long>,
         val amplitude: Double?,
-        val filterBand: FilterBandModel?,
+        val filterBand: Long?,
         val crossIdentifications: Set<String>,
         val coordinates: CosmicCoordinatesModel,
         val privateNote: String,

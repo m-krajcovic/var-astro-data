@@ -192,7 +192,7 @@ class CzevController(
         return typeService.getAll()
     }
 
-    @GetMapping("filterbands")
+    @GetMapping("filterBands")
     fun getAllFilterBands(): List<FilterBandModel> {
         return filterBandService.getAll()
     }
