@@ -85,6 +85,7 @@ export class StarDraftSingleNewStar extends Component {
                         };
                         return axios.post(BASE_URL + "/czev/drafts", body)
                             .then(result => {
+                                // TODO this doesn't work !
                                 history.push("/czev");
                                 notification.success({
                                     message: 'Variable star discovery submitted'
@@ -98,7 +99,6 @@ export class StarDraftSingleNewStar extends Component {
                             })
                     },
                     onCancel() {
-                        console.log('Cancel');
                     },
                 });
             }

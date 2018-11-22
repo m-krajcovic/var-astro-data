@@ -88,7 +88,7 @@ compileTestKotlin {
 node {
     version = '8.11.2'
     npmVersion = '5.6.0'
-    download = true
+    download = false
 
     // Set the work directory for NPM
     npmWorkDir = file("${project.buildDir}/npm")

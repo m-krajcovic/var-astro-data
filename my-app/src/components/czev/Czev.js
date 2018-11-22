@@ -173,7 +173,6 @@ export class CzevCatalogue extends Component {
             },
             // responseType: 'blob'
         }).then(response => {
-            console.log(response);
             const url = window.URL.createObjectURL(new Blob([response.data.content]));
             const link = document.createElement('a');
             link.href = url;
@@ -216,7 +215,6 @@ export class CzevStarDetail extends Component {
             this.setState({...this.state, data: result.data, loading: false});
         } catch (error) {
             if (error.response) {
-                console.log(error.response);
                 this.setState({...this.state, loading: false, data: null, error: error.response})
             }
         }

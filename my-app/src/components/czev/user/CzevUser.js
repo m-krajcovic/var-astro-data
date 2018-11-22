@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {Layout} from "antd/lib/layout";
+import {Layout} from "antd";
 import {Route, Switch} from "react-router-dom";
 
 export default class CzevUser extends Component {
@@ -30,3 +30,4 @@ export class CzevUserDraftDetail extends Component {
         )
     }
 }
+
