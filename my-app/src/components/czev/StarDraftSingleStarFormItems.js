@@ -92,7 +92,7 @@ export class StarDraftSingleStarFormItems extends Component {
             const certainType = value[value.length - 1] === ':' ? value.substring(0, value.length - 1) : value;
             const types = certainType.split(/[|+/]/);
             types.forEach(type => {
-                if (!this.props.types.has(type)) {
+                if (!this.props.entities.types.has(type)) {
                     typeValid = false;
                 }
             });
@@ -223,7 +223,7 @@ export class StarDraftSingleStarFormItems extends Component {
                     </Button>
                 </Form.Item>
                 <Form.Item {...formItemLayout} label="Constellation">
-                    <Spin spinning={this.props.constellationsLoading}>
+                    <Spin spinning={this.props.entities.loading}>
                         {
                             getFieldDecorator('constellation', {
                                 rules: [
@@ -235,7 +235,7 @@ export class StarDraftSingleStarFormItems extends Component {
                                     placeholder="Select a constellation"
                                     optionFilterProp="children"
                                 >
-                                    {this.props.constellations.map(cons => {
+                                    {this.props.entities.constellations.map(cons => {
                                         return (
                                             <Select.Option
                                                 key={cons.id}>{cons.abbreviation} ({cons.name})</Select.Option>
@@ -247,7 +247,7 @@ export class StarDraftSingleStarFormItems extends Component {
                     </Spin>
                 </Form.Item>
                 <Form.Item {...formItemLayout} label="Discoverers">
-                    <Spin spinning={this.props.observersLoading}>
+                    <Spin spinning={this.props.entities.loading}>
                         {
                             getFieldDecorator('discoverers', {
                                 rules: [
@@ -264,7 +264,7 @@ export class StarDraftSingleStarFormItems extends Component {
                                     placeholder="Select discoverers"
                                     optionFilterProp="children"
                                 >
-                                    {this.props.observers.map(obs => {
+                                    {this.props.entities.observers.map(obs => {
                                         return (
                                             <Select.Option
                                                 key={obs.id}>{obs.firstName} {obs.lastName}</Select.Option>
@@ -314,7 +314,7 @@ export class StarDraftSingleStarFormItems extends Component {
                     )}
                 </Form.Item>
                 <Form.Item {...formItemLayout} label="Filter band">
-                    <Spin spinning={this.props.filterBandsLoading}>
+                    <Spin spinning={this.props.entities.loading}>
                         {getFieldDecorator('filterBand', {})(
                             <Select
                                 allowClear
@@ -322,7 +322,7 @@ export class StarDraftSingleStarFormItems extends Component {
                                 placeholder="Select a filter band"
                                 optionFilterProp="children"
                             >
-                                {this.props.filterBands.map(fb => {
+                                {this.props.entities.filterBands.map(fb => {
                                     return (
                                         <Select.Option key={fb.id}>{fb.name}</Select.Option>
                                     )

@@ -91,17 +91,12 @@ export class CzevStarDraftsTable extends Component {
                     title: '',
                     dataIndex: 'id',
                     key: 'operation',
-                    render: id => (
-                        <Popconfirm visible={this.state.removeConfirmVisible} title="Are you sure？" okText="Yes" cancelText="No" onConfirm={e => {
-                            e.stopPropagation();
-                            this.props.onRemoveClick(id);
-                        }} >
-                            <Icon onClick={e => {
-                                e.stopPropagation();
-                                this.setState({...this.state, removeConfirmVisible: true})
-                            }} className="clickable-icon" type="delete"/>
-                        </Popconfirm>
-                    )
+                    onCell: record => {
+                        return {
+                            onClick: e => e.stopPropagation()
+                        };
+                    },
+                    render: id => (<DraftDeletePopconfirm onConfirm={() => this.props.onRemoveClick(id)}/>)
                 }
             )
         }
@@ -118,5 +113,32 @@ export class CzevStarDraftsTable extends Component {
                 size="small" rowKey="id" columns={columns} dataSource={this.props.data}
                 loading={this.props.loading}/>
         )
+    }
+}
+
+class DraftDeletePopconfirm extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {visible: false}
+    }
+
+    render() {
+        return (
+            <Popconfirm visible={this.state.visible} title="Are you sure？" okText="Yes"
+                        cancelText="No"
+                        onConfirm={e => {
+                            e.stopPropagation();
+                            this.props.onConfirm();
+                        }}
+                        onCancel={e => {
+                            e.stopPropagation();
+                            this.setState({...this.state, visible: false})
+                        }}>
+                <Icon onClick={e => {
+                    e.stopPropagation();
+                    this.setState({...this.state, visible: true})
+                }} className="clickable-icon" type="delete"/>
+            </Popconfirm>
+        );
     }
 }

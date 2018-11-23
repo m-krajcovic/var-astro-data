@@ -62,8 +62,6 @@ class App extends Component {
                         <Route exact path="/oc" component={OcGate}/>
                         <Route exact path="/brno" component={Brno}/>
                         <Route exact path="/predictions" component={Predictions}/>
-                        <Route path="/czev/admin" component={CzevAdmin}/>
-                        <Route path="/czev/user" component={CzevUser}/>
                         <Route path="/czev" component={Czev}/>
                         <Redirect to="/czev"/>
                     </Switch>

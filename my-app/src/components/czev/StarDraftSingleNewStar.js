@@ -1,63 +1,30 @@
 import React, {Component} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../api-endpoint";
-import {Alert, Button, Col, Modal, notification, Row, Spin, Tooltip, List, Form} from "antd";
+import {Alert, Button, Col, Form, List, Modal, notification, Row, Spin, Tooltip} from "antd";
 import {StarDraftSingleStarFormItems} from "./StarDraftSingleStarFormItems";
-import {Link, Redirect, withRouter} from "react-router-dom";
+import {Link, Redirect} from "react-router-dom";
 import {CoordinateWrapper} from "./CoordinateWrapper";
 import {Copyable} from "./Copyable";
 import AnimateHeight from "react-animate-height";
+import {CdsCallsHolder} from "./CdsCallsHolder";
 
 export class StarDraftSingleNewStar extends Component {
+    render() {
+        return (
+            <CdsCallsHolder>
+                <StarDraftSingleNewStarComponent {...this.props}/>
+            </CdsCallsHolder>
+        )
+    }
+}
+
+class StarDraftSingleNewStarComponent extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            constellations: [],
-            observers: [],
-            types: [],
-            filterBands: [],
-            constellationsLoading: false,
-            filterBandsLoading: false,
-            typesLoading: false,
-            observersLoading: false,
-
-
-            coordsInfoParams: {},
-            coordsInfoLoading: false,
-            coordsInfoResult: null,
-
-            nameInfoParams: {},
-            nameInfoLoading: false,
-            nameInfoResult: null,
-
             finished: false,
         };
-    }
-
-    componentDidMount() {
-        this.setState({
-            ...this.state,
-            constellationsLoading: true,
-            observersLoading: true,
-            filterBandsLoading: true,
-            typesLoading: true
-        });
-        axios.get(BASE_URL + "/czev/constellations")
-            .then(result => {
-                this.setState({...this.state, constellationsLoading: false, constellations: result.data});
-            });
-        axios.get(BASE_URL + "/czev/types")
-            .then(result => {
-                this.setState({...this.state, typesLoading: false, types: new Set(result.data)});
-            });
-        axios.get(BASE_URL + "/czev/filterBands")
-            .then(result => {
-                this.setState({...this.state, filterBandsLoading: false, filterBands: result.data});
-            });
-        axios.get(BASE_URL + "/czev/observers")
-            .then(result => {
-                this.setState({...this.state, observersLoading: false, observers: result.data});
-            });
     }
 
     handleSubmit = (e) => {
@@ -110,18 +77,10 @@ export class StarDraftSingleNewStar extends Component {
         const {form: {validateFields}} = this.props;
         validateFields(["coordinatesRa", "coordinatesDec"], (err, values) => {
             if (!err && values && values.coordinatesRa && values.coordinatesDec) {
-                if (this.state.coordsInfoParams.coordinatesRa !== values.coordinatesRa
-                    || this.state.coordsInfoParams.coordinatesDec !== values.coordinatesDec) {
-                    this.setState({...this.state, coordsInfoParams: values, coordsInfoLoading: true});
-                    axios.get(BASE_URL + "/czev/cds/all", {
-                        params: {
-                            ra: values.coordinatesRa,
-                            dec: values.coordinatesDec
-                        }
-                    }).then(result => {
-                        this.setState({...this.state, coordsInfoResult: result.data, coordsInfoLoading: false})
-                    })
-                }
+                this.props.cds.loadByCoordinates({
+                    ra: values.coordinatesRa,
+                    dec: values.coordinatesDec
+                });
             }
         });
     };
@@ -130,37 +89,13 @@ export class StarDraftSingleNewStar extends Component {
         const {form: {validateFields}} = this.props;
         validateFields(["crossIds[0]"], (err, values) => {
             if (!err && values && values.crossIds[0]) {
-                if (this.state.nameInfoParams !== values.crossIds[0]) {
-                    this.setState({...this.state, nameInfoParams: values.crossIds[0], nameInfoLoading: true});
-                    axios.get(BASE_URL + "/czev/cds/all", {
-                        params: {
-                            name: values.crossIds[0],
-                        }
-                    }).then(result => {
-                        if (this.state.nameInfoParams === values.crossIds[0]) {
-                            this.setState({...this.state, nameInfoResult: result.data, nameInfoLoading: false})
-                        }
-                    })
-                }
+                this.props.cds.loadByName(values.crossIds[0]);
             }
         });
     };
 
     handleCrossIdSearch = (id) => {
-        if (id) {
-            if (this.state.nameInfoParams !== id) {
-                this.setState({...this.state, nameInfoParams: id, nameInfoLoading: true});
-                axios.get(BASE_URL + "/czev/cds/all", {
-                    params: {
-                        name: id,
-                    }
-                }).then(result => {
-                    if (this.state.nameInfoParams === id) {
-                        this.setState({...this.state, nameInfoResult: result.data, nameInfoLoading: false})
-                    }
-                })
-            }
-        }
+        this.props.cds.loadByName(id);
     };
 
     handleUcacCopy = (model) => {
@@ -193,15 +128,7 @@ export class StarDraftSingleNewStar extends Component {
 
                             onSubmit={this.handleSubmit}
 
-                            constellations={this.state.constellations}
-                            observers={this.state.observers}
-                            types={this.state.types}
-                            filterBands={this.state.filterBands}
-
-                            constellationsLoading={this.state.constellationsLoading}
-                            observersLoading={this.state.observersLoading}
-                            typesLoading={this.state.typesLoading}
-                            filterBandsLoading={this.state.filterBandsLoading}
+                            entities={this.props.entities}
                         />
                         <Form.Item
                             wrapperCol={{
@@ -216,19 +143,19 @@ export class StarDraftSingleNewStar extends Component {
                 <Col span={24} sm={{span: 8}}>
                     <Spin style={{minHeight: "100px", width: "100%"}}
                           tip="Searching other catalogues by coordinates"
-                          spinning={this.state.coordsInfoLoading}>
-                        {this.state.coordsInfoResult && (
+                          spinning={this.props.cds.coordsInfoLoading}>
+                        {this.props.cds.coordsInfoResult && (
                             <CoordsInfoResultsWrapper onUcacCopy={this.handleUcacCopy}
-                                                      coords={this.state.coordsInfoParams}
-                                                      result={this.state.coordsInfoResult}/>
+                                                      coords={this.props.cds.coordsInfoParams}
+                                                      result={this.props.cds.coordsInfoResult}/>
                         )}
                     </Spin>
-                    <Spin spinning={this.state.nameInfoLoading} style={{minHeight: 100, width: "100%"}}
+                    <Spin spinning={this.props.cds.nameInfoLoading} style={{minHeight: 100, width: "100%"}}
                           tip="Searching other catalogues by id">
-                        {this.state.nameInfoResult && (
+                        {this.props.cds.nameInfoResult && (
                             <NameInfoResultsWrapper onUcacCopy={this.handleUcacCopy}
-                                                    name={this.state.nameInfoParams}
-                                                    result={this.state.nameInfoResult}/>
+                                                    name={this.props.cds.nameInfoParams}
+                                                    result={this.props.cds.nameInfoResult}/>
                         )}
                     </Spin>
                 </Col>
@@ -288,7 +215,8 @@ export class CoordsInfoResultsWrapper extends Component {
                                                    </div>
                                                    <div>
                                                        {Object.keys(item.model.magnitudes).map(k => (
-                                                           <span key={k} style={{marginRight: 4}}><b>{k}: </b> {item.model.magnitudes[k]}</span>
+                                                           <span key={k}
+                                                                 style={{marginRight: 4}}><b>{k}: </b> {item.model.magnitudes[k]}</span>
                                                        ))}
                                                    </div>
                                                </div>

@@ -10,13 +10,58 @@ import {StarDraftSingleNewStar} from "./StarDraftSingleNewStar";
 import {CoordinateWrapper} from "./CoordinateWrapper";
 import {StarDraftCsvImportWrapper} from "./StarDraftCsvImportWrapper";
 import {PathBreadCrumbs} from "./PathBreadCrumbs";
+import CzevAdmin from "./admin/CzevAdmin";
+import CzevUser from "./user/CzevUser";
 
 const breadcrumbNameMap = {
     "/czev": "CzeV Catalogue",
-    "/czev/new": "New variable star"
+    "/czev/new": "New variable star",
+    "/czev/user": null,
+    "/czev/user/drafts": "Your Drafts",
+    "/czev/admin": "Admin",
+    "/czev/admin/drafts": "Drafts"
 };
 
 export default class Czev extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            types: [],
+            constellations: [],
+            filterBands: [],
+            observers: [],
+            loading: false,
+            reload: this.loadEntities
+        }
+    }
+
+    componentDidMount() {
+        this.loadEntities();
+    }
+
+    loadEntities = () => {
+        this.setState({...this.state, loading: true});
+        const c = axios.get(BASE_URL + "/czev/constellations");
+        const t = axios.get(BASE_URL + "/czev/types");
+        const fb = axios.get(BASE_URL + "/czev/filterBands");
+        const o = axios.get(BASE_URL + "/czev/observers");
+        Promise.all([c, t, fb, o])
+            .then(result => {
+                this.setState({
+                    ...this.state,
+                    loading: false,
+                    constellations: result[0].data,
+                    types: result[1].data,
+                    filterBands: result[2].data,
+                    observers: result[3].data
+                })
+            })
+            .catch(e => {
+                // TODO
+                console.error("Failed to fetch entities");
+            });
+    };
+
     render() {
         return (
             <Layout.Content style={{margin: "24px 24px 0"}}>
@@ -30,14 +75,16 @@ export default class Czev extends Component {
                     </Col>)}
                 </Row>
                 <Switch>
-                    <Route path="/czev/new" component={CzevNewStar}/>
+                    <Route path="/czev/admin" render={props => (<CzevAdmin {...props} entities={{...this.state}}/>)}/>
+                    <Route path="/czev/user" render={props => (<CzevUser {...props} entities={{...this.state}}/>)}/>
+                    <Route path="/czev/new" render={props => (<CzevNewStar {...props} entities={{...this.state}}/>)}/>
                     <Route path="/czev/:id" component={CzevStarDetail}/>
-                    <Route path="/czev" component={CzevCatalogue}/>
+                    <Route path="/czev" render={props => (<CzevCatalogue {...props} entities={{...this.state}}/>)}/>
                 </Switch>
             </Layout.Content>
         )
     }
-}
+};
 
 const sortOrder = {
     "ascend": "asc",
@@ -265,7 +312,7 @@ export class CzevNewStar extends Component {
             <div className="card-container">
                 <Tabs type="card">
                     <Tabs.TabPane tab="Single" key={1}>
-                        <FormStarDraftSingleNewStar/>
+                        <FormStarDraftSingleNewStar entities={this.props.entities}/>
                     </Tabs.TabPane>
                     <Tabs.TabPane tab="Import multiple" key={2}>
                         <StarDraftCsvImportWrapper/>
@@ -277,9 +324,9 @@ export class CzevNewStar extends Component {
 }
 
 
-const FormStarDraftSingleNewStar = Form.create()(StarDraftSingleNewStar);
+const FormStarDraftSingleNewStar = Form.create({})(StarDraftSingleNewStar);
 
 
-// table - filters
 // edit stars
+// table - filters
 // show logs of star changes
