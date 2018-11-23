@@ -232,8 +232,7 @@ export class CzevStarDetail extends Component {
                     <div style={{textAlign: 'center'}}>
                         <span><span>RA: </span><CoordinateWrapper value={data.coordinates.raString}/></span>&nbsp;
                         <span><span>DEC: </span><CoordinateWrapper value={data.coordinates.decString}/></span></div>
-                    <img alt="star map" style={{width: "100%"}}
-                         src={`http://archive.stsci.edu/cgi-bin/dss_search?v=1&r=${data.coordinates.raString}&d=${data.coordinates.decString}&e=J2000&h=15.0&w=15.0&f=gif&c=none&fov=NONE&v3=`}/>
+                    <StarMap coordinates={data.coordinates}/>
                 </Col>
             </Row>)
         } else if (this.state.error) {
@@ -251,6 +250,13 @@ export class CzevStarDetail extends Component {
             </Card>
         )
     }
+}
+
+export function StarMap(props) {
+    return (
+        <img alt="star map" style={{width: "100%"}}
+             src={`http://archive.stsci.edu/cgi-bin/dss_search?v=1&r=${props.coordinates.raString}&d=${props.coordinates.decString}&e=J2000&h=15.0&w=15.0&f=gif&c=none&fov=NONE&v3=`}/>
+    )
 }
 
 export class CzevNewStar extends Component {
@@ -276,3 +282,4 @@ const FormStarDraftSingleNewStar = Form.create()(StarDraftSingleNewStar);
 
 // table - filters
 // edit stars
+// show logs of star changes
