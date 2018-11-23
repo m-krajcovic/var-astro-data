@@ -22,6 +22,10 @@ export default class CzevUser extends Component {
                     <Col span={12}>
                         <PathBreadCrumbs breadcrumbNameMap={breadcrumbNameMap}/>
                     </Col>
+                    <Col span={12} style={{textAlign: "right"}}>
+                        <Button type="primary" size="small"><Link to="/czev/new">Submit new variable
+                            star</Link></Button>
+                    </Col>
                 </Row>
                 <Switch>
                     <Route path="/czev/user/drafts/:id" component={CzevUserDraftDetailWithForm}/>
@@ -68,6 +72,22 @@ export class CzevUserDrafts extends Component {
         this.props.history.push('/czev/user/drafts/' + draft.id)
     };
 
+    handleRemove = (id) => {
+        axios.delete(`${BASE_URL}/czev/drafts/${id}`)
+            .then(result => {
+                notification.success({
+                    message: 'Draft deleted'
+                });
+                this.componentDidMount()
+            })
+            .catch(e => {
+                notification.error({
+                    message: 'Failed to delete draft',
+                    description: e.response.data.message,
+                });
+            })
+    };
+
     render() {
         return (
             <Card>
@@ -78,9 +98,12 @@ export class CzevUserDrafts extends Component {
                     <Radio.Button value="rejected">Rejected<Badge style={{marginLeft: 4, top: -1}} showZero={false}
                                                                   count={this.state.rejectedDrafts.length}/></Radio.Button>
                 </Radio.Group>
-                <CzevStarDraftsTable onRowClick={this.handleRowClick}
-                                     data={this.state.mode === 'waiting' ? this.state.waitingDrafts : this.state.rejectedDrafts}
-                                     loading={this.state.draftsLoading}/>
+                <CzevStarDraftsTable
+                    showRemove
+                    onRemoveClick={this.handleRemove}
+                    onRowClick={this.handleRowClick}
+                    data={this.state.mode === 'waiting' ? this.state.waitingDrafts : this.state.rejectedDrafts}
+                    loading={this.state.draftsLoading}/>
             </Card>
         )
     }

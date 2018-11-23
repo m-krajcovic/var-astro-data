@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {Table} from "antd";
+import {Icon, Popconfirm, Table} from "antd";
 
 export class CzevStarDraftsTable extends Component {
     static columns = [
@@ -62,8 +62,18 @@ export class CzevStarDraftsTable extends Component {
         loading: false,
         showCreatedBy: false,
         onRowClick: () => {
-        }
+        },
+        onRemoveClick: () => {
+        },
+        showRemove: true,
     };
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            removeConfirmVisible: false
+        }
+    }
 
     render() {
         const columns = [...CzevStarDraftsTable.columns];
@@ -75,11 +85,33 @@ export class CzevStarDraftsTable extends Component {
                     sorter: (a, b) => a.createdBy.name.localeCompare(b.createdBy.name)
                 });
         }
+        if (this.props.showRemove) {
+            columns.push(
+                {
+                    title: '',
+                    dataIndex: 'id',
+                    key: 'operation',
+                    render: id => (
+                        <Popconfirm visible={this.state.removeConfirmVisible} title="Are you sure？" okText="Yes" cancelText="No" onConfirm={e => {
+                            e.stopPropagation();
+                            this.props.onRemoveClick(id);
+                        }} >
+                            <Icon onClick={e => {
+                                e.stopPropagation();
+                                this.setState({...this.state, removeConfirmVisible: true})
+                            }} className="clickable-icon" type="delete"/>
+                        </Popconfirm>
+                    )
+                }
+            )
+        }
         return (
             <Table
                 onRow={(record) => {
                     return {
-                        onClick: () => this.props.onRowClick(record),
+                        onClick: () => {
+                            this.props.onRowClick(record);
+                        },
                         style: {cursor: "pointer"}
                     }
                 }}

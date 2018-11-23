@@ -25,7 +25,7 @@ import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "../StarDraftSing
 
 const breadcrumbNameMap = {
     "/czev": "CzeV Catalogue",
-    "/czev/admin": null,
+    "/czev/admin": "Admin",
     "/czev/admin/drafts": "All Drafts"
 };
 
