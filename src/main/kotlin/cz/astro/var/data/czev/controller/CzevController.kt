@@ -87,6 +87,11 @@ class CzevController(
         }.orElse(ResponseEntity.notFound().build())
     }
 
+    @PutMapping("drafts/{id}")
+    fun putDraft(@PathVariable id: Long, @Valid @RequestBody draft: CzevStarDraftUpdateModel): CzevStarDraftModel {
+        return draftService.update(draft)
+    }
+
 
     @PatchMapping("stars/{id}")
     fun patchStar(@PathVariable id: Long, patch: JsonPatch): ResponseEntity<*> {
@@ -104,6 +109,12 @@ class CzevController(
             }
         }.orElse(ResponseEntity.notFound().build())
     }
+
+    @PutMapping("stars/{id}")
+    fun putStar(@PathVariable id: Long, @Valid @RequestBody draft: CzevStarUpdateModel): CzevStarDetailsModel {
+        return starService.update(draft)
+    }
+
 
     @PostMapping("drafts/{id}/rejection")
     fun rejectDraft(@PathVariable id: Long, @Valid @RequestBody model: CzevStarDraftRejectionModel): ResponseEntity<*> {

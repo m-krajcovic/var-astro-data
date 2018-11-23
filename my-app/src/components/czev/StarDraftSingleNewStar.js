@@ -1,9 +1,9 @@
 import React, {Component} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../api-endpoint";
-import {Alert, Button, Col, Modal, notification, Row, Spin, Tooltip, List} from "antd";
-import {StarDraftSingleStarForm} from "./StarDraftSingleStarForm";
-import {Link} from "react-router-dom";
+import {Alert, Button, Col, Modal, notification, Row, Spin, Tooltip, List, Form} from "antd";
+import {StarDraftSingleStarFormItems} from "./StarDraftSingleStarFormItems";
+import {Link, Redirect, withRouter} from "react-router-dom";
 import {CoordinateWrapper} from "./CoordinateWrapper";
 import {Copyable} from "./Copyable";
 import AnimateHeight from "react-animate-height";
@@ -28,7 +28,9 @@ export class StarDraftSingleNewStar extends Component {
 
             nameInfoParams: {},
             nameInfoLoading: false,
-            nameInfoResult: null
+            nameInfoResult: null,
+
+            finished: false,
         };
     }
 
@@ -60,7 +62,7 @@ export class StarDraftSingleNewStar extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        const {history} = this.props;
+        const component = this;
         this.props.form.validateFieldsAndScroll((err, values) => {
             if (!err) {
                 Modal.confirm({
@@ -85,10 +87,9 @@ export class StarDraftSingleNewStar extends Component {
                         };
                         return axios.post(BASE_URL + "/czev/drafts", body)
                             .then(result => {
-                                // TODO this doesn't work !
-                                history.push("/czev");
+                                component.setState({...component.state, finished: true});
                                 notification.success({
-                                    message: 'Variable star discovery submitted'
+                                    message: (<span>Variable star discovery submitted</span>)
                                 });
                             })
                             .catch(e => {
@@ -174,28 +175,43 @@ export class StarDraftSingleNewStar extends Component {
     };
 
     render() {
+        if (this.state.finished) {
+            return (
+                <Redirect to="/czev/user/drafts"/>
+            )
+        }
         return (
             <Row gutter={8}>
                 <Col span={24} sm={{span: 16}}>
-                    <StarDraftSingleStarForm
-                        form={this.props.form}
+                    <Form onSubmit={this.handleSubmit}>
+                        <StarDraftSingleStarFormItems
+                            form={this.props.form}
 
-                        onCoordsBlur={this.handleCoordsBlur}
-                        onCrossIdBlur={this.handleCrossIdBlur}
-                        onCrossIdSearch={this.handleCrossIdSearch}
+                            onCoordsBlur={this.handleCoordsBlur}
+                            onCrossIdBlur={this.handleCrossIdBlur}
+                            onCrossIdSearch={this.handleCrossIdSearch}
 
-                        onSubmit={this.handleSubmit}
+                            onSubmit={this.handleSubmit}
 
-                        constellations={this.state.constellations}
-                        observers={this.state.observers}
-                        types={this.state.types}
-                        filterBands={this.state.filterBands}
+                            constellations={this.state.constellations}
+                            observers={this.state.observers}
+                            types={this.state.types}
+                            filterBands={this.state.filterBands}
 
-                        constellationsLoading={this.state.constellationsLoading}
-                        observersLoading={this.state.observersLoading}
-                        typesLoading={this.state.typesLoading}
-                        filterBandsLoading={this.state.filterBandsLoading}
-                    />
+                            constellationsLoading={this.state.constellationsLoading}
+                            observersLoading={this.state.observersLoading}
+                            typesLoading={this.state.typesLoading}
+                            filterBandsLoading={this.state.filterBandsLoading}
+                        />
+                        <Form.Item
+                            wrapperCol={{
+                                xs: {span: 24, offset: 0},
+                                sm: {span: 18, offset: 6},
+                            }}
+                        >
+                            <Button type="primary" htmlType="submit">Submit for approval</Button>
+                        </Form.Item>
+                    </Form>
                 </Col>
                 <Col span={24} sm={{span: 8}}>
                     <Spin style={{minHeight: "100px", width: "100%"}}
@@ -222,7 +238,7 @@ export class StarDraftSingleNewStar extends Component {
 }
 
 
-class CoordsInfoResultsWrapper extends Component {
+export class CoordsInfoResultsWrapper extends Component {
     render() {
         const {result} = this.props;
         if (!result) {
@@ -270,6 +286,11 @@ class CoordsInfoResultsWrapper extends Component {
                                                            DEC: <CoordinateWrapper value={item.model.coordinates.dec}/>
                                                        </span>
                                                    </div>
+                                                   <div>
+                                                       {Object.keys(item.model.magnitudes).map(k => (
+                                                           <span key={k} style={{marginRight: 4}}><b>{k}: </b> {item.model.magnitudes[k]}</span>
+                                                       ))}
+                                                   </div>
                                                </div>
                                                <Tooltip title="Copy to form">
                                                    <Button
@@ -296,7 +317,7 @@ function DistanceWrapper(props) {
     )
 }
 
-class NameInfoResultsWrapper extends Component {
+export class NameInfoResultsWrapper extends Component {
     render() {
         const {result} = this.props;
         if (!result) {
@@ -355,6 +376,11 @@ class NameInfoResultsWrapper extends Component {
                                     <span style={{display: "inline-block"}}>
                                                            DEC: <CoordinateWrapper value={item.coordinates.dec}/>
                                                        </span>
+                                </div>
+                                <div>
+                                    {Object.keys(item.magnitudes).map(k => (
+                                        <span key={k} style={{marginRight: 4}}><b>{k}: </b> {item.magnitudes[k]}</span>
+                                    ))}
                                 </div>
                             </div>
                             <Tooltip title="Copy to form">

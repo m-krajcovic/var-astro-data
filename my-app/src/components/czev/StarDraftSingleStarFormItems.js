@@ -1,7 +1,7 @@
-import React, {Component} from "react";
+import React, {Component, Fragment} from "react";
 import {AutoComplete, Button, Checkbox, Col, Icon, InputNumber, Select, Spin, Tooltip, Form, Input} from "antd";
 
-export class StarDraftSingleStarForm extends Component {
+export class StarDraftSingleStarFormItems extends Component {
     constructor(props) {
         super(props);
         this.defaultTypes = ["EB", "EW", "EA", "DSCT", "HADS", "RRAB", "RRC", "ELL", "UV", "M", "SR", "CV", "ACV", "DCEP"];
@@ -176,7 +176,7 @@ export class StarDraftSingleStarForm extends Component {
         });
 
         return (
-            <Form onSubmit={this.props.onSubmit}>
+            <Fragment>
                 <Form.Item {...formItemLayout} label="Coordinates (J2000)" required={true}>
                     <Col span={12}>
                         <Form.Item>
@@ -356,10 +356,7 @@ export class StarDraftSingleStarForm extends Component {
                         <Input.TextArea/>
                     )}
                 </Form.Item>
-                <Form.Item {...formItemLayoutWithOutLabel}>
-                    <Button type="primary" htmlType="submit">Submit for approval</Button>
-                </Form.Item>
-            </Form>
+            </Fragment>
         )
     }
 }

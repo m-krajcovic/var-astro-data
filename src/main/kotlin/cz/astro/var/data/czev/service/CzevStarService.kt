@@ -103,7 +103,7 @@ class CzevStarDraftServiceImpl(
                         val user = User(principal.id)
                         newDrafts.add(
                                 CzevStarDraft(
-                                        constellation, type, filterband, record.amplitude, record.coordinates.toEntity(), record.crossIds.map { id -> StarIdentification(id, null) }.toMutableSet(),
+                                        constellation, type, filterband, record.amplitude, record.coordinates.toEntity(), record.crossIds.mapIndexed { i, id -> StarIdentification(id, null, i) }.toMutableSet(),
                                         record.m0, record.period, discoverers, record.year, record.privateNote, record.publicNote, user)
                         )
                     } else {
@@ -132,24 +132,26 @@ class CzevStarDraftServiceImpl(
         )
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @accessVoter.isDraftOwner(#id, principal)")
+    @PreAuthorize("hasRole('ADMIN') or @accessVoter.isDraftOwner(#model.id, principal)")
     override fun update(model: CzevStarDraftUpdateModel): CzevStarDraftModel {
-        val updatedEntity = czevStarDraftRepository.getOne(model.id)
+        val updatedEntity = czevStarDraftRepository.findById(model.id).orElseThrow { ServiceException("Draft not found") }
+
         updatedEntity.apply {
 
-            val observers = observerRepository.findAllById(discoverers.map { it.id }).toMutableSet()
-            if (observers.size == 0 || observers.size != discoverers.size) {
+            val observers = observerRepository.findAllById(model.discoverers).toMutableSet()
+            if (observers.size == 0 || observers.size != model.discoverers.size) {
                 throw ServiceException("Some of discoverers don't exist")
             }
-            val newConstellation = constellationRepository.findById(constellation.id).orElseThrow { ServiceException("Constellation does not exist") }
-            val newFilterBand = filterBand?.let { filterBandRepository.findById(it.id).orElseThrow { ServiceException("Filter band does not exist") } }
+            val newConstellation = constellationRepository.findById(model.constellation).orElseThrow { ServiceException("Constellation does not exist") }
+            val newFilterBand = model.filterBand?.let { filterBandRepository.findById(it).orElseThrow { ServiceException("Filter band does not exist") } }
 
-
-            val newIds = crossIdentifications.intersectIds(model.crossIdentifications)
-
+            val newIds = model.crossIdentifications.toMutableSet()
+            newIds.removeIf { crossIdentifications.contains(StarIdentification(it, null, 0)) }
             if (starIdentificationRepository.existsByNameIn(newIds)) {
                 throw ServiceException("Star with same cross-id already exists")
             }
+            crossIdentifications.clear()
+            crossIdentifications.addAll(model.crossIdentifications.mapIndexed {i, it -> StarIdentification(it, null, i)}.toMutableSet())
 
             type = model.type
             publicNote = model.publicNote
@@ -240,23 +242,25 @@ class CzevStarDraftServiceImpl(
     }
 
     private fun CzevStarDraft.toPublished(model: CzevStarApprovalModel, typeValidator: StarTypeValidator): CzevStar {
-        val observers = observerRepository.findAllById(discoverers.map { it.id }).toMutableSet()
-        if (observers.size == 0 || observers.size != discoverers.size) {
+        val observers = observerRepository.findAllById(model.discoverers).toMutableSet()
+        if (observers.size == 0 || observers.size != model.discoverers.size) {
             throw ServiceException("Some of discoverers don't exist")
         }
-        val newConstellation = constellationRepository.findById(constellation.id).orElseThrow { ServiceException("Constellation does not exist") }
-        val newFilterBand = filterBand?.let { filterBandRepository.findById(it.id).orElseThrow { ServiceException("Filter band does not exist") } }
+        val newConstellation = constellationRepository.findById(model.constellation).orElseThrow { ServiceException("Constellation does not exist") }
+        val newFilterBand = model.filterBand?.let { filterBandRepository.findById(it).orElseThrow { ServiceException("Filter band does not exist") } }
 
         val czevStar = CzevStar(model.m0, model.period, .0, .0, model.publicNote, model.privateNote, newConstellation, model.type, newFilterBand,
                 observers, model.coordinates.toEntity(), model.year, mutableSetOf(), null, "", model.vMagnitude, model.jMagnitude, model.jkMagnitude, model.amplitude, createdBy)
 
-        val newIds = crossIdentifications.intersectIds(model.crossIdentifications)
-
+        val newIds = model.crossIdentifications.toMutableSet()
+        newIds.removeIf { crossIdentifications.contains(StarIdentification(it, null, 0)) }
         if (starIdentificationRepository.existsByNameIn(newIds)) {
             throw ServiceException("Star with same cross-id already exists")
         }
 
-        czevStar.crossIdentifications = crossIdentifications
+        crossIdentifications.clear()
+
+        czevStar.crossIdentifications = model.crossIdentifications.mapIndexed {i, it -> StarIdentification(it, null, i)}.toMutableSet()
         czevStar.typeValid = typeValidator.validate(model.type)
         if (!czevStar.typeValid) {
             czevStar.type = typeValidator.tryFixCase(type)
@@ -271,7 +275,7 @@ class CzevStarDraftServiceImpl(
         }
         val newConstellation = constellationRepository.findById(constellation).orElseThrow { ServiceException("Constellation does not exist") }
         val newFilterBand = filterBand?.let { filterBandRepository.findById(it).orElseThrow { ServiceException("Filter band does not exist") } }
-        val crossIds = crossIdentifications.map { StarIdentification(it, null) }.toMutableSet()
+        val crossIds = crossIdentifications.mapIndexed { i, it -> StarIdentification(it, null, i) }.toMutableSet()
 
         if (starIdentificationRepository.existsByNameIn(crossIdentifications)) {
             throw ServiceException("Star with same cross-id already exists")

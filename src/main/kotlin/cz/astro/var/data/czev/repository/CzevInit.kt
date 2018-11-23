@@ -120,7 +120,7 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
     }
 
     fun getCrossIds(crossId: String): MutableSet<StarIdentification> {
-        return hashSetOf(StarIdentification(crossId, null))
+        return hashSetOf(StarIdentification(crossId, null, 0))
     }
 
     fun getDiscoverers(key: String): MutableSet<StarObserver> {

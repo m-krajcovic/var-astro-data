@@ -9,6 +9,7 @@ import "./Czev.css";
 import {StarDraftSingleNewStar} from "./StarDraftSingleNewStar";
 import {CoordinateWrapper} from "./CoordinateWrapper";
 import {StarDraftCsvImportWrapper} from "./StarDraftCsvImportWrapper";
+import {PathBreadCrumbs} from "./PathBreadCrumbs";
 
 const breadcrumbNameMap = {
     "/czev": "CzeV Catalogue",
@@ -17,24 +18,11 @@ const breadcrumbNameMap = {
 
 export default class Czev extends Component {
     render() {
-        const pathSnippets = this.props.location.pathname.split("/").filter(i => i);
-        const breadcrumbs = pathSnippets.map((snippet, index) => {
-            const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
-            return (
-                <Breadcrumb.Item key={url}>
-                    <Link to={url}>
-                        {breadcrumbNameMap[url] ? breadcrumbNameMap[url] : snippet}
-                    </Link>
-                </Breadcrumb.Item>
-            )
-        });
         return (
             <Layout.Content style={{margin: "24px 24px 0"}}>
                 <Row>
                     <Col span={12}>
-                        <Breadcrumb style={{marginBottom: 12}}>
-                            {breadcrumbs}
-                        </Breadcrumb>
+                        <PathBreadCrumbs breadcrumbNameMap={breadcrumbNameMap}/>
                     </Col>
                     {this.props.location.pathname !== "/czev/new" && (<Col span={12} style={{textAlign: "right"}}>
                         <Button type="primary" size="small"><Link to="/czev/new">Submit new variable
@@ -61,6 +49,7 @@ const sorterToParam = (sorter) => {
 };
 
 export class CzevCatalogue extends Component {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -70,59 +59,57 @@ export class CzevCatalogue extends Component {
                 showSizeChanger: true,
                 showQuickJumper: true
             },
-            downloadLoading: false
-        };
-
-        this.columns = [
-            {
-                title: 'Id',
-                dataIndex: 'czevId',
-                sorter: true,
-                render: czevId => (
-                    <span style={{color: "#1890ff"}}>{czevId}</span>
-                ),
-                onCell: record => {
-                    return {
-                        onClick: e => {
-                            this.props.history.push(`/czev/${record.czevId}`)
-                        },
-                        className: "column-czevid"
+            downloadLoading: false,
+            columns: [
+                {
+                    title: 'Id',
+                    dataIndex: 'czevId',
+                    sorter: true,
+                    render: czevId => (
+                        <span style={{color: "#1890ff"}}>{czevId}</span>
+                    ),
+                    onCell: record => {
+                        return {
+                            onClick: e => {
+                                this.props.history.push(`/czev/${record.czevId}`)
+                            },
+                            className: "column-czevid"
+                        }
                     }
-                }
-            },
-            {
-                title: 'Constellation',
-                dataIndex: 'constellation.abbreviation',
-                sorter: true
-            },
-            {
-                title: 'Type',
-                dataIndex: 'type',
-                sorter: true
-            },
-            {
-                title: 'RA (J2000)',
-                dataIndex: 'coordinates.raString',
-            },
-            {
-                title: 'DEC (J2000)',
-                dataIndex: 'coordinates.decString',
-            },
-            {
-                title: 'Epoch',
-                dataIndex: 'm0',
-                sorter: true
-            },
-            {
-                title: 'Period',
-                dataIndex: 'period',
-                sorter: true
-            },
-            {
-                title: 'Discoverer',
-                dataIndex: 'discoverers',
-                render: discoverers => (
-                    <span>
+                },
+                {
+                    title: 'Constellation',
+                    dataIndex: 'constellation.abbreviation',
+                    sorter: true
+                },
+                {
+                    title: 'Type',
+                    dataIndex: 'type',
+                    sorter: true
+                },
+                {
+                    title: 'RA (J2000)',
+                    dataIndex: 'coordinates.raString',
+                },
+                {
+                    title: 'DEC (J2000)',
+                    dataIndex: 'coordinates.decString',
+                },
+                {
+                    title: 'Epoch',
+                    dataIndex: 'm0',
+                    sorter: true
+                },
+                {
+                    title: 'Period',
+                    dataIndex: 'period',
+                    sorter: true
+                },
+                {
+                    title: 'Discoverer',
+                    dataIndex: 'discoverers',
+                    render: discoverers => (
+                        <span>
             {
                 discoverers.map(d => {
                         return (<span key={d.abbreviation} title={`${d.firstName} ${d.lastName}`}>{d.abbreviation} </span>)
@@ -130,9 +117,10 @@ export class CzevCatalogue extends Component {
                 )
             }
             </span>
-                )
-            }
-        ];
+                    )
+                }
+            ]
+        };
     }
 
     loadPage(page, size, sorter) {
@@ -186,7 +174,7 @@ export class CzevCatalogue extends Component {
     render() {
         return (
             <Card>
-                <Table size="small" rowKey="czevId" columns={this.columns} dataSource={this.state.data}
+                <Table size="small" rowKey="czevId" columns={this.state.columns} dataSource={this.state.data}
                        loading={this.state.loading} pagination={this.state.pagination}
                        onChange={this.handleTableChange}/>
                 <Button loading={this.state.downloadLoading}
@@ -211,7 +199,7 @@ export class CzevStarDetail extends Component {
     async componentDidMount() {
         this.setState({...this.state, loading: true});
         try {
-            const result = await axios.get(BASE_URL + "/czev/stars/" + this.props.match.params.id)
+            const result = await axios.get(BASE_URL + "/czev/stars/" + this.props.match.params.id);
             this.setState({...this.state, data: result.data, loading: false});
         } catch (error) {
             if (error.response) {
@@ -287,8 +275,4 @@ const FormStarDraftSingleNewStar = Form.create()(StarDraftSingleNewStar);
 
 
 // table - filters
-
-// drafts list for user/admin
-// draft details for admin - approving / rejecting
-// edit drafts
 // edit stars

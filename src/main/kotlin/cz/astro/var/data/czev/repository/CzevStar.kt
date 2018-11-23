@@ -268,19 +268,15 @@ class StarComment(
 @Table(name = "czev_StarIdentification")
 @Audited
 class StarIdentification(
-        @NaturalId
-        @Column(nullable = false, unique = true)
+        @Id
         var name: String,
         @NotAudited
         @ManyToOne(fetch = FetchType.LAZY)
-        var format: CdsFormat?
+        var format: CdsFormat?,
+        var orderNumber: Int
 ) {
     @ManyToOne(fetch = FetchType.LAZY)
-    lateinit var star: CzevStar
-
-    @Id
-    @GeneratedValue
-    var id: Long = -1
+    var star: CzevStar? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

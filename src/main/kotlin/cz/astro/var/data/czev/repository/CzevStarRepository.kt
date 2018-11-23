@@ -57,7 +57,7 @@ interface StarObserverRepository: JpaRepository<StarObserver, Long> {
 }
 
 interface StarIdentificationRepository: JpaRepository<StarIdentification, Long> {
-    fun existsByNameIn(names: Collection<String>): Boolean
+    fun existsByNameIn(@Param("names") names: Collection<String>): Boolean
 }
 
 interface ConstellationRepository : JpaRepository<Constellation, Long>

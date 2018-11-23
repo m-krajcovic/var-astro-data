@@ -91,7 +91,7 @@ class CzevStarDraftCsvImportReaderImpl(
                             CosmicCoordinatesModel(BigDecimal.ZERO, BigDecimal.ZERO)
                         }
 
-                        val crossIds = csvRecord[2].split(';').map { i -> i.trim() }.toSet()
+                        val crossIds = csvRecord[2].split(';').map { i -> i.trim() }.toList()
                         val constellationName = csvRecord[3].trim()
                         val discoverers = csvRecord[4].split(';').map { d -> d.trim() }.toSet()
                         val year = csvRecord[5].toIntOrNull()

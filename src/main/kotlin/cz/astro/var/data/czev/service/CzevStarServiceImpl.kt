@@ -24,22 +24,24 @@ class CzevStarServiceImpl(
 ) : CzevStarService {
     @PreAuthorize("hasRole('USER')")
     override fun update(model: CzevStarUpdateModel): CzevStarDetailsModel {
-        val updatedEntity = czevStarRepository.getOne(model.czevId)
+        val updatedEntity = czevStarRepository.findById(model.czevId).orElseThrow { ServiceException("Star not found") }
         updatedEntity.apply {
 
-            val observers = observerRepository.findAllById(discoverers.map { it.id }).toMutableSet()
-            if (observers.size == 0 || observers.size != discoverers.size) {
+            val observers = observerRepository.findAllById(model.discoverers).toMutableSet()
+            if (observers.size == 0 || observers.size != model.discoverers.size) {
                 throw ServiceException("Some of discoverers don't exist")
             }
-            val newConstellation = constellationRepository.findById(constellation.id).orElseThrow { ServiceException("Constellation does not exist") }
-            val newFilterBand = filterBand?.let { filterBandRepository.findById(it.id).orElseThrow { ServiceException("Filter band does not exist") } }
+            val newConstellation = constellationRepository.findById(model.constellation).orElseThrow { ServiceException("Constellation does not exist") }
+            val newFilterBand = model.filterBand?.let { filterBandRepository.findById(it).orElseThrow { ServiceException("Filter band does not exist") } }
 
-
-            val newIds = crossIdentifications.intersectIds(model.crossIdentifications)
-
+            val newIds = model.crossIdentifications.toMutableSet()
+            newIds.removeIf { crossIdentifications.contains(StarIdentification(it, null, 0)) }
             if (starIdentificationRepository.existsByNameIn(newIds)) {
                 throw ServiceException("Star with same cross-id already exists")
             }
+
+            crossIdentifications.clear()
+            crossIdentifications.addAll(model.crossIdentifications.mapIndexed {i, it -> StarIdentification(it, null, i)}.toMutableSet())
 
             type = model.type
             publicNote = model.publicNote

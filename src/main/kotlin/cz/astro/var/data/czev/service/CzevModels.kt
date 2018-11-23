@@ -1,6 +1,6 @@
 package cz.astro.`var`.data.czev.service
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
 import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.czev.validation.Declination
@@ -20,28 +20,30 @@ data class CzevStarDraftModel(
         val discoverers: List<StarObserverModel>,
         val amplitude: Double?,
         val filterBand: FilterBandModel?,
-        val crossIdentifications: Set<String>,
+        val crossIdentifications: List<String>,
         val coordinates: CosmicCoordinatesModel,
         val privateNote: String,
         val publicNote: String,
         val m0: BigDecimal?,
         val period: BigDecimal?,
         val year: Int,
-        @JsonIgnore
-        val createdBy: UserPrincipal,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        val lastChange: LocalDateTime,
+        val createdBy: UserModel,
         val rejected: Boolean,
         val rejectedReason: String,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         val rejectedOn: LocalDateTime?
 )
 
 data class CzevStarDraftUpdateModel(
         val id: Long,
-        val constellation: ConstellationModel,
+        val constellation: Long,
         val type: String,
-        val discoverers: List<StarObserverModel>,
+        val discoverers: List<Long>,
         val amplitude: Double?,
-        val filterBand: FilterBandModel?,
-        val crossIdentifications: Set<String>,
+        val filterBand: Long?,
+        val crossIdentifications: List<String>,
         val coordinates: CosmicCoordinatesModel,
         val privateNote: String,
         val publicNote: String,
@@ -56,7 +58,7 @@ data class CzevStarDraftNewModel(
         val discoverers: List<Long>,
         val amplitude: Double?,
         val filterBand: Long?,
-        val crossIdentifications: Set<String>,
+        val crossIdentifications: List<String>,
         val coordinates: CosmicCoordinatesModel,
         val privateNote: String,
         val publicNote: String,
@@ -71,7 +73,7 @@ data class CzevStarDraftImportModel(
         val type: String,
         val amplitude: Double?,
         val filterBand: String,
-        val crossIds: Set<String>,
+        val crossIds: List<String>,
         val year: Int,
         val discoverers: Set<String>,
         val m0: BigDecimal?,
@@ -111,12 +113,12 @@ data class CsvImportResultModel(
 
 data class CzevStarApprovalModel(
         val id: Long,
-        val constellation: ConstellationModel,
+        val constellation: Long,
         val type: String,
-        val discoverers: List<StarObserverModel>,
+        val discoverers: List<Long>,
         val amplitude: Double?,
-        val filterBand: FilterBandModel?,
-        val crossIdentifications: Set<String>,
+        val filterBand: Long?,
+        val crossIdentifications: List<String>,
         val coordinates: CosmicCoordinatesModel,
         val privateNote: String,
         val publicNote: String,
@@ -142,7 +144,7 @@ data class CzevStarDetailsModel(
         val m0: BigDecimal?,
         val period: BigDecimal?,
         val filterBand: FilterBandModel?,
-        val crossIdentifications: Set<String>,
+        val crossIdentifications: List<String>,
         val year: Int,
         val publicNote: String,
         val vsxName: String,
@@ -152,18 +154,18 @@ data class CzevStarDetailsModel(
 data class CzevStarUpdateModel(
         val czevId: Long,
         val coordinates: CosmicCoordinatesModel,
-        val constellation: ConstellationModel,
+        val constellation: Long,
         val type: String,
         val typeValid: Boolean,
         val jMagnitude: Double?,
         val vMagnitude: Double?,
         val jkMagnitude: Double?,
         val amplitude: Double?,
-        val discoverers: List<StarObserverModel>,
+        val discoverers: List<Long>,
         val m0: BigDecimal?,
         val period: BigDecimal?,
-        val filterBand: FilterBandModel?,
-        val crossIdentifications: Set<String>,
+        val filterBand: Long?,
+        val crossIdentifications: List<String>,
         val year: Int,
         val publicNote: String,
         val vsxName: String,
@@ -172,7 +174,7 @@ data class CzevStarUpdateModel(
 
 data class CzevStarExportModel(
         val czevId: Long,
-        val crossIdentifications: Set<String>,
+        val crossIdentifications: List<String>,
         val vsxName: String,
         val coordinates: CosmicCoordinatesModel,
         val constellation: ConstellationModel,
@@ -255,10 +257,15 @@ data class StarObserverModel(
         val abbreviation: String
 )
 
+data class UserModel(
+        val id: Long,
+        val name: String
+)
+
 fun CzevStar.toDetailsModel(): CzevStarDetailsModel {
     return CzevStarDetailsModel(
             czevId, coordinates.toModel(), constellation.toModel(), type, typeValid, jMagnitude, vMagnitude, jkMagnitude, amplitude,
-            discoverers.toModels(), m0, period, filterBand.toModel(), crossIdentifications.map { it.name }.toSet(),
+            discoverers.toModels(), m0, period, filterBand.toModel(), crossIdentifications.sortedBy { it.orderNumber }.map { it.name }.toList(),
             year, publicNote, vsxName, vsxId
     )
 }
@@ -271,7 +278,7 @@ fun CzevStar.toListModel(): CzevStarListModel {
 fun CzevStar.toExportModel(): CzevStarExportModel {
     return CzevStarExportModel(
             czevId,
-            crossIdentifications.asSequence().map { it.name }.toSet(),
+            crossIdentifications.asSequence().map { it.name }.toList(),
             vsxName,
             coordinates.toModel(),
             constellation.toModel(),
@@ -308,26 +315,12 @@ fun Iterable<StarObserver>.toModels(): List<StarObserverModel> {
 }
 
 fun CzevStarDraft.toModel(): CzevStarDraftModel {
-    val principal = UserPrincipal()
-    principal.id = createdBy.id
+    val principal = UserModel(createdBy.id, createdBy.email)
     return CzevStarDraftModel(
             id, constellation.toModel(), type, typeValid, discoverers.toModels(), amplitude, filterBand.toModel(),
-            crossIdentifications.map { it.name }.toSet(), coordinates.toModel(), privateNote, publicNote, m0, period, year,
-            principal, rejected, rejectedNote, rejectedOn
+            crossIdentifications.sortedBy { it.orderNumber }.map { it.name }.toList(), coordinates.toModel(), privateNote, publicNote, m0, period, year,
+            lastChange, principal, rejected, rejectedNote, rejectedOn
     )
-}
-
-fun MutableSet<StarIdentification>.intersectIds(newIds: Iterable<String>): MutableSet<String> {
-    val modelIdsSet = newIds.toSet()
-    val intersection = HashSet<String>()
-    modelIdsSet.forEach {
-        val identification = StarIdentification(it, null)
-        if (!contains(identification)) {
-            add(identification)
-        }
-    }
-    removeIf { !modelIdsSet.contains(it.name) }
-    return intersection
 }
 
 fun ConstellationModel.toEntity(): Constellation {
@@ -353,4 +346,8 @@ fun List<StarObserverModel>.toEntities(): MutableSet<StarObserver> {
 
 fun CosmicCoordinatesModel.toEntity(): CosmicCoordinates {
     return CosmicCoordinates(ra, dec)
+}
+
+fun UserPrincipal.toModel(): UserModel {
+    return UserModel(id,  email)
 }
