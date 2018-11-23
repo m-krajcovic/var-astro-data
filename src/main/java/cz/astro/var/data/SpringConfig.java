@@ -47,8 +47,7 @@ public class SpringConfig {
     }
 
     @Bean
-    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter()
-    {
+    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter() {
         ObjectMapper mapper = new ObjectMapper().registerModule(new KotlinModule());
         return new MappingJackson2HttpMessageConverter(mapper);
     }

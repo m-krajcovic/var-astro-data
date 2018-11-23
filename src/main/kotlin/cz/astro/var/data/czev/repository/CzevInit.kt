@@ -105,12 +105,20 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
 
     fun getStar(czev: String, crossId: String, vsxName: String, ra: String, dec: String, cons: String, type: String, v: String, j: String, jk: String, amp: String, band: String, m0: String, per: String, disc: String, year: String): CzevStar {
         val crossIdentifications = getCrossIds(crossId)
+        val jMag = j.toDoubleOrNull()
+        var kMag: Double? = null
+        if (jMag != null) {
+            val jk = jk.toDoubleOrNull()
+            if (jk != null) {
+                kMag = jMag - jk
+            }
+        }
         val czevStar = CzevStar(
                 m0.toBigDecimalOrNull(),
                 per.toBigDecimalOrNull(),
                 .0, .0,
                 "", "",
-                getConstellation(cons), type, getBand(band), getDiscoverers(disc), CosmicCoordinates(ra, dec), year.toInt(), mutableSetOf(), null, vsxName, v.toDoubleOrNull(), j.toDoubleOrNull(), jk.toDoubleOrNull(), amp.toDoubleOrNull(), user
+                getConstellation(cons), type, getBand(band), getDiscoverers(disc), CosmicCoordinates(ra, dec), year.toInt(), mutableSetOf(), null, vsxName, v.toDoubleOrNull(), jMag, kMag, amp.toDoubleOrNull(), user
         )
         czevStar.czevId = czev.toLong()
         czevStar.crossIdentifications = crossIdentifications

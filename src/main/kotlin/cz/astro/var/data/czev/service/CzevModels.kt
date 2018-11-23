@@ -26,6 +26,9 @@ data class CzevStarDraftModel(
         val publicNote: String,
         val m0: BigDecimal?,
         val period: BigDecimal?,
+        val jmagnitude: Double?,
+        val kmagnitude: Double?,
+        val vmagnitude: Double?,
         val year: Int,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         val lastChange: LocalDateTime,
@@ -49,7 +52,10 @@ data class CzevStarDraftUpdateModel(
         val publicNote: String,
         val m0: BigDecimal?,
         val period: BigDecimal?,
-        val year: Int
+        val year: Int,
+        val jmagnitude: Double?,
+        val kmagnitude: Double?,
+        val vmagnitude: Double?
 )
 
 data class CzevStarDraftNewModel(
@@ -64,7 +70,10 @@ data class CzevStarDraftNewModel(
         val publicNote: String,
         val m0: BigDecimal?,
         val period: BigDecimal?,
-        val year: Int
+        val year: Int,
+        val jmagnitude: Double?,
+        val kmagnitude: Double?,
+        val vmagnitude: Double?
 )
 
 data class CzevStarDraftImportModel(
@@ -125,9 +134,9 @@ data class CzevStarApprovalModel(
         val m0: BigDecimal?,
         val period: BigDecimal?,
         val year: Int,
-        val jMagnitude: Double?,
-        val vMagnitude: Double?,
-        val jkMagnitude: Double?
+        val jmagnitude: Double?,
+        val vmagnitude: Double?,
+        val kmagnitude: Double?
 )
 
 data class CzevStarDetailsModel(
@@ -136,9 +145,9 @@ data class CzevStarDetailsModel(
         val constellation: ConstellationModel,
         val type: String,
         val typeValid: Boolean,
-        val jMagnitude: Double?,
-        val vMagnitude: Double?,
-        val jkMagnitude: Double?,
+        val jmagnitude: Double?,
+        val vmagnitude: Double?,
+        val kmagnitude: Double?,
         val amplitude: Double?,
         val discoverers: List<StarObserverModel>,
         val m0: BigDecimal?,
@@ -157,9 +166,9 @@ data class CzevStarUpdateModel(
         val constellation: Long,
         val type: String,
         val typeValid: Boolean,
-        val jMagnitude: Double?,
-        val vMagnitude: Double?,
-        val jkMagnitude: Double?,
+        val jmagnitude: Double?,
+        val vmagnitude: Double?,
+        val kmagnitude: Double?,
         val amplitude: Double?,
         val discoverers: List<Long>,
         val m0: BigDecimal?,
@@ -179,9 +188,9 @@ data class CzevStarExportModel(
         val coordinates: CosmicCoordinatesModel,
         val constellation: ConstellationModel,
         val type: String,
-        val vMagnitude: Double?,
-        val jMagnitude: Double?,
-        val jkMagnitude: Double?,
+        val vmagnitude: Double?,
+        val jmagnitude: Double?,
+        val kmagnitude: Double?,
         val amplitude: Double?,
         val filterBand: FilterBandModel?,
         val m0: BigDecimal?,
@@ -264,7 +273,7 @@ data class UserModel(
 
 fun CzevStar.toDetailsModel(): CzevStarDetailsModel {
     return CzevStarDetailsModel(
-            czevId, coordinates.toModel(), constellation.toModel(), type, typeValid, jMagnitude, vMagnitude, jkMagnitude, amplitude,
+            czevId, coordinates.toModel(), constellation.toModel(), type, typeValid, jmagnitude, vmagnitude, kmagnitude, amplitude,
             discoverers.toModels(), m0, period, filterBand.toModel(), crossIdentifications.sortedBy { it.orderNumber }.map { it.name }.toList(),
             year, publicNote, vsxName, vsxId
     )
@@ -283,9 +292,9 @@ fun CzevStar.toExportModel(): CzevStarExportModel {
             coordinates.toModel(),
             constellation.toModel(),
             type,
-            vMagnitude,
-            jMagnitude,
-            jkMagnitude,
+            vmagnitude,
+            jmagnitude,
+            kmagnitude,
             amplitude,
             filterBand.toModel(),
             m0,
@@ -318,7 +327,7 @@ fun CzevStarDraft.toModel(): CzevStarDraftModel {
     val principal = UserModel(createdBy.id, createdBy.email)
     return CzevStarDraftModel(
             id, constellation.toModel(), type, typeValid, discoverers.toModels(), amplitude, filterBand.toModel(),
-            crossIdentifications.sortedBy { it.orderNumber }.map { it.name }.toList(), coordinates.toModel(), privateNote, publicNote, m0, period, year,
+            crossIdentifications.sortedBy { it.orderNumber }.map { it.name }.toList(), coordinates.toModel(), privateNote, publicNote, m0, period, jmagnitude, kmagnitude, vmagnitude, year,
             lastChange, principal, rejected, rejectedNote, rejectedOn
     )
 }

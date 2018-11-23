@@ -50,7 +50,10 @@ class StarDraftSingleNewStarComponent extends Component {
                             privateNote: "",
                             m0: values.epoch,
                             period: values.period,
-                            year: values.year
+                            year: values.year,
+                            jmagnitude: values.jmagnitude,
+                            vmagnitude: values.vmagnitude,
+                            kmagnitude: values.kmagnitude
                         };
                         return axios.post(BASE_URL + "/czev/drafts", body)
                             .then(result => {
@@ -100,11 +103,16 @@ class StarDraftSingleNewStarComponent extends Component {
 
     handleUcacCopy = (model) => {
         const {form} = this.props;
-        form.setFieldsValue({
+        const {J, K, V} = model.magnitudes;
+        let valuesFromUcac = {
             coordinatesRa: model.coordinates.ra,
             coordinatesDec: model.coordinates.dec,
             "crossIds[0]": `UCAC4 ${model.identifier}`,
-        });
+            vmagnitude: V,
+            jmagnitude: J,
+            kmagnitude: K
+        };
+        form.setFieldsValue(valuesFromUcac);
         this.handleCoordsBlur();
         this.handleCrossIdBlur();
     };
@@ -196,43 +204,7 @@ export class CoordsInfoResultsWrapper extends Component {
                                                </div>
                                            </List.Item>)}
                 />
-                <StarInfoResultWrapper results={ucac4} title="UCAC4" successOnZero={false}
-                                       renderItem={item => (
-                                           <List.Item>
-                                               <div>
-                                                   <div>
-                                                       <span
-                                                           style={{color: "#1890ff"}}>UCAC4 {item.model.identifier}</span>
-                                                       <DistanceWrapper distance={item.distance}/>
-                                                   </div>
-                                                   <div>
-                                                       <span style={{display: "inline-block", marginRight: 4}}>
-                                                            RA: <CoordinateWrapper value={item.model.coordinates.ra}/>
-                                                       </span>
-                                                       <span style={{display: "inline-block"}}>
-                                                           DEC: <CoordinateWrapper value={item.model.coordinates.dec}/>
-                                                       </span>
-                                                   </div>
-                                                   <div>
-                                                       {Object.keys(item.model.magnitudes).map(k => (
-                                                           <span key={k}
-                                                                 style={{marginRight: 4}}><b>{k}: </b> {item.model.magnitudes[k]}</span>
-                                                       ))}
-                                                   </div>
-                                               </div>
-                                               <Tooltip title="Copy to form">
-                                                   <Button
-                                                       onClick={() => {
-                                                           if (this.props.onUcacCopy) {
-                                                               this.props.onUcacCopy(item.model)
-                                                           }
-                                                       }}
-                                                       style={{alignSelf: "center", marginLeft: 12}} type="ghost"
-                                                       shape="circle"
-                                                       icon="copy"/>
-                                               </Tooltip>
-                                           </List.Item>)}
-                />
+                <Ucac4ResultWrapper ucac4={ucac4} onUcacCopy={this.props.onUcacCopy}/>
             </div>
         );
     }
@@ -285,49 +257,60 @@ export class NameInfoResultsWrapper extends Component {
                             </div>
                         </List.Item>
                     )}/>
-                <StarInfoResultWrapper
-                    title="UCAC4"
-                    successOnZero={false}
-                    results={ucac4 ? [ucac4] : []}
-                    style={{marginBottom: 4}}
-                    message={(<span><b>UCAC4: </b>{!ucac4 && "No result"}</span>)}
-                    renderItem={item => (
-                        <List.Item>
-                            <div>
-                                <div>
-                                    <span style={{color: "#1890ff"}}>UCAC4 {item.identifier}</span>
-                                </div>
-                                <div>
-                                                       <span style={{display: "inline-block", marginRight: 4}}>
-                                                            RA: <CoordinateWrapper value={item.coordinates.ra}/>
-                                                       </span>
-                                    <span style={{display: "inline-block"}}>
-                                                           DEC: <CoordinateWrapper value={item.coordinates.dec}/>
-                                                       </span>
-                                </div>
-                                <div>
-                                    {Object.keys(item.magnitudes).map(k => (
-                                        <span key={k} style={{marginRight: 4}}><b>{k}: </b> {item.magnitudes[k]}</span>
-                                    ))}
-                                </div>
-                            </div>
-                            <Tooltip title="Copy to form">
-                                <Button
-                                    onClick={() => {
-                                        if (this.props.onUcacCopy) {
-                                            this.props.onUcacCopy(item)
-                                        }
-                                    }}
-                                    style={{alignSelf: "center", marginLeft: 12}} type="ghost"
-                                    shape="circle"
-                                    icon="copy"/>
-                            </Tooltip>
-                        </List.Item>
-                    )}/>
+                <Ucac4ResultWrapper ucac4={ucac4} onCopy={this.props.onUcacCopy}/>
                 <SesameResultWrapper sesame={sesame}/>
             </div>
         )
     }
+}
+
+function Ucac4ResultWrapper(props) {
+    return (
+        <StarInfoResultWrapper
+            title="UCAC4"
+            successOnZero={false}
+            results={props.ucac4 ? [].concat(props.ucac4) : []}
+            style={{marginBottom: 4}}
+            message={(<span><b>UCAC4: </b>{!props.ucac4 && "No result"}</span>)}
+            renderItem={item => {
+                const hasDistance = item.distance !== undefined;
+                const model = hasDistance ? item.model : item;
+                return (
+                    <List.Item>
+                        <div>
+                            <div>
+                                <span style={{color: "#1890ff"}}>UCAC4 {model.identifier}</span>
+                                {hasDistance && <DistanceWrapper distance={item.distance}/>}
+                            </div>
+                            <div>
+                                                       <span style={{display: "inline-block", marginRight: 4}}>
+                                                            RA: <CoordinateWrapper value={model.coordinates.ra}/>
+                                                       </span>
+                                <span style={{display: "inline-block"}}>
+                                                           DEC: <CoordinateWrapper value={model.coordinates.dec}/>
+                                                       </span>
+                            </div>
+                            <div>
+                                {Object.keys(model.magnitudes).map(k => (
+                                    <span key={k} style={{marginRight: 4}}><b>{k}: </b> {model.magnitudes[k]}</span>
+                                ))}
+                            </div>
+                        </div>
+                        <Tooltip title="Copy to form">
+                            <Button
+                                onClick={() => {
+                                    if (props.onCopy) {
+                                        props.onCopy(model)
+                                    }
+                                }}
+                                style={{alignSelf: "center", marginLeft: 12}} type="ghost"
+                                shape="circle"
+                                icon="copy"/>
+                        </Tooltip>
+                    </List.Item>
+                )
+            }}/>
+    )
 }
 
 class SesameResultWrapper extends Component {

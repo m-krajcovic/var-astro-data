@@ -1,17 +1,21 @@
 import React, {Component} from "react";
 
-import {Breadcrumb, Button, Card, Col, Form, Layout, Row, Spin, Table, Tabs} from 'antd';
+import {Button, Card, Col, Form, Icon, Layout, Modal, notification, Row, Spin, Table, Tabs} from 'antd';
 import {BASE_URL} from "../../api-endpoint";
 import axios from "axios";
-import {Link, Route, Switch} from "react-router-dom";
+import {Link, Redirect, Route, Switch} from "react-router-dom";
 
 import "./Czev.css";
-import {StarDraftSingleNewStar} from "./StarDraftSingleNewStar";
+import {CoordsInfoResultsWrapper, NameInfoResultsWrapper, StarDraftSingleNewStar} from "./StarDraftSingleNewStar";
 import {CoordinateWrapper} from "./CoordinateWrapper";
 import {StarDraftCsvImportWrapper} from "./StarDraftCsvImportWrapper";
 import {PathBreadCrumbs} from "./PathBreadCrumbs";
 import CzevAdmin from "./admin/CzevAdmin";
 import CzevUser from "./user/CzevUser";
+import StarMap from "./StarMap";
+import {sorterToParam} from "./tableHelper";
+import {CdsCallsHolder} from "./CdsCallsHolder";
+import {StarDraftSingleStarFormItems} from "./StarDraftSingleStarFormItems";
 
 const breadcrumbNameMap = {
     "/czev": "CzeV Catalogue",
@@ -51,7 +55,7 @@ export default class Czev extends Component {
                     ...this.state,
                     loading: false,
                     constellations: result[0].data,
-                    types: result[1].data,
+                    types: new Set(result[1].data),
                     filterBands: result[2].data,
                     observers: result[3].data
                 })
@@ -78,21 +82,13 @@ export default class Czev extends Component {
                     <Route path="/czev/admin" render={props => (<CzevAdmin {...props} entities={{...this.state}}/>)}/>
                     <Route path="/czev/user" render={props => (<CzevUser {...props} entities={{...this.state}}/>)}/>
                     <Route path="/czev/new" render={props => (<CzevNewStar {...props} entities={{...this.state}}/>)}/>
-                    <Route path="/czev/:id" component={CzevStarDetail}/>
+                    <Route path="/czev/:id/edit" render={props => (<FormCzevStarEdit {...props} entities={{...this.state}}/>)}/>
+                    <Route path="/czev/:id" render={props => (<CzevStarDetail {...props} entities={{...this.state}}/>)}/>
                     <Route path="/czev" render={props => (<CzevCatalogue {...props} entities={{...this.state}}/>)}/>
                 </Switch>
             </Layout.Content>
         )
     }
-};
-
-const sortOrder = {
-    "ascend": "asc",
-    "descend": "desc"
-};
-
-const sorterToParam = (sorter) => {
-    return `${sorter.field},${sortOrder[sorter.order]}`
 };
 
 export class CzevCatalogue extends Component {
@@ -261,12 +257,12 @@ export class CzevStarDetail extends Component {
         if (data) {
             body = (<Row gutter={8}>
                 <Col span={24} xl={{span: 8}} md={{span: 12}}>
-                    <h3>CzeV {data.czevId} {data.constellation.abbreviation}</h3>
+                    <h3>CzeV {data.czevId} {data.constellation.abbreviation} <Link to={`/czev/${data.czevId}/edit`}><Icon title="Edit" className="clickable-icon" type="edit" /></Link></h3>
                     <div>{data.crossIdentifications.join(" / ")}</div>
                     <div><b>Type: </b>{data.type}</div>
                     <div><b>J: </b>{data.jmagnitude}</div>
                     <div><b>V: </b>{data.vmagnitude}</div>
-                    <div><b>J-K: </b>{data.jkMagnitude}</div>
+                    <div><b>K: </b>{data.kmagnitude}</div>
                     <div><b>Amplitude: </b>{data.amplitude}</div>
                     <div><b>Filter band: </b>{data.filterBand ? data.filterBand.name : ''}</div>
                     <div><b>Epoch: </b>{data.m0}</div>
@@ -299,13 +295,6 @@ export class CzevStarDetail extends Component {
     }
 }
 
-export function StarMap(props) {
-    return (
-        <img alt="star map" style={{width: "100%"}}
-             src={`http://archive.stsci.edu/cgi-bin/dss_search?v=1&r=${props.coordinates.raString}&d=${props.coordinates.decString}&e=J2000&h=15.0&w=15.0&f=gif&c=none&fov=NONE&v3=`}/>
-    )
-}
-
 export class CzevNewStar extends Component {
     render() {
         return (
@@ -323,10 +312,226 @@ export class CzevNewStar extends Component {
     }
 }
 
-
 const FormStarDraftSingleNewStar = Form.create({})(StarDraftSingleNewStar);
 
+export class CzevStarEdit extends Component {
+    render() {
+        return (
+            <CdsCallsHolder>
+                <CzevStarEditComponent {...this.props}/>
+            </CdsCallsHolder>
+        )
+    }
+}
 
-// edit stars
+const FormCzevStarEdit = Form.create()(CzevStarEdit);
+
+class CzevStarEditComponent extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            originalStar: null,
+            starLoading: false,
+
+            finished: false,
+        };
+    }
+
+    componentDidMount() {
+        this.setState({
+            ...this.state,
+            starLoading: true
+        });
+        axios.get(BASE_URL + "/czev/stars/" + this.props.match.params.id)
+            .then(result => {
+                const star = result.data;
+                let newFormValues = {
+                    constellation: "" + star.constellation.id,
+                    type: star.type,
+                    discoverers: star.discoverers.map(d => "" + d.id),
+                    amplitude: star.amplitude,
+                    filterBand: star.filterBand ? "" + star.filterBand.id : null,
+                    crossIds: star.crossIdentifications,
+                    coordinatesRa: star.coordinates.ra,
+                    coordinatesDec: star.coordinates.dec,
+                    note: star.publicNote,
+                    epoch: star.m0,
+                    period: star.period,
+                    year: star.year,
+                    jmagnitude: star.jmagnitude,
+                    kmagnitude: star.kmagnitude,
+                    vmagnitude: star.vmagnitude
+                };
+                this.props.form.setFieldsValue({
+                    crossidKeys: [...Array(star.crossIdentifications.length).keys()],
+                });
+                this.props.form.setFieldsValue(newFormValues);
+                this.props.form.validateFieldsAndScroll();
+                this.setState({...this.state, originalStar: star, starLoading: false});
+                this.handleCoordsBlur();
+                this.handleCrossIdBlur();
+            });
+    }
+
+    handleSubmit = (e) => {
+        e.preventDefault();
+        const component = this;
+        this.props.form.validateFieldsAndScroll((err, values) => {
+            if (!err) {
+                Modal.confirm({
+                    title: 'Are you sure you want to update this variable star discovery?',
+                    okText: 'Yes',
+                    cancelText: 'No',
+                    onOk() {
+                        const body = {
+                            id: component.props.match.params.id,
+                            constellation: values.constellation,
+                            type: values.type ? values.type : "",
+                            discoverers: values.discoverers,
+                            amplitude: values.amplitude,
+                            filterBand: values.filterBand,
+                            crossIdentifications: values.crossIds,
+                            coordinates: {ra: values.coordinatesRa, dec: values.coordinatesDec},
+                            publicNote: values.note ? values.note : "",
+                            privateNote: "",
+                            m0: values.epoch,
+                            period: values.period,
+                            year: values.year,
+                            jmagnitude: values.jmagnitude,
+                            vmagnitude: values.vmagnitude,
+                            kmagnitude: values.kmagnitude
+                        };
+                        return axios.put(BASE_URL + "/czev/stars/" + component.props.match.params.id, body)
+                            .then(result => {
+                                component.setState({...component.state, finished: true});
+                                notification.success({
+                                    message: (<span>Variable star discovery updated</span>)
+                                });
+                            })
+                            .catch(e => {
+                                notification.error({
+                                    message: 'Failed to update variable star discovery',
+                                    description: e.response.data.message,
+                                });
+                            })
+                    },
+                    onCancel() {
+                    },
+                });
+            }
+        });
+    };
+
+    handleCoordsBlur = () => {
+        const {form: {validateFields}} = this.props;
+        validateFields(["coordinatesRa", "coordinatesDec"], (err, values) => {
+            if (!err && values && values.coordinatesRa && values.coordinatesDec) {
+                this.props.cds.loadByCoordinates({
+                    ra: values.coordinatesRa,
+                    dec: values.coordinatesDec
+                });
+            }
+        });
+    };
+
+    handleCrossIdBlur = () => {
+        const {form: {validateFields}} = this.props;
+        validateFields(["crossIds[0]"], (err, values) => {
+            if (!err && values && values.crossIds[0]) {
+                this.props.cds.loadByName(values.crossIds[0]);
+            }
+        });
+    };
+
+    handleCrossIdSearch = (id) => {
+        this.props.cds.loadByName(id);
+    };
+
+    handleUcacCopy = (model) => {
+        const {form} = this.props;
+        const {J, K, V} = model.magnitudes;
+        let valuesFromUcac = {
+            coordinatesRa: model.coordinates.ra,
+            coordinatesDec: model.coordinates.dec,
+            "crossIds[0]": `UCAC4 ${model.identifier}`,
+            vmagnitude: V,
+            jmagnitude: J,
+            kmagnitude: K
+        };
+        form.setFieldsValue(valuesFromUcac);
+        this.handleCoordsBlur();
+        this.handleCrossIdBlur();
+    };
+
+    render() {
+        if (this.state.finished) {
+            return (
+                <Redirect to={"/czev/stars/" + this.props.match.params.id}/>
+            )
+        }
+        const formItemLayout = {
+            labelCol: {
+                xs: {span: 24},
+                sm: {span: 6},
+            },
+            wrapperCol: {
+                xs: {span: 24},
+                sm: {span: 18},
+            },
+        };
+
+        const {getFieldDecorator} = this.props.form;
+
+        return (
+            <Spin spinning={this.state.starLoading}>
+                <Card>
+                    <Row gutter={8}>
+                        <Col span={24} sm={{span: 16}}>
+                            <Form onSubmit={this.handleSubmit}>
+                                <StarDraftSingleStarFormItems
+                                    form={this.props.form}
+
+                                    onCoordsBlur={this.handleCoordsBlur}
+                                    onCrossIdBlur={this.handleCrossIdBlur}
+                                    onCrossIdSearch={this.handleCrossIdSearch}
+
+                                    entities={this.props.entities}
+                                />
+                                <Form.Item
+                                    wrapperCol={{
+                                        xs: {span: 24, offset: 0},
+                                        sm: {span: 18, offset: 6},
+                                    }}
+                                >
+                                    <Button type="primary" htmlType="submit">Update</Button>
+                                </Form.Item>
+                            </Form>
+                        </Col>
+                        <Col span={24} sm={{span: 8}}>
+                            <Spin style={{minHeight: "100px", width: "100%"}}
+                                  tip="Searching other catalogues by coordinates"
+                                  spinning={this.props.cds.coordsInfoLoading}>
+                                {this.props.cds.coordsInfoResult && (
+                                    <CoordsInfoResultsWrapper onUcacCopy={this.handleUcacCopy}
+                                                              coords={this.props.cds.coordsInfoParams}
+                                                              result={this.props.cds.coordsInfoResult}/>
+                                )}
+                            </Spin>
+                            <Spin spinning={this.props.cds.nameInfoLoading} style={{minHeight: 100, width: "100%"}}
+                                  tip="Searching other catalogues by id">
+                                {this.props.cds.nameInfoResult && (
+                                    <NameInfoResultsWrapper onUcacCopy={this.handleUcacCopy}
+                                                            name={this.props.cds.nameInfoParams}
+                                                            result={this.props.cds.nameInfoResult}/>
+                                )}
+                            </Spin>
+                        </Col>
+                    </Row>
+                </Card>
+            </Spin>
+        )
+    }
+}
+
 // table - filters
 // show logs of star changes

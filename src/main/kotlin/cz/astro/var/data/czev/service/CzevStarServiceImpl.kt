@@ -20,11 +20,14 @@ class CzevStarServiceImpl(
         private val observerRepository: StarObserverRepository,
         private val constellationRepository: ConstellationRepository,
         private val filterBandRepository: FilterBandRepository,
-        private val starIdentificationRepository: StarIdentificationRepository
+        private val starIdentificationRepository: StarIdentificationRepository,
+        private val typeRepository: StarTypeRepository
 ) : CzevStarService {
     @PreAuthorize("hasRole('USER')")
     override fun update(model: CzevStarUpdateModel): CzevStarDetailsModel {
         val updatedEntity = czevStarRepository.findById(model.czevId).orElseThrow { ServiceException("Star not found") }
+        val typeValidator = StarTypeValidatorImpl(typeRepository.findAll().map { type -> type.name }.toSet())
+
         updatedEntity.apply {
 
             val observers = observerRepository.findAllById(model.discoverers).toMutableSet()
@@ -43,14 +46,17 @@ class CzevStarServiceImpl(
             crossIdentifications.clear()
             crossIdentifications.addAll(model.crossIdentifications.mapIndexed {i, it -> StarIdentification(it, null, i)}.toMutableSet())
 
-            type = model.type
+            typeValid = typeValidator.validate(model.type)
+            if (!typeValid) {
+                type = typeValidator.tryFixCase(type)
+            }
             publicNote = model.publicNote
             amplitude = model.amplitude
             m0 = model.m0
             period = model.period
-            jMagnitude = model.jMagnitude
-            jkMagnitude = model.jkMagnitude
-            vMagnitude = model.vMagnitude
+            jmagnitude = model.jmagnitude
+            kmagnitude = model.kmagnitude
+            vmagnitude = model.vmagnitude
             constellation = newConstellation
             filterBand = newFilterBand
             year = model.year

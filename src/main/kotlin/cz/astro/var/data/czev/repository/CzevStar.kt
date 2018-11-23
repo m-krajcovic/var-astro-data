@@ -36,11 +36,11 @@ class CzevStar(
         @Column(nullable = true) var vsxId: Long?,
         var vsxName: String,
         @Column(nullable = true)
-        var vMagnitude: Double?,
+        var vmagnitude: Double?,
         @Column(nullable = true)
-        var jMagnitude: Double?,
+        var jmagnitude: Double?,
         @Column(nullable = true)
-        var jkMagnitude: Double?,
+        var kmagnitude: Double?,
         @Column(nullable = true)
         var amplitude: Double?,
         @NotAudited
@@ -99,7 +99,10 @@ class CzevStarDraft(
         @ManyToOne(fetch = FetchType.LAZY)
         var rejectedBy: User? = null,
         @NotAudited
-        var typeValid: Boolean = true
+        var typeValid: Boolean = true,
+        var jmagnitude: Double? = null,
+        var vmagnitude: Double? = null,
+        var kmagnitude: Double? = null
 ) : CzevEntity()
 
 @Entity

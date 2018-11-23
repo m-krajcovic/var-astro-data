@@ -356,6 +356,34 @@ export class StarDraftSingleStarFormItems extends Component {
                         <Input.TextArea/>
                     )}
                 </Form.Item>
+
+                <Form.Item {...formItemLayout} label="J Magnitude">
+                    {getFieldDecorator('jmagnitude', {
+                        rules: [{
+                            type: "number", message: "The input is not a valid number"
+                        }],
+                    })(
+                        <InputNumber style={{width: "100%"}}/>
+                    )}
+                </Form.Item>
+                <Form.Item {...formItemLayout} label="V Magnitude">
+                    {getFieldDecorator('vmagnitude', {
+                        rules: [{
+                            type: "number", message: "The input is not a valid number"
+                        }],
+                    })(
+                        <InputNumber style={{width: "100%"}}/>
+                    )}
+                </Form.Item>
+                <Form.Item {...formItemLayout} label="K Magnitude">
+                    {getFieldDecorator('kmagnitude', {
+                        rules: [{
+                            type: "number", message: "The input is not a valid number"
+                        }],
+                    })(
+                        <InputNumber style={{width: "100%"}}/>
+                    )}
+                </Form.Item>
             </Fragment>
         )
     }

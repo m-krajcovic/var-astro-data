@@ -125,7 +125,7 @@ class CzevAdminDraftDetailComponent extends Component {
                     type: draft.type,
                     discoverers: draft.discoverers.map(d => "" + d.id),
                     amplitude: draft.amplitude,
-                    filterBand: draft.filterBand ? draft.filterBand.id : null,
+                    filterBand: draft.filterBand ? "" + draft.filterBand.id : null,
                     crossIds: draft.crossIdentifications,
                     coordinatesRa: draft.coordinates.ra,
                     coordinatesDec: draft.coordinates.dec,
@@ -133,6 +133,9 @@ class CzevAdminDraftDetailComponent extends Component {
                     epoch: draft.m0,
                     period: draft.period,
                     year: draft.year,
+                    jmagnitude: draft.jmagnitude,
+                    vmagnitude: draft.vmagnitude,
+                    kmagnitude: draft.kmagnitude
                 };
                 this.props.form.setFieldsValue({
                     crossidKeys: [...Array(draft.crossIdentifications.length).keys()],
@@ -189,9 +192,9 @@ class CzevAdminDraftDetailComponent extends Component {
                             m0: values.epoch,
                             period: values.period,
                             year: values.year,
-                            jMagnitude: values.jMagnitude,
-                            vMagnitude: values.vMagnitude,
-                            jkMagnitude: values.jkMagnitude
+                            jmagnitude: values.jmagnitude,
+                            vmagnitude: values.vmagnitude,
+                            kmagnitude: values.kmagnitude
                         };
                         return axios.post(BASE_URL + "/czev/stars", body)
                             .then(result => {
@@ -246,12 +249,10 @@ class CzevAdminDraftDetailComponent extends Component {
             coordinatesRa: model.coordinates.ra,
             coordinatesDec: model.coordinates.dec,
             "crossIds[0]": `UCAC4 ${model.identifier}`,
-            vMagnitude: V,
-            jMagnitude: J,
+            vmagnitude: V,
+            jmagnitude: J,
+            kmagnitude: K
         };
-        if (J && K) {
-            valuesFromUcac["jkMagnitude"] = parseFloat((J - K).toFixed(3))
-        }
         form.setFieldsValue(valuesFromUcac);
         this.handleCoordsBlur();
         this.handleCrossIdBlur();
@@ -303,33 +304,6 @@ class CzevAdminDraftDetailComponent extends Component {
 
                                     entities={this.props.entities}
                                 />
-                                <Form.Item {...formItemLayout} label="J Magnitude">
-                                    {getFieldDecorator('jMagnitude', {
-                                        rules: [{
-                                            type: "number", message: "The input is not a valid number"
-                                        }],
-                                    })(
-                                        <InputNumber style={{width: "100%"}}/>
-                                    )}
-                                </Form.Item>
-                                <Form.Item {...formItemLayout} label="V Magnitude">
-                                    {getFieldDecorator('vMagnitude', {
-                                        rules: [{
-                                            type: "number", message: "The input is not a valid number"
-                                        }],
-                                    })(
-                                        <InputNumber style={{width: "100%"}}/>
-                                    )}
-                                </Form.Item>
-                                <Form.Item {...formItemLayout} label="J-K Magnitude">
-                                    {getFieldDecorator('jkMagnitude', {
-                                        rules: [{
-                                            type: "number", message: "The input is not a valid number"
-                                        }],
-                                    })(
-                                        <InputNumber style={{width: "100%"}}/>
-                                    )}
-                                </Form.Item>
                                 <Form.Item
                                     wrapperCol={{
                                         xs: {span: 24, offset: 0},

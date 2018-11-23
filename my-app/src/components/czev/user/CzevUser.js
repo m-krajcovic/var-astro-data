@@ -127,7 +127,7 @@ class CzevUserDraftDetailComponent extends Component {
                     type: draft.type,
                     discoverers: draft.discoverers.map(d => "" + d.id),
                     amplitude: draft.amplitude,
-                    filterBand: draft.filterBand ? draft.filterBand.id : null,
+                    filterBand: draft.filterBand ? "" + draft.filterBand.id : null,
                     crossIds: draft.crossIdentifications,
                     coordinatesRa: draft.coordinates.ra,
                     coordinatesDec: draft.coordinates.dec,
@@ -135,6 +135,9 @@ class CzevUserDraftDetailComponent extends Component {
                     epoch: draft.m0,
                     period: draft.period,
                     year: draft.year,
+                    jmagnitude: draft.jmagnitude,
+                    vmagnitude: draft.vmagnitude,
+                    kmagnitude: draft.kmagnitude
                 };
                 this.props.form.setFieldsValue({
                     crossidKeys: [...Array(draft.crossIdentifications.length).keys()],
@@ -170,7 +173,10 @@ class CzevUserDraftDetailComponent extends Component {
                             privateNote: "",
                             m0: values.epoch,
                             period: values.period,
-                            year: values.year
+                            year: values.year,
+                            jmagnitude: values.jmagnitude,
+                            vmagnitude: values.vmagnitude,
+                            kmagnitude: values.kmagnitude
                         };
                         return axios.put(BASE_URL + "/czev/drafts/" + component.props.match.params.id, body)
                             .then(result => {
@@ -220,11 +226,16 @@ class CzevUserDraftDetailComponent extends Component {
 
     handleUcacCopy = (model) => {
         const {form} = this.props;
-        form.setFieldsValue({
+        const {J, K, V} = model.magnitudes;
+        let valuesFromUcac = {
             coordinatesRa: model.coordinates.ra,
             coordinatesDec: model.coordinates.dec,
             "crossIds[0]": `UCAC4 ${model.identifier}`,
-        });
+            vmagnitude: V,
+            jmagnitude: J,
+            kmagnitude: K
+        };
+        form.setFieldsValue(valuesFromUcac);
         this.handleCoordsBlur();
         this.handleCrossIdBlur();
     };

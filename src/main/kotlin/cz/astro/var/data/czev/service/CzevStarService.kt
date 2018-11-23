@@ -135,6 +135,7 @@ class CzevStarDraftServiceImpl(
     @PreAuthorize("hasRole('ADMIN') or @accessVoter.isDraftOwner(#model.id, principal)")
     override fun update(model: CzevStarDraftUpdateModel): CzevStarDraftModel {
         val updatedEntity = czevStarDraftRepository.findById(model.id).orElseThrow { ServiceException("Draft not found") }
+        val typeValidator = StarTypeValidatorImpl(typeRepository.findAll().map { type -> type.name }.toSet())
 
         updatedEntity.apply {
 
@@ -153,7 +154,10 @@ class CzevStarDraftServiceImpl(
             crossIdentifications.clear()
             crossIdentifications.addAll(model.crossIdentifications.mapIndexed {i, it -> StarIdentification(it, null, i)}.toMutableSet())
 
-            type = model.type
+            typeValid = typeValidator.validate(model.type)
+            if (!typeValid) {
+                type = typeValidator.tryFixCase(type)
+            }
             publicNote = model.publicNote
             amplitude = model.amplitude
             m0 = model.m0
@@ -163,6 +167,9 @@ class CzevStarDraftServiceImpl(
             year = model.year
             discoverers = observers
             coordinates = CosmicCoordinates(model.coordinates.ra, model.coordinates.dec)
+            jmagnitude = model.jmagnitude
+            kmagnitude = model.kmagnitude
+            vmagnitude = model.vmagnitude
         }
         return czevStarDraftRepository.save(updatedEntity).toModel()
     }
@@ -250,7 +257,7 @@ class CzevStarDraftServiceImpl(
         val newFilterBand = model.filterBand?.let { filterBandRepository.findById(it).orElseThrow { ServiceException("Filter band does not exist") } }
 
         val czevStar = CzevStar(model.m0, model.period, .0, .0, model.publicNote, model.privateNote, newConstellation, model.type, newFilterBand,
-                observers, model.coordinates.toEntity(), model.year, mutableSetOf(), null, "", model.vMagnitude, model.jMagnitude, model.jkMagnitude, model.amplitude, createdBy)
+                observers, model.coordinates.toEntity(), model.year, mutableSetOf(), null, "", model.vmagnitude, model.jmagnitude, model.kmagnitude, model.amplitude, createdBy)
 
         val newIds = model.crossIdentifications.toMutableSet()
         newIds.removeIf { crossIdentifications.contains(StarIdentification(it, null, 0)) }
@@ -265,6 +272,7 @@ class CzevStarDraftServiceImpl(
         if (!czevStar.typeValid) {
             czevStar.type = typeValidator.tryFixCase(type)
         }
+
         return czevStar
     }
 
@@ -283,7 +291,7 @@ class CzevStarDraftServiceImpl(
 
         val czevStarDraft = CzevStarDraft(
                 newConstellation, type, newFilterBand, amplitude, CosmicCoordinates(coordinates.ra, coordinates.dec), crossIds,
-                m0, period, observers, year, privateNote, publicNote, user)
+                m0, period, observers, year, privateNote, publicNote, user, false, null, "", null, false, jmagnitude, vmagnitude, kmagnitude)
         czevStarDraft.typeValid = typeValidator.validate(type)
         if (!czevStarDraft.typeValid) {
             czevStarDraft.type = typeValidator.tryFixCase(type)
