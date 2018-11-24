@@ -7,7 +7,8 @@ import {BrowserRouter as Router, Route, Redirect, NavLink, Switch, withRouter} f
 import Czev from "./components/czev/Czev";
 
 
-import "./App.css"
+import "./App.css";
+import "./components/ocgate/StarList.css";
 import "antd/dist/antd.css";
 
 import {Layout, Menu} from 'antd';

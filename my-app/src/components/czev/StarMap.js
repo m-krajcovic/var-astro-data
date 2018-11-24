@@ -39,6 +39,7 @@ export default class StarMap extends Component {
         this.aladin.on('objectClicked', (object) => {
             this.setState({selectedObject: object});
         });
+        // TODO: add original coordinates marker
         if (this.props.catalog) {
             this.aladin.addCatalog(window.A.catalogFromVizieR('I/322A/out', {
                 ra: coo.lon,

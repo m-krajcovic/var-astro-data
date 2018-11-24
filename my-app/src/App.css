@@ -4,154 +4,66 @@ body {
 
 
 
+.stars-detail-wrapper {
+    flex: 1;
+    overflow: auto;
+}
 
 
+.panel {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    border-radius: 8px;
+    background-color: white;
+    overflow: hidden;
+}
 
+.panel.selectable:hover:not(.selected) {
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+}
 
-/*!**/
-/*.app {*/
-    /*!*text-align: center;*!*/
-    /*display: flex;*/
-    /*overflow: hidden;*/
-    /*height: 100vh;*/
-    /*flex-direction: column;*/
-/*}*/
+.panel.selectable.selected {
+    background-color: #dde9ff;
+}
 
-/*.app-header {*/
-    /*flex: 0 0 48px;*/
-    /*background: white;*/
-    /*z-index: 1;*/
-    /*box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);*/
-/*}*/
+.panel-header.selectable:hover, .panel-header.selected {
+    background-color: #0038a8;
+    color: white;
+}
 
-/*.app-header a, .app-header a:visited {*/
-    /*color: black;*/
-    /*text-decoration: none;*/
-/*}*/
+.selectable {
+    cursor: pointer;
+}
 
-/*.header-link {*/
-    /*display: inline-block;*/
-    /*!*height: 32px;*!*/
-    /*padding: 8px;*/
-    /*line-height: 32px;*/
-    /*text-align: center;*/
-    /*width: 120px;*/
-/*}*/
+.panel > .panel-header {
+    padding: 8px;
+    border-bottom: 1px solid #eeeeee;
+    /*border-top-left-radius: 8px;*/
+    /*border-top-right-radius: 8px;*/
+}
 
-/*.header-link:hover {*/
-    /*background-color: #eeeeee;*/
-/*}*/
+.panel > .panel-body {
+    padding: 8px;
+    /*border-bottom-left-radius: 8px;*/
+    /*border-bottom-right-radius: 8px;*/
+}
 
-/*a.active > .header-link {*/
-    /*background-color: #0038a8;*/
-    /*color: white;*/
-/*}*/
+.space-out {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
 
-/*body {*/
-    /*background-color: #ECEFF1;*/
-/*}*/
+.space-out > b {
+    margin-right: 3px;
+}
 
-/*.sidebar::-webkit-scrollbar-track*/
-/*{*/
-    /*border-radius: 8px;*/
-    /*background-color: #F5F5F5;*/
-    /*box-shadow: none;*/
-/*}*/
+.text-error {
+    color: #ba160c;
+}
 
-/*.sidebar::-webkit-scrollbar*/
-/*{*/
-    /*width: 6px;*/
-    /*background-color: #F5F5F5;*/
-    /*box-shadow: none;*/
-    /*border-radius: 8px;*/
-/*}*/
+.oc-gate-app {
+    display: flex;
+}
 
-/*.sidebar::-webkit-scrollbar-thumb*/
-/*{*/
-    /*border-radius: 8px;*/
-    /*background-color: #a5a5a5;*/
-/*}*/
-
-/*.sidebar-wrapper {*/
-    /*overflow: hidden;*/
-/*}*/
-
-/*.sidebar-wrapper > .sidebar {*/
-    /*display: inline-block;*/
-    /*height: calc(100% - 24px);*/
-    /*overflow: auto;*/
-    /*overflow-x: hidden;*/
-    /*!*box-shadow: 0 1px 3px rgba(0, 0, 0, 0.24);*!*/
-    /*background-color: white;*/
-    /*padding: 12px;*/
-    /*max-width: 160px;*/
-/*}*/
-
-/*.sidebar > ul {*/
-    /*margin: 0;*/
-    /*padding: 0;*/
-/*}*/
-
-/*.stars-detail-wrapper {*/
-    /*flex: 1;*/
-    /*overflow: auto;*/
-/*}*/
-
-
-/*.panel {*/
-    /*box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);*/
-    /*transition: all 0.3s cubic-bezier(.25,.8,.25,1);*/
-    /*border-radius: 8px;*/
-    /*background-color: white;*/
-    /*overflow: hidden;*/
-/*}*/
-
-/*.panel.selectable:hover:not(.selected) {*/
-    /*box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);*/
-/*}*/
-
-/*.panel.selectable.selected {*/
-    /*background-color: #dde9ff;*/
-/*}*/
-
-/*.panel-header.selectable:hover, .panel-header.selected {*/
-    /*background-color: #0038a8;*/
-    /*color: white;*/
-/*}*/
-
-/*.selectable {*/
-    /*cursor: pointer;*/
-/*}*/
-
-/*.panel > .panel-header {*/
-    /*padding: 8px;*/
-    /*border-bottom: 1px solid #eeeeee;*/
-    /*!*border-top-left-radius: 8px;*!*/
-    /*!*border-top-right-radius: 8px;*!*/
-/*}*/
-
-/*.panel > .panel-body {*/
-    /*padding: 8px;*/
-    /*!*border-bottom-left-radius: 8px;*!*/
-    /*!*border-bottom-right-radius: 8px;*!*/
-/*}*/
-
-/*.space-out {*/
-    /*display: flex;*/
-    /*flex-direction: row;*/
-    /*justify-content: space-between;*/
-    /*margin-bottom: 2px;*/
-/*}*/
-
-/*.space-out > b {*/
-    /*margin-right: 3px;*/
-/*}*/
-
-/*.text-error {*/
-    /*color: #ba160c;*/
-/*}*/
-
-/*.oc-gate-app {*/
-    /*display: flex;*/
-/*}*/
-/**!*/

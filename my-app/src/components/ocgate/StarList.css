@@ -23,7 +23,6 @@
 
 .tab-wrapper > .tab-item {
     text-align: center;
-    height: 16px;
     padding: 16px 8px;
     flex-grow: 1;
     flex-basis: 100%;
@@ -38,6 +37,7 @@
 
 .tab-wrapper > .tab-item.selected {
     border-bottom-color: #0038a8;
+    border-width: 2px;
 }
 
 .tab-wrapper > .tab-item.selected::after {
