@@ -87,13 +87,3 @@
 .czev-catalogue-search-form .ant-form-item-control-wrapper {
     flex: 1;
 }
-
-.aladin-star-map-holder {
-    height: 500px
-}
-
-@media only screen and (max-width: 420px) {
-    .aladin-star-map-holder {
-        height: 350px
-    }
-}

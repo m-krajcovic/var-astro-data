@@ -1,13 +1,14 @@
 import React, {Component} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../api-endpoint";
-import {Alert, Button, Col, Form, List, Modal, notification, Row, Spin, Tooltip} from "antd";
+import {Alert, Button, Col, Form, Icon, List, Modal, notification, Row, Spin, Tooltip, message} from "antd";
 import {StarDraftSingleStarFormItems} from "./StarDraftSingleStarFormItems";
 import {Link, Redirect} from "react-router-dom";
 import {CoordinateWrapper} from "./CoordinateWrapper";
 import {Copyable} from "./Copyable";
 import AnimateHeight from "react-animate-height";
 import {CdsCallsHolder} from "./CdsCallsHolder";
+import StarMap from "./StarMap";
 
 export class StarDraftSingleNewStar extends Component {
     render() {
@@ -113,6 +114,7 @@ class StarDraftSingleNewStarComponent extends Component {
             kmagnitude: K
         };
         form.setFieldsValue(valuesFromUcac);
+        message.info('Copied');
         this.handleCoordsBlur();
         this.handleCrossIdBlur();
     };
@@ -174,6 +176,10 @@ class StarDraftSingleNewStarComponent extends Component {
 
 
 export class CoordsInfoResultsWrapper extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {mapVisible: false, onUcacCopy: () => {}};
+    }
     render() {
         const {result} = this.props;
         if (!result) {
@@ -182,7 +188,18 @@ export class CoordsInfoResultsWrapper extends Component {
         const {vsx, czev, ucac4} = result;
         return (
             <div style={{marginBottom: 8}}>
-                <h4>Coordinates search</h4>
+                <h4>Coordinates search <Icon type="eye" className="clickable-icon" onClick={() => {
+                    this.setState({mapVisible: true})
+                }}/></h4>
+                <Modal
+                    footer={null}
+                    centered
+                    visible={this.state.mapVisible}
+                    closable={false}
+                    onCancel={() => this.setState({mapVisible: false})}
+                >
+                    <StarMap fov={0.1} coordinates={this.props.coords} catalog={true} onCopy={this.props.onUcacCopy}/>
+                </Modal>
                 <StarInfoResultWrapper results={czev} title="CzeV" successOnZero style={{marginBottom: 4}}
                                        renderItem={item => (
                                            <List.Item>
@@ -204,7 +221,7 @@ export class CoordsInfoResultsWrapper extends Component {
                                                </div>
                                            </List.Item>)}
                 />
-                <Ucac4ResultWrapper ucac4={ucac4} onUcacCopy={this.props.onUcacCopy}/>
+                <Ucac4ResultWrapper ucac4={ucac4} onCopy={this.props.onUcacCopy}/>
             </div>
         );
     }

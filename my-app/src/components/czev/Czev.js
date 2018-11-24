@@ -506,7 +506,7 @@ export class CzevStarDetail extends Component {
         let body = (<span/>);
         if (data) {
             body = (<Row gutter={8}>
-                <Col span={24} xxl={{span: 8}} xl={{span: 12}}>
+                <Col span={24} xxl={{span: 8}} md={{span: 12}}>
                     <h3>CzeV {data.czevId} {data.constellation.abbreviation} <Link
                         to={`/czev/${data.czevId}/edit`}><Icon title="Edit" className="clickable-icon"
                                                                type="edit"/></Link></h3>
@@ -523,7 +523,7 @@ export class CzevStarDetail extends Component {
                     <div><b>Discoverer: </b>{data.discoverers.map(d => `${d.firstName} ${d.lastName}`).join(", ")}</div>
                     <div><b>Note: </b>{data.publicNote}</div>
                 </Col>
-                <Col span={24} xxl={{span: 8}} xl={{span: 12}}>
+                <Col span={24} xxl={{span: 8}} md={{span: 12}}>
                     <div style={{textAlign: 'center'}}>
                         <span style={{display: "inline-block"}}><span>RA: </span><CoordinateWrapper size="large"
                                                                   value={data.coordinates.raString}/></span>&nbsp;
