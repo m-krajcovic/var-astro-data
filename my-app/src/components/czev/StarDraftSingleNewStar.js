@@ -284,15 +284,15 @@ function Ucac4ResultWrapper(props) {
                             </div>
                             <div>
                                                        <span style={{display: "inline-block", marginRight: 4}}>
-                                                            RA: <CoordinateWrapper value={model.coordinates.ra}/>
+                                                            RA: <CoordinateWrapper size="large" value={model.coordinates.ra}/>
                                                        </span>
                                 <span style={{display: "inline-block"}}>
-                                                           DEC: <CoordinateWrapper value={model.coordinates.dec}/>
+                                                           DEC: <CoordinateWrapper size="large" value={model.coordinates.dec}/>
                                                        </span>
                             </div>
                             <div>
                                 {Object.keys(model.magnitudes).map(k => (
-                                    <span key={k} style={{marginRight: 4}}><b>{k}: </b> {model.magnitudes[k]}</span>
+                                    <span key={k} style={{marginRight: 4}}><b>{k}: </b> <Copyable value={model.magnitudes[k]}/></span>
                                 ))}
                             </div>
                         </div>
@@ -351,10 +351,10 @@ class SesameResultWrapper extends Component {
                             <div>
                                 <div>
                                     <span style={{display: "inline-block", marginRight: 4}}>
-                                        RA: <CoordinateWrapper value={item.coordinates.ra}/>
+                                        RA: <CoordinateWrapper size="large" value={item.coordinates.ra}/>
                                     </span>
                                     <span style={{display: "inline-block"}}>
-                                            DEC: <CoordinateWrapper value={item.coordinates.dec}/>
+                                            DEC: <CoordinateWrapper size="large" value={item.coordinates.dec}/>
                                         </span>
                                 </div>
                                 <List size="small" dataSource={importantNames}

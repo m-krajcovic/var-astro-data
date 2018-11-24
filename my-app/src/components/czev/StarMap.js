@@ -1,8 +1,19 @@
-import React from "react";
+import React, {Component} from "react";
+import {Col} from "antd";
 
-export default function StarMap(props) {
-    return (
-        <img alt="star map" style={{width: "100%"}}
-             src={`http://archive.stsci.edu/cgi-bin/dss_search?v=1&r=${props.coordinates.raString}&d=${props.coordinates.decString}&e=J2000&h=15.0&w=15.0&f=gif&c=none&fov=NONE&v3=`}/>
-    )
+export default class StarMap extends Component{
+    constructor(props) {
+        super(props);
+        this.id = new Date().getTime();
+    }
+
+    componentDidMount() {
+        var aladin = window.A.aladin(`#${this.id}`, {target: `${this.props.coordinates.ra} ${this.props.coordinates.dec}`,survey: "P/DSS2/color", fov:0.2});
+    }
+
+    render() {
+        return (
+            <div id={this.id} className="aladin-star-map-holder" style={{width: "100%"}}/>
+        )
+    }
 }

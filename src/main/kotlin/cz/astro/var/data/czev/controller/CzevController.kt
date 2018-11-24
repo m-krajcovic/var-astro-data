@@ -179,6 +179,7 @@ class CzevController(
                     czevResult
             )
         }
+        // TODO get constellation?
         // TODO: Other formats like these?
         //GSC 01234-06789 (5 digits before and after the dash, use leading zeroes if necessary)
         //2MASS J11431012-5804040 (use a J before the coordinates)

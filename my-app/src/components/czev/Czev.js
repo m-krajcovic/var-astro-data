@@ -1,6 +1,22 @@
-import React, {Component} from "react";
+import React, {Component, Fragment} from "react";
 
-import {Button, Card, Col, Form, Icon, Layout, Modal, notification, Row, Spin, Table, Tabs} from 'antd';
+import {
+    Button,
+    Card,
+    Col,
+    Form,
+    Icon,
+    Tag,
+    Layout,
+    Modal,
+    notification,
+    Row,
+    Spin,
+    Table,
+    Tabs,
+    Input,
+    Select, Slider
+} from 'antd';
 import {BASE_URL} from "../../api-endpoint";
 import axios from "axios";
 import {Link, Redirect, Route, Switch} from "react-router-dom";
@@ -16,6 +32,7 @@ import StarMap from "./StarMap";
 import {sorterToParam} from "./tableHelper";
 import {CdsCallsHolder} from "./CdsCallsHolder";
 import {StarDraftSingleStarFormItems} from "./StarDraftSingleStarFormItems";
+import AnimateHeight from "react-animate-height";
 
 const breadcrumbNameMap = {
     "/czev": "CzeV Catalogue",
@@ -82,14 +99,227 @@ export default class Czev extends Component {
                     <Route path="/czev/admin" render={props => (<CzevAdmin {...props} entities={{...this.state}}/>)}/>
                     <Route path="/czev/user" render={props => (<CzevUser {...props} entities={{...this.state}}/>)}/>
                     <Route path="/czev/new" render={props => (<CzevNewStar {...props} entities={{...this.state}}/>)}/>
-                    <Route path="/czev/:id/edit" render={props => (<FormCzevStarEdit {...props} entities={{...this.state}}/>)}/>
-                    <Route path="/czev/:id" render={props => (<CzevStarDetail {...props} entities={{...this.state}}/>)}/>
+                    <Route path="/czev/:id/edit"
+                           render={props => (<FormCzevStarEdit {...props} entities={{...this.state}}/>)}/>
+                    <Route path="/czev/:id"
+                           render={props => (<CzevStarDetail {...props} entities={{...this.state}}/>)}/>
                     <Route path="/czev" render={props => (<CzevCatalogue {...props} entities={{...this.state}}/>)}/>
                 </Switch>
             </Layout.Content>
         )
     }
 };
+
+class ToggleTag extends React.Component {
+    state = {checked: false};
+
+    handleChange = (checked) => {
+        this.setState({checked});
+        this.props.onToggle(checked);
+    };
+
+    render() {
+        return <Tag.CheckableTag {...this.props} checked={this.state.checked} onChange={this.handleChange}/>;
+    }
+}
+
+class CzevCatalogueAdvancedSearch extends Component {
+    static defaultProps = {
+        onSubmit: () => {
+        },
+        loading: false
+    };
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            hidden: true
+        };
+        this.coordinatesRaRegexp = /^((\d*(\.\d+)?)|((\d{1,2})[\s:](\d{1,2})[\s:](\d{0,2}(\.\d+)?)))$/;
+        this.coordinatesDecRegexp = /^(([+-]?\d*(\.\d+)?)|(([+-]?\d{1,2})[\s:](\d{1,2})[\s:](\d{0,2}(\.\d+)?)))$/;
+        this.yearsDefaults = [1990, new Date().getFullYear()];
+        this.yearMarks = {};
+        this.yearMarks[this.yearsDefaults[0]] = "" + this.yearsDefaults[0];
+        this.yearMarks[this.yearsDefaults[1]] = "" + this.yearsDefaults[1];
+        this.amplitudeDefaults = [0, 2];
+        this.amplitudeMarks = {};
+        this.amplitudeMarks[this.amplitudeDefaults[0]] = "" + this.amplitudeDefaults[0];
+        this.amplitudeMarks[this.amplitudeDefaults[1]] = "" + this.amplitudeDefaults[1];
+    }
+
+    handleClear = () => {
+        this.props.onSubmit(null);
+    };
+
+    handleSubmit = e => {
+        e.preventDefault();
+        this.props.form.validateFieldsAndScroll((err, values) => {
+            if (!err) {
+                const submittedValues = {};
+                Object.keys(values).forEach(key => {
+                    if (values[key] !== "" && values[key] != null) {
+                        if (key === 'amplitude') {
+                            if (values[key][0] !== this.amplitudeDefaults[0] || values[key][1] !== this.amplitudeDefaults[1]) {
+                                submittedValues['amplitudeFrom'] = values[key][0];
+                                submittedValues['amplitudeTo'] = values[key][1];
+
+                            }
+                        } else if (key === 'year') {
+                            if (values[key][0] !== this.yearsDefaults[0] || values[key][1] !== this.yearsDefaults[1]) {
+                                submittedValues['yearFrom'] = values[key][0];
+                                submittedValues['yearTo'] = values[key][1];
+                            }
+                        } else {
+                            submittedValues[key] = values[key];
+                        }
+                    }
+                });
+                this.props.onSubmit(submittedValues);
+            }
+        });
+    };
+
+    render() {
+        const {getFieldDecorator} = this.props.form;
+        return (
+            <Spin spinning={this.props.loading}>
+                <div style={{marginBottom: 12}}>
+                    <ToggleTag onToggle={() => this.setState({...this.state, hidden: !this.state.hidden})}>Advanced
+                        search</ToggleTag>
+                    <AnimateHeight height={this.state.hidden ? 0 : "auto"}>
+                        <Form style={{marginTop: 8}} className="czev-catalogue-search-form"
+                              onSubmit={this.handleSubmit}>
+                            <Row gutter={24}>
+                                <Col span={24} md={{span: 8}}>
+                                    <Form.Item label="RA">
+                                        {getFieldDecorator('ra', {
+                                            rules: [{
+                                                pattern: this.coordinatesRaRegexp,
+                                                message: 'The input is not valid right ascension!',
+                                            }]
+                                        })(
+                                            <Input/>
+                                        )}
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24} md={{span: 8}}>
+                                    <Form.Item label="DEC">
+                                        {getFieldDecorator('dec', {
+                                            rules: [{
+                                                pattern: this.coordinatesDecRegexp,
+                                                message: 'The input is not valid right ascension!',
+                                            }]
+                                        })(
+                                            <Input/>
+                                        )}
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24} md={{span: 8}}>
+                                    <Form.Item label="Radius">
+                                        {getFieldDecorator('radius', {
+                                            initialValue: 0.01
+                                        })(
+                                            <Input style={{width: "100%"}} addonAfter="deg"/>
+                                        )}
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                            <Row gutter={24}>
+                                <Col span={24} md={{span: 8}}>
+                                    <Form.Item label="Constellation">
+                                        {getFieldDecorator('constellation', {})(
+                                            <Select
+                                                showSearch
+                                                optionFilterProp="children"
+                                            >
+                                                {this.props.entities.constellations.map(cons => {
+                                                    return (
+                                                        <Select.Option
+                                                            key={cons.id}>{cons.abbreviation} ({cons.name})</Select.Option>
+                                                    )
+                                                })}
+                                            </Select>
+                                        )}
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24} md={{span: 8}}>
+                                    <Form.Item label="Discoverer">
+                                        {getFieldDecorator('discoverer', {})(
+                                            <Select
+                                                showSearch
+                                                optionFilterProp="children"
+                                            >
+                                                {this.props.entities.observers.map(obs => {
+                                                    return (
+                                                        <Select.Option
+                                                            key={obs.id}>{obs.firstName} {obs.lastName}</Select.Option>
+                                                    )
+                                                })}
+                                            </Select>
+                                        )}
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24} md={{span: 8}}>
+                                    <Form.Item label="Filter Band">
+                                        {getFieldDecorator('filterBand', {})(
+                                            <Select
+                                                showSearch
+                                                optionFilterProp="children"
+                                            >
+                                                {this.props.entities.filterBands.map(fb => {
+                                                    return (
+                                                        <Select.Option
+                                                            key={fb.id}>{fb.name}</Select.Option>
+                                                    )
+                                                })}
+                                            </Select>
+                                        )}
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                            <Row gutter={24}>
+                                <Col span={24} md={{span: 8}}>
+                                    <Form.Item label="Type">
+                                        {getFieldDecorator('type', {})(
+                                            <Input/>
+                                        )}
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24} md={{span: 8}}>
+                                    <Form.Item label="Amplitude">
+                                        {getFieldDecorator('amplitude', {
+                                            initialValue: this.amplitudeDefaults
+                                        })(
+                                            <Slider step={0.01} min={this.amplitudeDefaults[0]} max={this.amplitudeDefaults[1]} range marks={this.amplitudeMarks} />
+                                        )}
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24} md={{span: 8}}>
+                                    <Form.Item label="Year">
+                                        {getFieldDecorator('year', {
+                                            initialValue: [1990, 2018]
+                                        })(
+                                            <Slider min={this.yearsDefaults[0]} max={this.yearsDefaults[1]} range marks={this.yearMarks} />
+                                        )}
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col span={24} style={{textAlign: "right"}}>
+                                    <Button type="primary" htmlType="submit">Search</Button>
+                                    <Button style={{marginLeft: 8}} htmlType="button"
+                                            onClick={this.handleClear}>Clear</Button>
+                                </Col>
+                            </Row>
+                        </Form>
+                    </AnimateHeight>
+                </div>
+            </Spin>
+        )
+    }
+}
+
+const WrappedCzevCatalogueAdvancedSearch = Form.create()(CzevCatalogueAdvancedSearch);
 
 export class CzevCatalogue extends Component {
 
@@ -100,78 +330,25 @@ export class CzevCatalogue extends Component {
                 size: 'small',
                 pageSizeOptions: ['10', '20', '50'],
                 showSizeChanger: true,
-                showQuickJumper: true
+                showQuickJumper: true,
+                showTotal: total => `Total ${total} star${total !== 1 ? 's': ''}`
             },
             downloadLoading: false,
-            columns: [
-                {
-                    title: 'Id',
-                    dataIndex: 'czevId',
-                    sorter: true,
-                    render: czevId => (
-                        <span style={{color: "#1890ff"}}>{czevId}</span>
-                    ),
-                    onCell: record => {
-                        return {
-                            onClick: e => {
-                                this.props.history.push(`/czev/${record.czevId}`)
-                            },
-                            className: "column-czevid"
-                        }
-                    }
-                },
-                {
-                    title: 'Constellation',
-                    dataIndex: 'constellation.abbreviation',
-                    sorter: true
-                },
-                {
-                    title: 'Type',
-                    dataIndex: 'type',
-                    sorter: true
-                },
-                {
-                    title: 'RA (J2000)',
-                    dataIndex: 'coordinates.raString',
-                },
-                {
-                    title: 'DEC (J2000)',
-                    dataIndex: 'coordinates.decString',
-                },
-                {
-                    title: 'Epoch',
-                    dataIndex: 'm0',
-                    sorter: true
-                },
-                {
-                    title: 'Period',
-                    dataIndex: 'period',
-                    sorter: true
-                },
-                {
-                    title: 'Discoverer',
-                    dataIndex: 'discoverers',
-                    render: discoverers => (
-                        <span>
-            {
-                discoverers.map(d => {
-                        return (<span key={d.abbreviation} title={`${d.firstName} ${d.lastName}`}>{d.abbreviation} </span>)
-                    }
-                )
-            }
-            </span>
-                    )
-                }
-            ]
         };
+        this.sorter = null;
+        this.filters = null;
+        this.pageSize = 10;
     }
 
-    loadPage(page, size, sorter) {
+    loadPage(page, size, sorter, filters) {
         this.setState({...this.state, loading: true});
         let params = {
             page: page,
             size: size,
         };
+        if (filters) {
+            Object.assign(params, filters);
+        }
         if (sorter && sorter.field && sorter.order) {
             params["sort"] = sorterToParam(sorter)
         }
@@ -189,7 +366,14 @@ export class CzevCatalogue extends Component {
     }
 
     handleTableChange = (pagination, filters, sorter) => {
-        this.loadPage(pagination.current - 1, pagination.pageSize, sorter)
+        this.pageSize = pagination.pageSize;
+        this.sorter = sorter;
+        this.loadPage(pagination.current - 1, pagination.pageSize, sorter, this.filters);
+    };
+
+    handleSearch = (values) => {
+        this.filters = values;
+        this.loadPage(0, this.pageSize, this.sorter, values);
     };
 
     componentDidMount() {
@@ -215,15 +399,81 @@ export class CzevCatalogue extends Component {
     };
 
     render() {
+        const columns = [
+            {
+                title: 'Id',
+                dataIndex: 'czevId',
+                sorter: true,
+                render: czevId => (
+                    <span style={{color: "#1890ff"}}>{czevId}</span>
+                ),
+                onCell: record => {
+                    return {
+                        onClick: e => {
+                            this.props.history.push(`/czev/${record.czevId}`)
+                        },
+                        className: "column-czevid"
+                    }
+                }
+            },
+            {
+                title: 'Constellation',
+                dataIndex: 'constellation.abbreviation',
+                sorter: true,
+            },
+            {
+                title: 'Type',
+                dataIndex: 'type',
+                sorter: true
+            },
+            {
+                title: 'RA (J2000)',
+                dataIndex: 'coordinates.raString',
+                render: ra => (<CoordinateWrapper value={ra}/>)
+            },
+            {
+                title: 'DEC (J2000)',
+                dataIndex: 'coordinates.decString',
+                render: dec => (<CoordinateWrapper value={dec}/>)
+            },
+            {
+                title: 'Epoch',
+                dataIndex: 'm0',
+                sorter: true
+            },
+            {
+                title: 'Period',
+                dataIndex: 'period',
+                sorter: true
+            },
+            {
+                title: 'Discoverer',
+                dataIndex: 'discoverers',
+                render: discoverers => (
+                    <span>
+            {
+                discoverers.map(d => {
+                        return (<span key={d.abbreviation} title={`${d.firstName} ${d.lastName}`}>{d.abbreviation} </span>)
+                    }
+                )
+            }
+            </span>
+                )
+            }
+        ];
         return (
-            <Card>
-                <Table size="small" rowKey="czevId" columns={this.state.columns} dataSource={this.state.data}
-                       loading={this.state.loading} pagination={this.state.pagination}
-                       onChange={this.handleTableChange}/>
-                <Button loading={this.state.downloadLoading}
-                        style={{position: "absolute", bottom: "24px", marginBottom: 16}} onClick={this.handleDownload}
-                        type="ghost" icon="download" size="small">Download</Button>
-            </Card>
+            <Spin spinning={this.state.loading}>
+                <Card style={{overflow: "hidden"}}>
+                    <WrappedCzevCatalogueAdvancedSearch entities={this.props.entities} onSubmit={this.handleSearch}/>
+                    <Table size="small" rowKey="czevId" columns={columns} dataSource={this.state.data}
+                           pagination={this.state.pagination}
+                           onChange={this.handleTableChange}/>
+                    <Button loading={this.state.downloadLoading}
+                            style={{position: "absolute", bottom: "24px", marginBottom: 16}}
+                            onClick={this.handleDownload}
+                            type="ghost" icon="download" size="small">Download</Button>
+                </Card>
+            </Spin>
         )
     }
 }
@@ -256,8 +506,10 @@ export class CzevStarDetail extends Component {
         let body = (<span/>);
         if (data) {
             body = (<Row gutter={8}>
-                <Col span={24} xl={{span: 8}} md={{span: 12}}>
-                    <h3>CzeV {data.czevId} {data.constellation.abbreviation} <Link to={`/czev/${data.czevId}/edit`}><Icon title="Edit" className="clickable-icon" type="edit" /></Link></h3>
+                <Col span={24} xxl={{span: 8}} xl={{span: 12}}>
+                    <h3>CzeV {data.czevId} {data.constellation.abbreviation} <Link
+                        to={`/czev/${data.czevId}/edit`}><Icon title="Edit" className="clickable-icon"
+                                                               type="edit"/></Link></h3>
                     <div>{data.crossIdentifications.join(" / ")}</div>
                     <div><b>Type: </b>{data.type}</div>
                     <div><b>J: </b>{data.jmagnitude}</div>
@@ -271,10 +523,11 @@ export class CzevStarDetail extends Component {
                     <div><b>Discoverer: </b>{data.discoverers.map(d => `${d.firstName} ${d.lastName}`).join(", ")}</div>
                     <div><b>Note: </b>{data.publicNote}</div>
                 </Col>
-                <Col span={24} xl={{span: 8}} md={{span: 12}}>
+                <Col span={24} xxl={{span: 8}} xl={{span: 12}}>
                     <div style={{textAlign: 'center'}}>
-                        <span><span>RA: </span><CoordinateWrapper value={data.coordinates.raString}/></span>&nbsp;
-                        <span><span>DEC: </span><CoordinateWrapper value={data.coordinates.decString}/></span></div>
+                        <span style={{display: "inline-block"}}><span>RA: </span><CoordinateWrapper size="large"
+                                                                  value={data.coordinates.raString}/></span>&nbsp;
+                        <span style={{display: "inline-block"}}><span>DEC: </span><CoordinateWrapper size="large" value={data.coordinates.decString}/></span></div>
                     <StarMap coordinates={data.coordinates}/>
                 </Col>
             </Row>)
@@ -295,6 +548,8 @@ export class CzevStarDetail extends Component {
     }
 }
 
+
+
 export class CzevNewStar extends Component {
     render() {
         return (
@@ -314,7 +569,7 @@ export class CzevNewStar extends Component {
 
 const FormStarDraftSingleNewStar = Form.create({})(StarDraftSingleNewStar);
 
-export class CzevStarEdit extends Component {
+class CzevStarEdit extends Component {
     render() {
         return (
             <CdsCallsHolder>
