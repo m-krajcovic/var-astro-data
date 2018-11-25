@@ -19,15 +19,16 @@ export class CdsCallsHolder extends Component {
     loadByName = name => {
         if (name) {
             if (this.state.nameInfoParams !== name) {
-                this.setState({...this.state, nameInfoParams: name, nameInfoLoading: true});
+                this.setState(state => {
+                        return {...state, nameInfoParams: name, nameInfoLoading: true}
+                    }
+                );
                 axios.get(BASE_URL + "/czev/cds/all", {
                     params: {
                         name: name,
                     }
                 }).then(result => {
-                    if (this.state.nameInfoParams === name) {
-                        this.setState({...this.state, nameInfoResult: result.data, nameInfoLoading: false})
-                    }
+                    this.setState({...this.state, nameInfoResult: result.data, nameInfoLoading: false})
                 })
             }
         }
@@ -36,7 +37,9 @@ export class CdsCallsHolder extends Component {
     loadByCoordinates = coords => {
         if (coords && coords.ra != null && coords.dec != null) {
             if (coords.ra !== this.state.coordsInfoParams.ra || coords.dec !== this.state.coordsInfoParams.dec) {
-                this.setState({...this.state, coordsInfoParams: coords, coordsInfoLoading: true});
+                this.setState(state => {
+                    return {...state, coordsInfoParams: coords, coordsInfoLoading: true};
+                });
                 axios.get(BASE_URL + "/czev/cds/all", {
                     params: {
                         ra: coords.ra,

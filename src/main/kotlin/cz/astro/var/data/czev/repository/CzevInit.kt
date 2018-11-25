@@ -108,9 +108,9 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         val jMag = j.toDoubleOrNull()
         var kMag: Double? = null
         if (jMag != null) {
-            val jk = jk.toDoubleOrNull()
-            if (jk != null) {
-                kMag = jMag - jk
+            val jkVal = jk.toDoubleOrNull()
+            if (jkVal != null) {
+                kMag = jMag - jkVal
             }
         }
         val czevStar = CzevStar(

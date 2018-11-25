@@ -96,12 +96,27 @@ export class StarDraftSingleStarFormItems extends Component {
                     typeValid = false;
                 }
             });
-            this.setState({...this.state, typeValid: typeValid});
+            this.setState(state => {
+                return {
+                    ...state,
+                    typeValid: typeValid
+                };
+            });
         }
         if (uncertain && !value.endsWith(':')) {
-            this.setState({...this.state, typeUncertain: false});
+            this.setState(state => {
+                return {
+                    ...state,
+                    typeUncertain: false
+                };
+            });
         } else if (!uncertain && value.endsWith(':')) {
-            this.setState({...this.state, typeUncertain: true});
+            this.setState(state => {
+                return {
+                    ...state,
+                    typeUncertain: true
+                };
+            });
         }
     };
 
