@@ -2,12 +2,13 @@ package cz.astro.`var`.data.oc.controller
 
 import cz.astro.`var`.data.oc.repository.ConstellationStarSummary
 import cz.astro.`var`.data.oc.repository.StarRepository
+import cz.astro.`var`.data.oc.service.PredictionResultModel
+import cz.astro.`var`.data.oc.service.PredictionService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.web.bind.annotation.*
+import java.time.LocalDate
 
 /**
  * @author Michal
@@ -16,7 +17,8 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("api/oc")
-class StarController(private val starRepository: StarRepository) {
+class StarController(private val starRepository: StarRepository,
+                     private val predictionService: PredictionService) {
 
     private val logger: Logger = LoggerFactory.getLogger(StarController::class.java)
 
@@ -34,4 +36,8 @@ class StarController(private val starRepository: StarRepository) {
     fun getByConstellation(@PathVariable cons: String): List<StarListItemModel> =
             starRepository.findStarMinimaSummaryByConstellation(cons).asSequence().map { it.toListItemModel() }.toList()
 
+    @GetMapping("predictions")
+    fun getAllPredictions(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate): List<PredictionResultModel> {
+        return predictionService.getAllPredictionsForDay(date)
+    }
 }

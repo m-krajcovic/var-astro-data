@@ -66,9 +66,6 @@ class App extends Component {
                         <Route path="/czev" component={Czev}/>
                         <Redirect to="/czev"/>
                     </Switch>
-                    <Footer style={{textAlign: 'center'}}>
-                        ©2018
-                    </Footer>
                 </Layout>
             </Router>
         );

@@ -20,4 +20,7 @@ interface StarRepository : JpaRepository<Star, Int> {
 
     @Query("select new cz.astro.var.data.oc.repository.StarMinimaSummary(s.id, s.constellation, s.starName, COUNT(m)) from StarMinima m JOIN Star s ON m.constellationId = s.constellationId AND m.starId = s.starId WHERE s.constellation = :constellation GROUP BY s.id, s.starId, s.constellation, s.starName ORDER BY s.starId")
     fun findStarMinimaSummaryByConstellation(@Param("constellation") constellation: String): List<StarMinimaSummary>
+
+    @Query("select e from StarElementRichEntity e")
+    fun findAllElements(): List<StarElementRichEntity>
 }

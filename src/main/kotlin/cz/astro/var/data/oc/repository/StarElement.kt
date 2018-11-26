@@ -19,3 +19,15 @@ class StarElement(
     var period: Double,
     @Column(name="KIND", columnDefinition = "char") var kind: String
 )
+
+@Entity
+@Table(name = "element")
+class StarElementRichEntity(
+        @Id var id: Int,
+        @Column(name="STARNAME", columnDefinition = "char") var starName: String,
+        @Column(name="CONS", columnDefinition = "char") var cons: String,
+        @Column(name="KIND", columnDefinition = "char") var kind: String,
+        var minimum0: Double,
+        var minimum9: Double,
+        var period: Double
+)
