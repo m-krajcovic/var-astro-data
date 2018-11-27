@@ -21,5 +21,5 @@ data class StarModel(
 )
 
 fun Star.toModel() : StarModel {
-    return StarModel(id, constellation, starName, comp, coordinates, elements.asSequence().map { it.toModel() }.toList(), brightness, minima.asSequence().map { it.toModel() }.toList())
+    return StarModel(id, constellation, starName, comp, coordinates, elements.asSequence().map { it.toModel() }.toList(), brightness.toList(), minima.asSequence().map { it.toModel() }.toList())
 }

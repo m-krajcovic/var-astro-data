@@ -331,13 +331,14 @@ export class CzevCatalogue extends Component {
                 pageSizeOptions: ['10', '20', '50'],
                 showSizeChanger: true,
                 showQuickJumper: true,
+                pageSize: 20,
                 showTotal: total => `Total ${total} star${total !== 1 ? 's': ''}`
             },
             downloadLoading: false,
         };
         this.sorter = null;
         this.filters = null;
-        this.pageSize = 10;
+        this.pageSize = 20;
     }
 
     loadPage(page, size, sorter, filters) {
@@ -377,7 +378,7 @@ export class CzevCatalogue extends Component {
     };
 
     componentDidMount() {
-        this.loadPage(0, 10)
+        this.loadPage(0, 20)
     }
 
     handleDownload = () => {
@@ -414,37 +415,41 @@ export class CzevCatalogue extends Component {
                         },
                         className: "column-czevid"
                     }
-                }
+                },
+                width: 60
             },
             {
-                title: 'Constellation',
+                title: 'Cons.',
                 dataIndex: 'constellation.abbreviation',
                 sorter: true,
+                width: 80
             },
             {
                 title: 'Type',
                 dataIndex: 'type',
-                sorter: true
+                sorter: true,
             },
             {
                 title: 'RA (J2000)',
                 dataIndex: 'coordinates.raString',
-                render: ra => (<CoordinateWrapper value={ra}/>)
+                render: ra => (<CoordinateWrapper value={ra}/>),
+                width: 140
             },
             {
                 title: 'DEC (J2000)',
                 dataIndex: 'coordinates.decString',
-                render: dec => (<CoordinateWrapper value={dec}/>)
+                render: dec => (<CoordinateWrapper value={dec}/>),
+                width: 140
             },
             {
                 title: 'Epoch',
                 dataIndex: 'm0',
-                sorter: true
+                sorter: true,
             },
             {
                 title: 'Period',
                 dataIndex: 'period',
-                sorter: true
+                sorter: true,
             },
             {
                 title: 'Discoverer',
@@ -452,8 +457,8 @@ export class CzevCatalogue extends Component {
                 render: discoverers => (
                     <span>
             {
-                discoverers.map(d => {
-                        return (<span key={d.abbreviation} title={`${d.firstName} ${d.lastName}`}>{d.abbreviation} </span>)
+                discoverers.map((d, i) => {
+                        return (<span key={d.abbreviation} title={`${d.firstName} ${d.lastName}`}>{d.lastName}{discoverers.length !== i + 1 ? ", " : ""}</span>)
                     }
                 )
             }
@@ -466,6 +471,7 @@ export class CzevCatalogue extends Component {
                 <Card style={{overflow: "hidden"}}>
                     <WrappedCzevCatalogueAdvancedSearch entities={this.props.entities} onSubmit={this.handleSearch}/>
                     <Table size="small" rowKey="czevId" columns={columns} dataSource={this.state.data}
+                           scroll={{x: 800}}
                            pagination={this.state.pagination}
                            onChange={this.handleTableChange}/>
                     <Button loading={this.state.downloadLoading}

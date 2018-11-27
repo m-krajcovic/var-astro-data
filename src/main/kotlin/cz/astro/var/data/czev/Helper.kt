@@ -63,8 +63,10 @@ fun getSunCoordinates(jd: Double): CosmicCoordinatesModel {
     val LRad = Math.toRadians(L)
     val RA = Math.toDegrees(atan2(cos(eRad) * sin(LRad), cos(LRad)))
     val d = Math.toDegrees(asin(sin(eRad) * sin(LRad)))
-    return CosmicCoordinatesModel(((RA % 360 + 360) % 360).toBigDecimal(), d.toBigDecimal())
+    return CosmicCoordinatesModel(normalizeDegrees(RA).toBigDecimal(), d.toBigDecimal())
 }
+
+private fun normalizeDegrees(deg: Double) = ((deg % 360 + 360) % 360)
 
 data class HorizontalCoordinatesModel(
         val altitude: Double,
@@ -84,7 +86,7 @@ fun transformEquatorialToHorizontalCoordinates(coordinates: CosmicCoordinatesMod
     val v1 = sin(tRad)
     val v2 = sin(latRad) * cos(tRad) - tan(decRad) * cos(latRad)
     val azimuth = Math.toDegrees(atan2(v1, v2))
-    return HorizontalCoordinatesModel(90 - altitude, azimuth)
+    return HorizontalCoordinatesModel(90 - altitude, azimuth + 180)
 }
 
 // this is probably correct now
@@ -122,13 +124,38 @@ fun calculateMinimum(m0: Double, period: Double, jd: Double): Double {
     return m0 + period * e
 }
 
+val degreesCardinalDirectionMap = mapOf(
+        Pair(0, "N"),
+        Pair(45, "NE"),
+        Pair(90, "E"),
+        Pair(135, "SE"),
+        Pair(180, "S"),
+        Pair(225, "SW"),
+        Pair(270, "W"),
+        Pair(315, "NW"),
+        Pair(360, "N")
+)
+
+fun getCardinalDirection(azimuth: Double): String {
+    val normalizedAzimuth = normalizeDegrees(azimuth)
+    var degreeCheckpoint = 0
+    while (degreeCheckpoint <= 360) {
+        if (normalizedAzimuth < degreeCheckpoint + 22.5) {
+            return degreesCardinalDirectionMap[degreeCheckpoint]!!
+        }
+        degreeCheckpoint += 45
+    }
+    return "N"
+}
+
 fun main(args: Array<String>) {
     val jdNight = 2458448.5
     var i = 0.0
     while (i < 1) {
         val sunCoords = getSunCoordinates(jdNight + i)
+//        println("${sunCoords.ra} ${sunCoords.dec}")
         val horiCoords = transformEquatorialToHorizontalCoordinates(sunCoords, 50.0, 15.0, jdNight + i)
-        println(((horiCoords.altitude - 90) * -1).toString() + " "+ horiCoords.azimuth)
+        println(((horiCoords.altitude - 90) * -1).toString() + " "+ horiCoords.azimuth + " " + getCardinalDirection(horiCoords.azimuth))
         i+= JD_MINUTE
     }
 }

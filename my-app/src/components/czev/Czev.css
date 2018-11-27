@@ -58,6 +58,10 @@
     opacity: 1;
 }
 
+.blue {
+    color: #1890ff;
+}
+
 .fade-enter {
     height: 0;
 }

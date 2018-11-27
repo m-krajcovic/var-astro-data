@@ -336,3 +336,13 @@ class CosmicCoordinates(
 ) {
     constructor(raString: String, decString: String) : this(raStringToDegrees(raString), decStringToDegrees(decString))
 }
+
+@Entity
+@Table(name = "predpovedi")
+class Predpovedi(
+        @Id
+        val id: Int,
+        val starName: String,
+        val cons: String,
+        @Column(name = "BODY_zanedbanost") val body: Int
+)

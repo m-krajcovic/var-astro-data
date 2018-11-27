@@ -37,7 +37,9 @@ class StarController(private val starRepository: StarRepository,
             starRepository.findStarMinimaSummaryByConstellation(cons).asSequence().map { it.toListItemModel() }.toList()
 
     @GetMapping("predictions")
-    fun getAllPredictions(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate): List<PredictionResultModel> {
-        return predictionService.getAllPredictionsForDay(date)
+    fun getAllPredictions(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
+                          @RequestParam(defaultValue = "50.0") latitude: Double,
+                          @RequestParam(defaultValue = "15.0") longitude: Double): Set<PredictionResultModel> {
+        return predictionService.getAllPredictionsForDay(date, latitude, longitude)
     }
 }

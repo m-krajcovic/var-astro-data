@@ -1,5 +1,6 @@
 package cz.astro.`var`.data.oc.repository
 
+import java.math.BigDecimal
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -14,20 +15,8 @@ import javax.persistence.Table
 @Table(name = "element")
 class StarElement(
     @Id var id: Int,
-    var minimum0: Double,
-    var minimum9: Double,
-    var period: Double,
+    @Column(name="MINIMUM0", columnDefinition = "double")var minimum0: BigDecimal,
+    @Column(name="MINIMUM9", columnDefinition = "double") var minimum9: BigDecimal,
+    @Column(name="PERIOD", columnDefinition = "double")var period: BigDecimal,
     @Column(name="KIND", columnDefinition = "char") var kind: String
-)
-
-@Entity
-@Table(name = "element")
-class StarElementRichEntity(
-        @Id var id: Int,
-        @Column(name="STARNAME", columnDefinition = "char") var starName: String,
-        @Column(name="CONS", columnDefinition = "char") var cons: String,
-        @Column(name="KIND", columnDefinition = "char") var kind: String,
-        var minimum0: Double,
-        var minimum9: Double,
-        var period: Double
 )

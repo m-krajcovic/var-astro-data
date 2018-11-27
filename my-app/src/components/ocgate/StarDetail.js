@@ -91,7 +91,7 @@ export default class StarDetail extends Component {
                             return (
                                 <div className="star-detail panel" key={bright.id}>
                                     <div className="panel-header">
-                                        <b>Brightness</b>
+                                        <b>Brightness ({bright.col})</b>
                                     </div>
                                     <div className="panel-body">
                                         <div><b>Max P: </b>{bright.maxP}</div>

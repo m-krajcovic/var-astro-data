@@ -63,3 +63,5 @@ interface StarIdentificationRepository: JpaRepository<StarIdentification, Long> 
 interface ConstellationRepository : JpaRepository<Constellation, Long>
 interface StarTypeRepository: JpaRepository<StarType, Long>
 interface FilterBandRepository: JpaRepository<FilterBand, Long>
+
+interface PredpovediRepository: JpaRepository<Predpovedi, Int>
