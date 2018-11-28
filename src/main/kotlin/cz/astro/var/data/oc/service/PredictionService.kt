@@ -1,16 +1,14 @@
 package cz.astro.`var`.data.oc.service
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import cz.astro.`var`.data.czev.calculateMinimum
-import cz.astro.`var`.data.czev.fromJulianDate
-import cz.astro.`var`.data.czev.getCardinalDirection
-import cz.astro.`var`.data.czev.isVisible
+import cz.astro.`var`.data.czev.*
 import cz.astro.`var`.data.czev.repository.PredpovediRepository
 import cz.astro.`var`.data.czev.repository.toMap
 import cz.astro.`var`.data.czev.service.CosmicCoordinatesModel
 import cz.astro.`var`.data.oc.repository.StarRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -36,11 +34,13 @@ class PredictionServiceImpl(
         val logger: Logger = LoggerFactory.getLogger(PredictionServiceImpl::class.java)
     }
 
+    @Cacheable("predictions")
     override fun getAllPredictionsForDay(night: LocalDate, latitude: Double, longitude: Double): Set<PredictionResultModel> {
         val startTime = System.nanoTime()
         val jdNight = night.toJulianDay() + 0.5
         val result = HashSet<PredictionResultModel>()
         val body = predpovediRepository.findAll().toMap { "${it.starName} ${it.cons}" }
+        val nights = findNights(jdNight, jdNight + 1, latitude, longitude)
         starRepository.findStarsWithElements()
                 .forEach { star ->
                     star.elements.asSequence().filter { it.kind == "p" || it.kind == "s" }.forEach {
@@ -55,12 +55,14 @@ class PredictionServiceImpl(
                             points = predpoved.body
                         }
                         while (calculatedMinimum < jdNight + 1) {
-                            val prediction = isVisible(CosmicCoordinatesModel(star.coordinates.raValue(), star.coordinates.decValue()), latitude, longitude, calculatedMinimum.toDouble())
-                            prediction.map { pr ->
-                                result.add(PredictionResultModel(star.id, starName,
-                                        it.kind, calculatedMinimum.toBigDecimal(), fromJulianDate(calculatedMinimum), points, pr.objCoords.altitude, getCardinalDirection(pr.objCoords.azimuth),
-                                        star.brightness.map { b -> PredictionMagnitudeModel(b.col, b.maxP, b.minP) },
-                                        "24${it.minimum9}+$period*E"))
+                            if (isNight(calculatedMinimum, nights)) {
+                                val objHorizontalCoords = transformEquatorialToHorizontalCoordinates(CosmicCoordinatesModel(star.coordinates.raValue(), star.coordinates.decValue()), latitude, longitude, calculatedMinimum)
+                                if (objHorizontalCoords.altitude >= 20) {
+                                    result.add(PredictionResultModel(star.id, starName,
+                                            it.kind, calculatedMinimum.toBigDecimal(), fromJulianDate(calculatedMinimum), points, objHorizontalCoords.altitude, getCardinalDirection(objHorizontalCoords.azimuth),
+                                            star.brightness.map { b -> PredictionMagnitudeModel(b.col, b.maxP, b.minP) },
+                                            "24${it.minimum9}+$period*E"))
+                                }
                             }
                             calculatedMinimum += periodDouble
                         }
@@ -113,7 +115,7 @@ data class PredictionMagnitudeModel(
         val min: Double
 )
 
-fun LocalDate.toJulianDay(): Double{
+fun LocalDate.toJulianDay(): Double {
     val julianDay = (1461 * (this.year + 4800 + (this.monthValue - 14) / 12)) / 4 + (367 * (this.monthValue - 2 - 12 * ((this.monthValue - 14) / 12))) / 12 - (3 * ((this.year + 4900 + (this.monthValue - 14) / 12) / 100)) / 4 + this.dayOfMonth - 32075
     return julianDay - 0.5
 }

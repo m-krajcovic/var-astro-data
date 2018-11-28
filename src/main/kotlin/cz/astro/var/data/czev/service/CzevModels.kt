@@ -2,6 +2,8 @@ package cz.astro.`var`.data.czev.service
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import cz.astro.`var`.data.czev.conversion.CosmicCoordinatesDeserializer
 import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.czev.validation.Declination
 import cz.astro.`var`.data.czev.validation.RightAscension
@@ -211,6 +213,7 @@ data class CzevStarListModel(
         val year: Int
 )
 
+@JsonDeserialize(using = CosmicCoordinatesDeserializer::class)
 data class CosmicCoordinatesModel(
         @RightAscension val ra: BigDecimal,
         @Declination val dec: BigDecimal
@@ -358,5 +361,5 @@ fun CosmicCoordinatesModel.toEntity(): CosmicCoordinates {
 }
 
 fun UserPrincipal.toModel(): UserModel {
-    return UserModel(id,  email)
+    return UserModel(id, email)
 }

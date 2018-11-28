@@ -61,13 +61,13 @@ export default class StarMap extends Component {
         const obj = this.state.selectedObject.data;
         const magnitudes = {};
         if (obj.Vmag) {
-            magnitudes["V"] = obj.Vmag;
+            magnitudes["V"] = parseFloat(obj.Vmag);
         }
         if (obj.Jmag) {
-            magnitudes["J"] = obj.Jmag;
+            magnitudes["J"] = parseFloat(obj.Jmag);
         }
         if (obj.Kmag) {
-            magnitudes["K"] = obj.Kmag;
+            magnitudes["K"] = parseFloat(obj.Kmag);
         }
         return {
             coordinates: {

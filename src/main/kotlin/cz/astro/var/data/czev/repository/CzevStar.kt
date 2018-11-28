@@ -50,6 +50,7 @@ class CzevStar(
         @NotAudited
         var typeValid: Boolean = true
 ) {
+    // TODO Rename to 'id'
     @Id
     @SequenceGenerator(name = "czev_CzevIdSequence", sequenceName = "czev_CzevIdSequence", allocationSize = 1)
     @GeneratedValue(generator = "czev_CzevIdSequence", strategy = GenerationType.SEQUENCE)

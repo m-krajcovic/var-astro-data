@@ -1,7 +1,12 @@
 package cz.astro.`var`.data.czev.conversion
 
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import cz.astro.`var`.data.czev.decStringToDegrees
 import cz.astro.`var`.data.czev.raStringToDegrees
+import cz.astro.`var`.data.czev.service.CosmicCoordinatesModel
 import cz.astro.`var`.data.czev.validation.Declination
 import cz.astro.`var`.data.czev.validation.RightAscension
 import org.springframework.core.convert.TypeDescriptor
@@ -75,3 +80,14 @@ data class RightAscensionHolder(
 data class DeclinationHolder(
         val value: BigDecimal
 )
+
+class CosmicCoordinatesDeserializer(vc: Class<*>? = null) : StdDeserializer<CosmicCoordinatesModel>(vc) {
+    override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): CosmicCoordinatesModel {
+        val node = p!!.codec.readTree<JsonNode>(p)
+        val raText = node.get("ra").asText().trim()
+        val ra = raText.toBigDecimalOrNull() ?: raStringToDegrees(raText)
+        val decText = node.get("dec").asText().trim()
+        val dec = decText.toBigDecimalOrNull() ?: decStringToDegrees(decText)
+        return CosmicCoordinatesModel(ra, dec)
+    }
+}

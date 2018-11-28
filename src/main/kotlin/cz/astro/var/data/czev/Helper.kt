@@ -5,12 +5,13 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.time.temporal.JulianFields
-import java.util.*
 import kotlin.math.*
 
 
 const val JD2000: Double = 2451545.0
-const val JD_MINUTE = 0.000694
+const val JD_HOUR = 1.0 / 24.0
+const val JD_MINUTE = JD_HOUR / 60.0
+const val JD_SECOND = JD_MINUTE / 60.0
 
 const val RA_NUMBER_PATTERN = "(\\d*(\\.\\d+)?)"
 const val DEC_NUMBER_PATTERN = "([+\\-]?\\d*(\\.\\d+)?)"
@@ -104,59 +105,103 @@ fun fromJulianDate(jd: Double): LocalDateTime {
 }
 
 data class PredictionModel(
-        var sunCoords: HorizontalCoordinatesModel,
+//        var sunCoords: HorizontalCoordinatesModel,
         var objCoords: HorizontalCoordinatesModel
 )
-
-fun isVisible(objCoords: CosmicCoordinatesModel, latitude: Double, longitude: Double, jd: Double): Optional<PredictionModel> {
-    val sunCoords = getSunCoordinates(jd)
-    val sunHorizontalCoords = transformEquatorialToHorizontalCoordinates(sunCoords, latitude, longitude, jd)
-    if (sunHorizontalCoords.altitude <= -12) {
-        val objHorizontalCoords = transformEquatorialToHorizontalCoordinates(objCoords, latitude, longitude, jd)
-        if (objHorizontalCoords.altitude >= 20)
-        return Optional.of(PredictionModel(sunHorizontalCoords, objHorizontalCoords))
-    }
-    return Optional.empty()
-}
 
 fun calculateMinimum(m0: Double, period: Double, jd: Double): Double {
     val e = Math.ceil((jd - m0) / period)
     return m0 + period * e
 }
 
-val degreesCardinalDirectionMap = mapOf(
-        Pair(0, "N"),
-        Pair(45, "NE"),
-        Pair(90, "E"),
-        Pair(135, "SE"),
-        Pair(180, "S"),
-        Pair(225, "SW"),
-        Pair(270, "W"),
-        Pair(315, "NW"),
-        Pair(360, "N")
-)
+val cardinalDirections = arrayOf("N", "NE", "E", "SE", "S", "SW", "W", "NW", "N")
 
 fun getCardinalDirection(azimuth: Double): String {
     val normalizedAzimuth = normalizeDegrees(azimuth)
-    var degreeCheckpoint = 0
-    while (degreeCheckpoint <= 360) {
-        if (normalizedAzimuth < degreeCheckpoint + 22.5) {
-            return degreesCardinalDirectionMap[degreeCheckpoint]!!
+    val directionIndex: Int = (Math.round(normalizedAzimuth / 45) % 8).toInt()
+    return cardinalDirections[directionIndex]
+}
+
+fun isNight(jd: Double, nights: List<Array<Double>>): Boolean {
+    return nights.any { jd >= it[0] && jd <= it[1] }
+}
+
+fun findNights(jdStart: Double, jdEnd: Double, latitude: Double, longitude: Double): List<Array<Double>> {
+    val result = arrayListOf<Array<Double>>()
+    var twilight: Array<Double>? = null
+    var jd = jdStart
+    while (jd <= jdEnd) {
+        val sunCoords = getSunCoordinates(jd)
+        val horiSunCoords = transformEquatorialToHorizontalCoordinates(sunCoords, latitude, longitude, jd)
+        if (horiSunCoords.altitude <= -12) {
+            if (twilight == null) {
+                // change from day to twilight -> need to find sunset
+                twilight = Array(2) { 0.0 }
+                if (jd == jdStart) {
+                    twilight[0] = jd
+                } else {
+                    twilight[0] = findSunset(jd - JD_HOUR, jd, latitude, longitude)
+                }
+            }
+        } else {
+            if (twilight != null) {
+                // change from twilight to day -> need to find sunrise
+                twilight[1] = findSunrise(jd - JD_HOUR, jd, latitude, longitude)
+                result.add(twilight)
+                twilight = null
+            }
         }
-        degreeCheckpoint += 45
+        jd += JD_HOUR
     }
-    return "N"
+    if (twilight != null) {
+        twilight[1] = jdEnd
+        result.add(twilight)
+    }
+    return result
+}
+
+fun findSunset(jdStart: Double, jdEnd: Double, latitude: Double, longitude: Double): Double {
+    val half = (jdStart + jdEnd) / 2
+    if (jdEnd - jdStart < JD_SECOND) {
+        return half
+    }
+    val sunCoords = getSunCoordinates(half)
+    val horiSunCoords = transformEquatorialToHorizontalCoordinates(sunCoords, latitude, longitude, half)
+    return if (horiSunCoords.altitude > -12) {
+        findSunset(half, jdEnd, latitude, longitude)
+    } else {
+        findSunset(jdStart, half, latitude, longitude)
+    }
+}
+
+fun findSunrise(jdStart: Double, jdEnd: Double, latitude: Double, longitude: Double): Double {
+    val half = (jdStart + jdEnd) / 2
+    if (jdEnd - jdStart < JD_SECOND) {
+        return half
+    }
+    val sunCoords = getSunCoordinates(half)
+    val horiSunCoords = transformEquatorialToHorizontalCoordinates(sunCoords, latitude, longitude, half)
+    return if (horiSunCoords.altitude < -12) {
+        findSunrise(half, jdEnd, latitude, longitude)
+    } else {
+        findSunrise(jdStart, half, latitude, longitude)
+    }
 }
 
 fun main(args: Array<String>) {
-    val jdNight = 2458448.5
+    val jdNight = 2458447.5
+    val nights = findNights(2458447.5, 2458448.5, 50.0, 15.0)
+    nights.forEach {
+        val start = fromJulianDate(it[0])
+        val end = fromJulianDate(it[1])
+        println("$start - $end")
+    }
     var i = 0.0
-    while (i < 1) {
+    while (i <= 1) {
         val sunCoords = getSunCoordinates(jdNight + i)
-//        println("${sunCoords.ra} ${sunCoords.dec}")
-        val horiCoords = transformEquatorialToHorizontalCoordinates(sunCoords, 50.0, 15.0, jdNight + i)
-        println(((horiCoords.altitude - 90) * -1).toString() + " "+ horiCoords.azimuth + " " + getCardinalDirection(horiCoords.azimuth))
-        i+= JD_MINUTE
+        val horiSunCoords = transformEquatorialToHorizontalCoordinates(sunCoords, 50.0, 15.0, jdNight + i)
+        println("${fromJulianDate(jdNight + i)} --- ${horiSunCoords.altitude}")
+        i += JD_MINUTE
     }
 }
 

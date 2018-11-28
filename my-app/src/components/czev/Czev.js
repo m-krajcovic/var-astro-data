@@ -645,7 +645,7 @@ class CzevStarEditComponent extends Component {
                     cancelText: 'No',
                     onOk() {
                         const body = {
-                            id: component.props.match.params.id,
+                            czevId: component.props.match.params.id,
                             constellation: values.constellation,
                             type: values.type ? values.type : "",
                             discoverers: values.discoverers,
@@ -660,7 +660,8 @@ class CzevStarEditComponent extends Component {
                             year: values.year,
                             jmagnitude: values.jmagnitude,
                             vmagnitude: values.vmagnitude,
-                            kmagnitude: values.kmagnitude
+                            kmagnitude: values.kmagnitude,
+                            vsxName: ""
                         };
                         return axios.put(BASE_URL + "/czev/stars/" + component.props.match.params.id, body)
                             .then(result => {
@@ -727,7 +728,7 @@ class CzevStarEditComponent extends Component {
     render() {
         if (this.state.finished) {
             return (
-                <Redirect to={"/czev/stars/" + this.props.match.params.id}/>
+                <Redirect to={"/czev/" + this.props.match.params.id}/>
             )
         }
         const formItemLayout = {

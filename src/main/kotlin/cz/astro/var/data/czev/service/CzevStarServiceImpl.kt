@@ -45,6 +45,7 @@ class CzevStarServiceImpl(
 
             crossIdentifications.clear()
             crossIdentifications.addAll(model.crossIdentifications.mapIndexed {i, it -> StarIdentification(it, null, i)}.toMutableSet())
+            crossIdentifications.forEach { it.star = this }
 
             typeValid = typeValidator.validate(model.type)
             if (!typeValid) {
@@ -62,8 +63,9 @@ class CzevStarServiceImpl(
             year = model.year
             discoverers = observers
             coordinates = CosmicCoordinates(model.coordinates.ra, model.coordinates.dec)
-            vsxId = model.vsxId
-            vsxName = model.vsxName
+            // TODO allow vsx change
+//            vsxId = model.vsxId
+//            vsxName = model.vsxName
         }
         return czevStarRepository.save(updatedEntity).toDetailsModel()
     }

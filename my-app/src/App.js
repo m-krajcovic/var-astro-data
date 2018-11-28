@@ -193,7 +193,7 @@ class Predictions extends Component {
     };
 
     handleCoordinatesChange = (latitude, longitude) => {
-        if (latitude != null && longitude != null && this.state.latitude !== latitude && this.state.longitude !== longitude) {
+        if (latitude != null && longitude != null && (this.state.latitude !== latitude || this.state.longitude !== longitude)) {
             const cacheKey = `${latitude} ${longitude} ${this.state.date}`;
             if (this.cache[cacheKey]) {
                 this.setState({...this.state, latitude, longitude, predictions: this.cache[cacheKey]});
