@@ -1,6 +1,7 @@
 import React, {Component} from "react";
 import ReactEcharts from "echarts-for-react";
 import MinimaList from "./MinimaList"
+import {Col, Radio, Row} from "antd";
 
 const red = "#ba160c";
 const blue = "#0038a8";
@@ -49,6 +50,11 @@ const cValue = function (d) {
     return d.kind + " - " + methodValue(d.color);
 };
 
+const jdToDate = (jd) => {
+    const added = jd - 2451545.0;
+    return new Date(946728000000 + added * 86400000)
+};
+
 const ocCalc = function (element, minima) {
     let e = Math.round((minima.julianDate - element.minimum0) / element.period);
     let oc = minima.julianDate - (element.minimum0 + element.period * e);
@@ -95,7 +101,7 @@ class ChartLegendItem extends Component {
 export default class StarMinimaChart extends Component {
     constructor(props) {
         super(props);
-        this.state = {customMinima: []};
+        this.state = {customMinima: [], xAxisOptionKey: 'epoch'};
         this.echartsReact = null;
     }
 
@@ -124,7 +130,7 @@ export default class StarMinimaChart extends Component {
                 }
                 if (minima.quality !== '?') {
                     if (grouppedMinima[minima.type] && oc && epoch) {
-                        grouppedMinima[minima.type].push([epoch, oc, minima.julianDate]);
+                        grouppedMinima[minima.type].push([epoch, oc, minima.julianDate, jdToDate(minima.julianDate)]);
                         minimaList.push({epoch, oc, minima});
                     }
                 }
@@ -141,7 +147,7 @@ export default class StarMinimaChart extends Component {
                         oc = ocCalc(this.props.secondary, minima);
                         epoch = Math.round((minima.julianDate - this.props.secondary.minimum0) / this.props.secondary.period);
                     }
-                    return [epoch, oc, minima.julianDate];
+                    return [epoch, oc, minima.julianDate, jdToDate(minima.julianDate)];
                 }).filter(row => row[0] != null && row[1] != null);
             }
             minimaList.sort((a, b) => a.epoch - b.epoch);
@@ -149,12 +155,23 @@ export default class StarMinimaChart extends Component {
                 <>
                     <div className="panel"
                          style={{position: 'relative', overflow: 'auto', marginBottom: 12, maxWidth: 900}}>
+                        <Row>
+                            <Col span={24} style={{marginTop: 8, textAlign: "center"}}>
+                                <label>X Axis: </label>
+                        <Radio.Group onChange={(e) => this.setState({...this.state, xAxisOptionKey: e.target.value})}
+                                     defaultValue="epoch">
+                            <Radio.Button value="epoch">Epoch</Radio.Button>
+                            <Radio.Button value="jd">JD</Radio.Button>
+                            <Radio.Button value="date">Date</Radio.Button>
+                        </Radio.Group>
+                            </Col>
+                        </Row>
                         <div style={{position: 'relative', paddingTop: '75%', width: '100%'}}>
                             <ReactEcharts
                                 ref={(e) => {
                                     this.echartsReact = e;
                                 }}
-                                option={this.getOption(grouppedMinima)}
+                                option={this.getOption(grouppedMinima, this.state.xAxisOptionKey)}
                                 style={{
                                     overflow: 'hidden',
                                     position: "absolute",
@@ -181,7 +198,8 @@ export default class StarMinimaChart extends Component {
                             })}
                         </div>
                     </div>
-                    <MinimaList onCustomMinimaChange={(customMinima) => this.handleCustomMinimaChange(customMinima)} minimaList={minimaList}/>
+                    <MinimaList onCustomMinimaChange={(customMinima) => this.handleCustomMinimaChange(customMinima)}
+                                minimaList={minimaList}/>
                 </>
             );
         }
@@ -195,7 +213,24 @@ export default class StarMinimaChart extends Component {
         this.setState({...this.state, customMinima});
     }
 
-    getOption(grouppedMinima) {
+    static xAxisOptions = {
+        'jd': {
+            xIndex: 2,
+            axisType: 'value'
+        },
+        'epoch': {
+            xIndex: 0,
+            axisType: 'value'
+        },
+        'date': {
+            xIndex: 3,
+            axisType: 'time'
+        }
+    };
+
+    getOption(grouppedMinima, xAxisOptionKey) {
+        xAxisOptionKey = xAxisOptionKey || 'epoch';
+        const xAxisOption = StarMinimaChart.xAxisOptions[xAxisOptionKey];
         const series = Object.keys(grouppedMinima).map(key => {
             return {
                 name: key,
@@ -209,40 +244,58 @@ export default class StarMinimaChart extends Component {
                 },
                 datasetIndex: datasetIndexes[key],
                 encode: {
-                    x: 0,
+                    x: xAxisOption.xIndex,
                     y: 1,
-                    tooltip: [0, 1, 2]
+                    tooltip: [1, 0, 2, 3]
                 }
             };
         });
         return {
             title: {},
-            tooltip: {},
+            tooltip: {
+                formatter: (params) => {
+                    console.log(params);
+                    /*
+                        0: -29570
+                        1: "-0.00139"
+                        2: 2432865.793
+                        3: Wed Nov 10 1948 08:01:55 GMT+0100 (Central European Standard Time) {}
+                    */
+                    return `
+${params.marker}${params.seriesName}<br/>
+<br/>
+O-C: ${params.data[1]}<br/>
+Epoch: ${params.data[0]}<br/>
+JD: ${params.data[2]}<br/>
+Date: ${params.data[3].toISOString()}`;
+                }
+
+            },
             legend: {
                 show: false,
                 orient: 'horizontal',
                 bottom: 10,
             },
             dataset: [{
-                dimensions: ['epoch', 'oc', 'julianDate'],
+                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
                 source: grouppedMinima["p - CCD / photoelectric"]
             }, {
-                dimensions: ['epoch', 'oc', 'julianDate'],
+                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
                 source: grouppedMinima["p - visual"]
             }, {
-                dimensions: ['epoch', 'oc', 'julianDate'],
+                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
                 source: grouppedMinima["p - photographic"]
             }, {
-                dimensions: ['epoch', 'oc', 'julianDate'],
+                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
                 source: grouppedMinima['s - CCD / photoelectric']
             }, {
-                dimensions: ['epoch', 'oc', 'julianDate'],
+                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
                 source: grouppedMinima["s - visual"]
             }, {
-                dimensions: ['epoch', 'oc', 'julianDate'],
+                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
                 source: grouppedMinima["s - photographic"]
             }, {
-                dimensions: ['epoch', 'oc', 'julianDate'],
+                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
                 source: grouppedMinima['user']
             }
             ],
@@ -252,9 +305,8 @@ export default class StarMinimaChart extends Component {
                 },
             ],
             xAxis: {
-                type: 'value',
+                type: xAxisOption.axisType,
                 scale: true,
-
             },
             yAxis: {
                 type: 'value',
@@ -268,7 +320,7 @@ export default class StarMinimaChart extends Component {
                 {
                     type: 'slider',
                     showDataShadow: false,
-                    bottom: 20,
+                    bottom: 15,
                     filterMode: 'empty'
                 },
                 {
@@ -280,7 +332,7 @@ export default class StarMinimaChart extends Component {
                     type: 'slider',
                     orient: 'vertical',
                     showDataShadow: false,
-                    right: 20,
+                    right: 15,
                     filterMode: 'empty'
                 }
             ],
