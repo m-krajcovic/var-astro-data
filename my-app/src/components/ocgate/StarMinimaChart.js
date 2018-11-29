@@ -254,13 +254,6 @@ export default class StarMinimaChart extends Component {
             title: {},
             tooltip: {
                 formatter: (params) => {
-                    console.log(params);
-                    /*
-                        0: -29570
-                        1: "-0.00139"
-                        2: 2432865.793
-                        3: Wed Nov 10 1948 08:01:55 GMT+0100 (Central European Standard Time) {}
-                    */
                     return `
 ${params.marker}${params.seriesName}<br/>
 <br/>

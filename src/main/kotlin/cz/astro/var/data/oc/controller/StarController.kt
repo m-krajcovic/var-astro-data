@@ -1,5 +1,6 @@
 package cz.astro.`var`.data.oc.controller
 
+import cz.astro.`var`.data.czev.controller.toOkOrNotFound
 import cz.astro.`var`.data.oc.repository.ConstellationStarSummary
 import cz.astro.`var`.data.oc.repository.StarRepository
 import cz.astro.`var`.data.oc.service.PredictionResultModel
@@ -7,6 +8,7 @@ import cz.astro.`var`.data.oc.service.PredictionService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 
@@ -42,4 +44,27 @@ class StarController(private val starRepository: StarRepository,
                           @RequestParam(defaultValue = "15.0") longitude: Double): Set<PredictionResultModel> {
         return predictionService.getAllPredictionsForDay(date, latitude, longitude)
     }
+
+    @GetMapping("stars/{starId}/minima")
+    fun getMinimaValuesOnly(@PathVariable starId: Int, @RequestParam("kind") kind: String): ResponseEntity<MinimaResultModel> {
+        val star = starRepository.findById(starId)
+        return star.map<MinimaResultModel> {
+            val element = it.elements.firstOrNull { e -> e.kind == kind }
+            if (element != null) {
+                MinimaResultModel(
+                        prepend24(element.minimum0).toDouble(),
+                        element.period.toDouble(),
+                        it.minima.filter { m -> m.kind == kind }.map { m -> "${m.julianDatePrefix}${m.julianDate}".toDouble() }
+                )
+            } else {
+                null
+            }
+        }.toOkOrNotFound()
+    }
 }
+
+data class MinimaResultModel(
+        val m0: Double,
+        val period: Double,
+        val minima: List<Double>
+)

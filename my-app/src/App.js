@@ -3,7 +3,7 @@ import ConstellationList from "./components/ocgate/ConstellationList";
 import {BASE_URL} from "./api-endpoint";
 import StarList from "./components/ocgate/StarList";
 import StarDetail from "./components/ocgate/StarDetail";
-import {BrowserRouter as Router, Route, Redirect, NavLink, Switch, withRouter} from "react-router-dom";
+import {BrowserRouter as Router, Route, Redirect, NavLink, Switch, withRouter, Link} from "react-router-dom";
 import Czev from "./components/czev/Czev";
 import moment from 'moment';
 import axios from "axios";
@@ -24,8 +24,9 @@ import {
     Table,
     Switch as ASwitch,
     Col,
-    Button, Icon
+    Button, Icon, Popover
 } from 'antd';
+import ReactEcharts from "echarts-for-react";
 
 const {Header, Content, Sider} = Layout;
 
@@ -148,6 +149,95 @@ class OcGate extends Component {
     }
 }
 
+class MinimalMinimaList extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            failed: false,
+            loading: false,
+            data: []
+        }
+    }
+
+    ocCalc = (m0, period, minima) => {
+        let e = Math.round((minima - m0) / period);
+        let oc = minima - (m0 + period * e);
+        return oc.toFixed(5);
+    };
+
+    componentDidMount() {
+        this.setState({...this.state, loading: true});
+        axios.get(BASE_URL + "/oc/stars/" + this.props.id + "/minima", {
+            params: {
+                kind: this.props.kind
+            }
+        }).then(result => {
+            const data = result.data.minima.map(minima => {
+                const oc = this.ocCalc(result.data.m0, result.data.period, minima);
+                const epoch = Math.round((minima - result.data.m0) / result.data.period);
+                return [epoch, oc];
+            });
+            this.setState({...this.state, loading: false, data: data});
+        }).catch(e => {
+            this.setState({...this.state, failed: true});
+        });
+    }
+
+    getChartOption(data) {
+        return {
+            title: {},
+            tooltip: {
+                show: false,
+                trigger: 'none'
+            },
+            legend: {
+                show: false,
+            },
+            grid: [
+                {
+                    right: 0, bottom: 25, left: 25, top: 10,
+                },
+            ],
+            xAxis: {
+                name: 'Epoch',
+                type: 'value',
+                scale: true,
+            },
+            yAxis: {
+                name: 'O-C',
+                type: 'value',
+                scale: true,
+            },
+            animation: false,
+            series: [{
+                name: 'minimas',
+                type: 'scatter',
+                symbolSize: 8,
+                data: data,
+                itemStyle: {
+                    color: '#1890ff'
+                }
+            }]
+        };
+    }
+
+    render() {
+        return (
+            <Spin spinning={this.state.loading}>
+            <span>
+                <ReactEcharts
+                    option={this.getChartOption(this.state.data)}
+                    style={{
+                        width: 400,
+                        height: 300
+                    }}
+                />
+            </span>
+            </Spin>
+        )
+    }
+}
+
 class Predictions extends Component {
     constructor(props) {
         super(props);
@@ -204,6 +294,7 @@ class Predictions extends Component {
         }
     };
 
+
     render() {
         const columns = [
             {
@@ -213,7 +304,11 @@ class Predictions extends Component {
                     <TableInputFilter actions={actions}/>
                 ),
                 onFilter: (value, record) => record.name.toLowerCase().indexOf(value.toLowerCase()) !== -1,
-                width: 200
+                width: 200,
+                render: (name, record) => (
+                    <span><Link to="/oc">{name}</Link> <Popover content={(<MinimalMinimaList id={record.id} kind={record.kind}/>)}><Icon
+                        type="dot-chart" className="clickable-icon"/></Popover></span>
+                )
             },
             {
                 title: 'P/S',
