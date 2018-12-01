@@ -26,6 +26,6 @@ data class CosmicCoordinates(
 
     fun decValue(): BigDecimal {
         val op: (BigDecimal, BigDecimal) -> BigDecimal = if (decSign != "-") { a, b -> a + b } else { a, b -> a - b }
-        return op(decDegrees.toBigDecimal(), (decMinutes.toBigDecimal().divide(BigDecimal(60), 7, RoundingMode.HALF_UP) + decSeconds.toBigDecimal().divide(BigDecimal(3600), 7, RoundingMode.HALF_UP)))
+        return op(BigDecimal.ZERO, op(decDegrees.toBigDecimal(), (decMinutes.toBigDecimal().divide(BigDecimal(60), 7, RoundingMode.HALF_UP) + decSeconds.toBigDecimal().divide(BigDecimal(3600), 7, RoundingMode.HALF_UP))))
     }
 }

@@ -129,7 +129,7 @@ export default class StarMinimaChart extends Component {
                     epoch = Math.round((minima.julianDate - this.props.secondary.minimum0) / this.props.secondary.period);
                 }
                 if (minima.quality !== '?') {
-                    if (grouppedMinima[minima.type] && oc && epoch) {
+                    if (grouppedMinima[minima.type] && oc != null && epoch != null) {
                         grouppedMinima[minima.type].push([epoch, oc, minima.julianDate, jdToDate(minima.julianDate)]);
                         minimaList.push({epoch, oc, minima});
                     }
