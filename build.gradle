@@ -94,7 +94,7 @@ node {
     npmWorkDir = file("${project.buildDir}/npm")
 
     // Set the work directory where node_modules should be located
-    nodeModulesDir = file("${project.projectDir}/my-app")
+    nodeModulesDir = file("${project.projectDir}/react-app")
 }
 
 task npmBuild(type: NpmTask) {
@@ -102,7 +102,7 @@ task npmBuild(type: NpmTask) {
 }
 
 task moveNpmBuildToResources(type: Copy) {
-    from "${project.projectDir}/my-app/build"
+    from "${project.projectDir}/react-app/build"
     into "${project.projectDir}/build/resources/main/static"
 }
 
