@@ -13,31 +13,27 @@ class AuthProvider extends React.Component {
             isAuth: false,
             isAdmin: false,
         };
-    }
-
-    componentDidMount() {
         const token = localStorage.getItem('auth_token');
         if (token != null) {
-            this.loadToken(token);
+            this.state = this.loadToken(token);
         }
     }
 
     loadToken = (token) => {
         const decoded = decode(token);
-        this.setState({
+        return {
             isAuth: decoded.authorities.indexOf('ROLE_USER') !== -1,
             isAdmin: decoded.authorities.indexOf('ROLE_ADMIN') !== -1
-        });
+        };
     };
 
     login = (username, password) => {
-        const component = this;
         return axios.post(BASE_URL + "/auth/signin", {
             username, password
         }).then(result => {
             if (result.data.token) {
                 localStorage.setItem('auth_token', result.data.token);
-                component.loadToken(result.data.token);
+                this.setState(this.loadToken(result.data.token));
             }
             return result;
         }).catch(e => {
@@ -51,7 +47,6 @@ class AuthProvider extends React.Component {
     };
 
     render() {
-        console.log(this.state);
         return (
             <AuthContext.Provider
                 value={{

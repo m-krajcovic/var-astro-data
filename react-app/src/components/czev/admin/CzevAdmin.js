@@ -20,7 +20,7 @@ import axios from "axios";
 import {BASE_URL} from "../../../api-endpoint";
 import {StarDraftSingleStarFormItems} from "../StarDraftSingleStarFormItems";
 import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "../StarDraftSingleNewStar";
-import {CdsCallsHolder} from "../CdsCallsHolder";
+import {CdsCallsHolder} from "../../common/CdsCallsHolder";
 
 
 export default class CzevAdmin extends Component {

@@ -6,7 +6,7 @@ import {BASE_URL} from "../../../api-endpoint";
 import {CzevStarDraftsTable} from "../CzevStarDraftsTable";
 import {StarDraftSingleStarFormItems} from "../StarDraftSingleStarFormItems";
 import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "../StarDraftSingleNewStar";
-import {CdsCallsHolder} from "../CdsCallsHolder";
+import {CdsCallsHolder} from "../../common/CdsCallsHolder";
 
 export default class CzevUser extends Component {
     render() {

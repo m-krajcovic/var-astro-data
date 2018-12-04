@@ -23,14 +23,14 @@ import {Link, Redirect, Route, Switch} from "react-router-dom";
 
 import "./Czev.css";
 import {CoordsInfoResultsWrapper, NameInfoResultsWrapper, StarDraftSingleNewStar} from "./StarDraftSingleNewStar";
-import {CoordinateWrapper} from "./CoordinateWrapper";
+import {CoordinateWrapper} from "../common/CoordinateWrapper";
 import {StarDraftCsvImportWrapper} from "./StarDraftCsvImportWrapper";
-import {PathBreadCrumbs} from "./PathBreadCrumbs";
+import {PathBreadCrumbs} from "../common/PathBreadCrumbs";
 import CzevAdmin from "./admin/CzevAdmin";
 import CzevUser from "./user/CzevUser";
 import StarMap from "./StarMap";
-import {sorterToParam} from "./tableHelper";
-import {CdsCallsHolder} from "./CdsCallsHolder";
+import {sorterToParam} from "../common/tableHelper";
+import {CdsCallsHolder} from "../common/CdsCallsHolder";
 import {StarDraftSingleStarFormItems} from "./StarDraftSingleStarFormItems";
 import AnimateHeight from "react-animate-height";
 import {AuthConsumer, OnlyAdmin, OnlyAuth} from "../AuthContext";

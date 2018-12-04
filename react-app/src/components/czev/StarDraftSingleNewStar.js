@@ -4,10 +4,10 @@ import {BASE_URL} from "../../api-endpoint";
 import {Alert, Button, Col, Form, Icon, List, Modal, notification, Row, Spin, Tooltip, message} from "antd";
 import {StarDraftSingleStarFormItems} from "./StarDraftSingleStarFormItems";
 import {Link, Redirect} from "react-router-dom";
-import {CoordinateWrapper} from "./CoordinateWrapper";
-import {Copyable} from "./Copyable";
+import {CoordinateWrapper} from "../common/CoordinateWrapper";
+import {Copyable} from "../common/Copyable";
 import AnimateHeight from "react-animate-height";
-import {CdsCallsHolder} from "./CdsCallsHolder";
+import {CdsCallsHolder} from "../common/CdsCallsHolder";
 import StarMap from "./StarMap";
 
 export class StarDraftSingleNewStar extends Component {
