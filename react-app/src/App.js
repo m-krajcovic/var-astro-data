@@ -24,11 +24,22 @@ import {
     Table,
     Switch as ASwitch,
     Col,
-    Button, Icon, Popover
+    Button, Icon, Popover, Form
 } from 'antd';
 import ReactEcharts from "echarts-for-react";
+import {AuthProvider, OnlyAdmin, OnlyAuth, AuthConsumer} from "./components/AuthContext";
 
 const {Header, Content, Sider} = Layout;
+
+axios.interceptors.request.use((config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+
+}, (error) => {
+    // Do something with request error
+    return Promise.reject(error);
+});
 
 const LinkMenu = withRouter(props => {
         const {location} = props;
@@ -48,16 +59,20 @@ const LinkMenu = withRouter(props => {
                     <Menu.Item key="/czev">
                         <NavLink to="/czev">Catalogue</NavLink>
                     </Menu.Item>
-                    <Menu.SubMenu title="User">
-                        <Menu.Item key="/czev/user/drafts">
-                            <NavLink to="/czev/user/drafts">Drafts</NavLink>
-                        </Menu.Item>
-                    </Menu.SubMenu>
-                    <Menu.SubMenu title="Admin">
-                        <Menu.Item key="/czev/admin/drafts">
-                            <NavLink to="/czev/admin/drafts">Drafts</NavLink>
-                        </Menu.Item>
-                    </Menu.SubMenu>
+                    <OnlyAuth>
+                        <Menu.SubMenu title="User">
+                            <Menu.Item key="/czev/user/drafts">
+                                <NavLink to="/czev/user/drafts">Drafts</NavLink>
+                            </Menu.Item>
+                        </Menu.SubMenu>
+                    </OnlyAuth>
+                    <OnlyAdmin>
+                        <Menu.SubMenu title="Admin">
+                            <Menu.Item key="/czev/admin/drafts">
+                                <NavLink to="/czev/admin/drafts">Drafts</NavLink>
+                            </Menu.Item>
+                        </Menu.SubMenu>
+                    </OnlyAdmin>
                 </Menu.SubMenu>
                 <Menu.Item key="/predictions">
                     <NavLink to="/predictions">Predictions</NavLink>
@@ -71,19 +86,93 @@ class App extends Component {
     render() {
         return (
             <Router>
-                <Layout className="layout" style={{minHeight: "100vh"}}>
-                    <Header style={{width: "100%"}}>
-                        <LinkMenu/>
-                    </Header>
-                    <Switch>
-                        <Route exact path="/oc" component={OcGate}/>
-                        <Route exact path="/predictions" component={Predictions}/>
-                        <Route path="/czev" component={Czev}/>
-                        <Redirect to="/czev"/>
-                    </Switch>
-                </Layout>
+                <AuthProvider>
+                    <Layout className="layout" style={{minHeight: "100vh"}}>
+                        <Header style={{width: "100%"}}>
+                            <Row>
+                                <Col span={20}>
+                                    <LinkMenu/>
+                                </Col>
+                                <Col span={4} style={{textAlign: "right"}}>
+                                    <AuthConsumer>
+                                        {({logout, isAuth}) => {
+                                            return isAuth ? (
+                                                <Link to="/logout">Log out</Link>
+                                            ) : (
+                                                <Link to="/login">Log in</Link>
+                                            )
+                                        }}
+                                    </AuthConsumer>
+                                </Col>
+                            </Row>
+                        </Header>
+                        <Switch>
+                            <Route exact path="/logout" component={Logout}/>
+                            <Route exact path="/login" component={Login}/>
+                            <Route exact path="/oc" component={OcGate}/>
+                            <Route exact path="/predictions" component={Predictions}/>
+                            <Route path="/czev" component={Czev}/>
+                            <Redirect to="/czev"/>
+                        </Switch>
+                    </Layout>
+                </AuthProvider>
             </Router>
         );
+    }
+}
+
+class Logout extends Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <Fragment>
+                <AuthConsumer>
+                    {({logout}) => {
+                        logout()
+                    }}
+                </AuthConsumer>
+                <Redirect to="/czev"/>
+            </Fragment>
+        )
+    }
+}
+
+class Login extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {username: '', password: ''};
+    }
+
+    render() {
+        return (
+            <Content style={{margin: "24px 24px 0"}}>
+                <Card>
+                    <Col offset={9} span={6}>
+                        <Form.Item label="E-mail">
+                            <Input type="text" value={this.state.username}
+                                   onChange={(e) => this.setState({...this.state, username: e.target.value})}/>
+                        </Form.Item>
+                        <Form.Item label="Password">
+                        <Input type="password" value={this.state.password}
+                               onChange={(e) => this.setState({...this.state, password: e.target.value})}/>
+                        </Form.Item>
+                        <AuthConsumer>
+                            {({login}) => (
+                                <Button type="primary" onClick={() => {
+                                    login(this.state.username, this.state.password)
+                                        .then(result => {
+                                            this.props.history.goBack();
+                                        })
+                                }}>Log in</Button>
+                            )}
+                        </AuthConsumer>
+                    </Col>
+                </Card>
+            </Content>
+        )
     }
 }
 
@@ -306,7 +395,8 @@ class Predictions extends Component {
                 onFilter: (value, record) => record.name.toLowerCase().indexOf(value.toLowerCase()) !== -1,
                 width: 200,
                 render: (name, record) => (
-                    <span><Link to="/oc">{name}</Link> <Popover content={(<MinimalMinimaList id={record.id} kind={record.kind}/>)}><Icon
+                    <span><Link to="/oc">{name}</Link> <Popover
+                        content={(<MinimalMinimaList id={record.id} kind={record.kind}/>)}><Icon
                         type="dot-chart" className="clickable-icon"/></Popover></span>
                 )
             },

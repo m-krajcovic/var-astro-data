@@ -33,6 +33,7 @@ import {sorterToParam} from "./tableHelper";
 import {CdsCallsHolder} from "./CdsCallsHolder";
 import {StarDraftSingleStarFormItems} from "./StarDraftSingleStarFormItems";
 import AnimateHeight from "react-animate-height";
+import {AuthConsumer, OnlyAdmin, OnlyAuth} from "../AuthContext";
 
 const breadcrumbNameMap = {
     "/czev": "CzeV Catalogue",
@@ -89,22 +90,37 @@ export default class Czev extends Component {
                 <Row>
                     <Col span={12}>
                         <PathBreadCrumbs breadcrumbNameMap={breadcrumbNameMap}/>
-                    </Col>
-                    {this.props.location.pathname !== "/czev/new" && (<Col span={12} style={{textAlign: "right"}}>
-                        <Button type="primary" size="small"><Link to="/czev/new">Submit new variable
-                            star</Link></Button>
-                    </Col>)}
+                    </Col><Col span={12} style={{textAlign: "right"}}>
+                    <OnlyAuth default={(<span style={{opacity: 0.6}}>Log in to sumit new variable star</span>)}>
+                        {this.props.location.pathname !== "/czev/new" && (
+                            <Button type="primary" size="small"><Link to="/czev/new">Submit new variable
+                                star</Link></Button>
+                        )}
+                    </OnlyAuth></Col>
                 </Row>
-                <Switch>
-                    <Route path="/czev/admin" render={props => (<CzevAdmin {...props} entities={{...this.state}}/>)}/>
-                    <Route path="/czev/user" render={props => (<CzevUser {...props} entities={{...this.state}}/>)}/>
-                    <Route path="/czev/new" render={props => (<CzevNewStar {...props} entities={{...this.state}}/>)}/>
-                    <Route path="/czev/:id/edit"
-                           render={props => (<FormCzevStarEdit {...props} entities={{...this.state}}/>)}/>
-                    <Route path="/czev/:id"
-                           render={props => (<CzevStarDetail {...props} entities={{...this.state}}/>)}/>
-                    <Route path="/czev" render={props => (<CzevCatalogue {...props} entities={{...this.state}}/>)}/>
-                </Switch>
+                <AuthConsumer>
+                    {({isAuth, isAdmin}) => {
+                        return (
+                            <Switch>
+                                {isAdmin && (<Route path="/czev/admin"
+                                                    render={props => (
+                                                        <CzevAdmin {...props} entities={{...this.state}}/>)}/>)}
+                                {isAuth && (<Route path="/czev/user"
+                                                   render={props => (
+                                                       <CzevUser {...props} entities={{...this.state}}/>)}/>)}
+                                {isAuth && (<Route path="/czev/new"
+                                                   render={props => (
+                                                       <CzevNewStar {...props} entities={{...this.state}}/>)}/>)}
+                                {isAuth && (<Route path="/czev/:id/edit"
+                                                   render={props => (<FormCzevStarEdit {...props}
+                                                                                       entities={{...this.state}}/>)}/>)}
+                                <Route path="/czev/:id"
+                                       render={props => (<CzevStarDetail {...props} entities={{...this.state}}/>)}/>
+                                <Route path="/czev"
+                                       render={props => (<CzevCatalogue {...props} entities={{...this.state}}/>)}/>
+                            </Switch>)
+                    }}
+                </AuthConsumer>
             </Layout.Content>
         )
     }
@@ -290,7 +306,8 @@ class CzevCatalogueAdvancedSearch extends Component {
                                         {getFieldDecorator('amplitude', {
                                             initialValue: this.amplitudeDefaults
                                         })(
-                                            <Slider step={0.01} min={this.amplitudeDefaults[0]} max={this.amplitudeDefaults[1]} range marks={this.amplitudeMarks} />
+                                            <Slider step={0.01} min={this.amplitudeDefaults[0]}
+                                                    max={this.amplitudeDefaults[1]} range marks={this.amplitudeMarks}/>
                                         )}
                                     </Form.Item>
                                 </Col>
@@ -299,7 +316,8 @@ class CzevCatalogueAdvancedSearch extends Component {
                                         {getFieldDecorator('year', {
                                             initialValue: [1990, 2018]
                                         })(
-                                            <Slider min={this.yearsDefaults[0]} max={this.yearsDefaults[1]} range marks={this.yearMarks} />
+                                            <Slider min={this.yearsDefaults[0]} max={this.yearsDefaults[1]} range
+                                                    marks={this.yearMarks}/>
                                         )}
                                     </Form.Item>
                                 </Col>
@@ -332,7 +350,7 @@ export class CzevCatalogue extends Component {
                 showSizeChanger: true,
                 showQuickJumper: true,
                 pageSize: 20,
-                showTotal: total => `Total ${total} star${total !== 1 ? 's': ''}`
+                showTotal: total => `Total ${total} star${total !== 1 ? 's' : ''}`
             },
             downloadLoading: false,
         };
@@ -458,7 +476,8 @@ export class CzevCatalogue extends Component {
                     <span>
             {
                 discoverers.map((d, i) => {
-                        return (<span key={d.abbreviation} title={`${d.firstName} ${d.lastName}`}>{d.lastName}{discoverers.length !== i + 1 ? ", " : ""}</span>)
+                        return (<span key={d.abbreviation}
+                                      title={`${d.firstName} ${d.lastName}`}>{d.lastName}{discoverers.length !== i + 1 ? ", " : ""}</span>)
                     }
                 )
             }
@@ -513,9 +532,14 @@ export class CzevStarDetail extends Component {
         if (data) {
             body = (<Row gutter={8}>
                 <Col span={24} xxl={{span: 8}} md={{span: 12}}>
-                    <h3>CzeV {data.czevId} {data.constellation.abbreviation} <Link
-                        to={`/czev/${data.czevId}/edit`}><Icon title="Edit" className="clickable-icon"
-                                                               type="edit"/></Link></h3>
+                    <h3>CzeV {data.czevId} {data.constellation.abbreviation}
+                        <OnlyAuth>
+                            <Link
+                                to={`/czev/${data.czevId}/edit`}><Icon title="Edit" className="clickable-icon"
+                                                                       type="edit"/>
+                            </Link>
+                        </OnlyAuth>
+                    </h3>
                     <div>{data.crossIdentifications.join(" / ")}</div>
                     <div><b>Type: </b>{data.type}</div>
                     <div><b>J: </b>{data.jmagnitude}</div>
@@ -532,8 +556,10 @@ export class CzevStarDetail extends Component {
                 <Col span={24} xxl={{span: 8}} md={{span: 12}}>
                     <div style={{textAlign: 'center'}}>
                         <span style={{display: "inline-block"}}><span>RA: </span><CoordinateWrapper size="large"
-                                                                  value={data.coordinates.raString}/></span>&nbsp;
-                        <span style={{display: "inline-block"}}><span>DEC: </span><CoordinateWrapper size="large" value={data.coordinates.decString}/></span></div>
+                                                                                                    value={data.coordinates.raString}/></span>&nbsp;
+                        <span style={{display: "inline-block"}}><span>DEC: </span><CoordinateWrapper size="large"
+                                                                                                     value={data.coordinates.decString}/></span>
+                    </div>
                     <StarMap coordinates={data.coordinates}/>
                 </Col>
             </Row>)
@@ -553,7 +579,6 @@ export class CzevStarDetail extends Component {
         )
     }
 }
-
 
 
 export class CzevNewStar extends Component {

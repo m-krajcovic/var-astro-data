@@ -19,11 +19,11 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public UserPrincipal getCurrentUser() {
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
-            UserPrincipal userPrincipal = new UserPrincipal();
-            userPrincipal.setId(3L);
-            return userPrincipal;
+//            UserPrincipal userPrincipal = new UserPrincipal();
+//            userPrincipal.setId(3L);
+//            return userPrincipal;
             // TODO don't forget this
-//            return (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            return (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         }
         return null;
     }

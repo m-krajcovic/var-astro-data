@@ -32,7 +32,6 @@ interface StarTypeService {
 class ConstellationServiceImpl(
         private val constellationRepository: ConstellationRepository
 ) : ConstellationService {
-    @PreAuthorize("hasRole('USER')")
     override fun getAll(): List<ConstellationModel> {
         return constellationRepository.findAll(Sort.by(Constellation::name.name)).map { it.toModel() }
     }
@@ -42,7 +41,6 @@ class ConstellationServiceImpl(
 class FilterBandServiceImpl(
         private val filterBandRepository: FilterBandRepository
 ) : FilterBandService {
-    @PreAuthorize("hasRole('USER')")
     override fun getAll(): List<FilterBandModel> {
         return filterBandRepository.findAll(Sort.by(FilterBand::name.name)).asSequence().map { it.toModel() }.filter { f -> f != null}.map { it!! }.toList()
     }
@@ -52,7 +50,6 @@ class FilterBandServiceImpl(
 class StarObserverServiceImpl(
         private val observerRepository: StarObserverRepository
 ) : StarObserverService {
-    @PreAuthorize("hasRole('USER')")
     override fun getAll(): List<StarObserverModel> {
         return observerRepository.findAll(Sort.by(StarObserver::abbreviation.name)).toModels()
     }
@@ -67,7 +64,6 @@ class StarTypeServiceImpl(
         return StarTypeValidatorImpl(typeRepository.findAll().map { it.name }.toSet()).validate(type)
     }
 
-    @PreAuthorize("hasRole('USER')")
     override fun getAll(): List<String> {
         return typeRepository.findAll().map { it.name }
     }
