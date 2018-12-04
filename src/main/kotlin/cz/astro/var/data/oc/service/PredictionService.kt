@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
  * @since 11/26/2018
  */
 interface PredictionService {
-    fun getAllPredictionsForDay(night: LocalDate, latitude: Double = 50.0, longitude: Double = 15.0): Set<PredictionResultModel>
+    fun getAllPredictionsForNight(night: LocalDate, latitude: Double = 50.0, longitude: Double = 15.0): Set<PredictionResultModel>
 }
 
 @Component
@@ -35,7 +35,7 @@ class PredictionServiceImpl(
     }
 
     @Cacheable("predictions")
-    override fun getAllPredictionsForDay(night: LocalDate, latitude: Double, longitude: Double): Set<PredictionResultModel> {
+    override fun getAllPredictionsForNight(night: LocalDate, latitude: Double, longitude: Double): Set<PredictionResultModel> {
         val startTime = System.nanoTime()
         val jdNight = night.toJulianDay() + 0.5
         val result = HashSet<PredictionResultModel>()

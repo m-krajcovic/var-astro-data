@@ -42,7 +42,7 @@ class StarController(private val starRepository: StarRepository,
     fun getAllPredictions(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
                           @RequestParam(defaultValue = "50.0") latitude: Double,
                           @RequestParam(defaultValue = "15.0") longitude: Double): Set<PredictionResultModel> {
-        return predictionService.getAllPredictionsForDay(date, latitude, longitude)
+        return predictionService.getAllPredictionsForNight(date, latitude, longitude)
     }
 
     @GetMapping("stars/{starId}/minima")
