@@ -101,6 +101,10 @@ task npmBuild(type: NpmTask) {
     args = ["run", "build"]
 }
 
+task npmStart(type: NpmTask) {
+    args = ["run", "start"]
+}
+
 task moveNpmBuildToResources(type: Copy) {
     from "${project.projectDir}/react-app/build"
     into "${project.projectDir}/build/resources/main/static"
