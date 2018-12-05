@@ -32,9 +32,9 @@ export default class MinimaList extends Component {
                                 this.props.minimaList.map(minima => {
                                     return (
                                         <tr key={minima.minima.id}>
-                                            <td align="right">{minima.minima.julianDate.toFixed(5)}</td>
+                                            <td align="right">{minima.jd.toFixed(5)}</td>
                                             <td align="right">{minima.epoch}</td>
-                                            <td align="right">{minima.oc}</td>
+                                            <td align="right">{minima.oc.toFixed(5)}</td>
                                         </tr>
                                     )
                                 })

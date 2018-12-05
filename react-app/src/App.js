@@ -157,7 +157,15 @@ class Login extends Component {
 class OcGate extends Component {
     constructor(props) {
         super(props);
-        this.state = {constellations: [], stars: [], selectedStar: null, selectedElement: 'server'};
+        this.state = {
+            constellations: [],
+            stars: [],
+            selectedStar: null,
+            selectedElement: 'server',
+            starLoading: false,
+            starsLoading: false,
+            constellationsLoading: false
+        };
     }
 
     componentDidMount() {

@@ -1,6 +1,5 @@
-import React, {Component} from "react";
+import React, {Component, Fragment} from "react";
 import ReactEcharts from "echarts-for-react";
-import MinimaList from "./MinimaList"
 import {Col, Radio, Row} from "antd";
 
 const red = "#ba160c";
@@ -36,30 +35,6 @@ const borderColors = {
     "user": "#000000"
 };
 
-const methodValue = function (method) {
-    if (method === "pg") {
-        return "photographic";
-    } else if (method === "vis") {
-        return "visual";
-    } else {
-        return "CCD / photoelectric";
-    }
-};
-
-const cValue = function (d) {
-    return d.kind + " - " + methodValue(d.color);
-};
-
-const jdToDate = (jd) => {
-    const added = jd - 2451545.0;
-    return new Date(946728000000 + added * 86400000)
-};
-
-const ocCalc = function (element, minima) {
-    let e = Math.round((minima.julianDate - element.minimum0) / element.period);
-    let oc = minima.julianDate - (element.minimum0 + element.period * e);
-    return oc.toFixed(5);
-};
 
 class ChartLegendItem extends Component {
     constructor(props) {
@@ -101,116 +76,65 @@ class ChartLegendItem extends Component {
 export default class StarMinimaChart extends Component {
     constructor(props) {
         super(props);
-        this.state = {customMinima: [], xAxisOptionKey: 'epoch'};
+        this.state = {xAxisOptionKey: 'epoch'};
         this.echartsReact = null;
     }
 
     render() {
-        if (this.props.minima) {
-            const grouppedMinima = {
-                "p - CCD / photoelectric": [],
-                "p - visual": [],
-                "p - photographic": [],
-                's - CCD / photoelectric': [],
-                "s - visual": [],
-                "s - photographic": []
-            };
-            const minimaList = [];
-            this.props.minima.forEach(minima => {
-                minima.type = cValue(minima);
-                let oc = minima.oc;
-                let epoch = null;
-                if (minima.kind === 'p' && this.props.primary && this.props.primary.minimum0 && this.props.primary.period) {
-                    oc = ocCalc(this.props.primary, minima);
-                    epoch = Math.round((minima.julianDate - this.props.primary.minimum0) / this.props.primary.period);
-                }
-                if (minima.kind === 's' && this.props.secondary && this.props.secondary.minimum0 && this.props.secondary.period) {
-                    oc = ocCalc(this.props.secondary, minima);
-                    epoch = Math.round((minima.julianDate - this.props.secondary.minimum0) / this.props.secondary.period);
-                }
-                if (minima.quality !== '?') {
-                    if (grouppedMinima[minima.type] && oc != null && epoch != null) {
-                        grouppedMinima[minima.type].push([epoch, oc, minima.julianDate, jdToDate(minima.julianDate)]);
-                        minimaList.push({epoch, oc, minima});
-                    }
-                }
-            });
-            if (this.state.customMinima.length > 0) {
-                grouppedMinima["user"] = this.state.customMinima.map(minima => {
-                    let oc = null;
-                    let epoch = null;
-                    if (minima.kind === 'p' && this.props.primary && this.props.primary.minimum0 && this.props.primary.period) {
-                        oc = ocCalc(this.props.primary, minima);
-                        epoch = Math.round((minima.julianDate - this.props.primary.minimum0) / this.props.primary.period);
-                    }
-                    if (minima.kind === 's' && this.props.secondary && this.props.secondary.minimum0 && this.props.secondary.period) {
-                        oc = ocCalc(this.props.secondary, minima);
-                        epoch = Math.round((minima.julianDate - this.props.secondary.minimum0) / this.props.secondary.period);
-                    }
-                    return [epoch, oc, minima.julianDate, jdToDate(minima.julianDate)];
-                }).filter(row => row[0] != null && row[1] != null);
-            }
-            minimaList.sort((a, b) => a.epoch - b.epoch);
+        if (this.props.grouppedMinima) {
+
             return (
-                <>
-                    <div className="panel"
-                         style={{position: 'relative', overflow: 'auto', marginBottom: 12, maxWidth: 900}}>
-                        <Row>
-                            <Col span={24} style={{marginTop: 8, textAlign: "center"}}>
-                                <label>X Axis: </label>
-                        <Radio.Group onChange={(e) => this.setState({...this.state, xAxisOptionKey: e.target.value})}
-                                     defaultValue="epoch">
-                            <Radio.Button value="epoch">Epoch</Radio.Button>
-                            <Radio.Button value="jd">JD</Radio.Button>
-                            <Radio.Button value="date">Date</Radio.Button>
-                        </Radio.Group>
-                            </Col>
-                        </Row>
-                        <div style={{position: 'relative', paddingTop: '75%', width: '100%'}}>
-                            <ReactEcharts
-                                ref={(e) => {
-                                    this.echartsReact = e;
-                                }}
-                                option={this.getOption(grouppedMinima, this.state.xAxisOptionKey)}
-                                style={{
-                                    overflow: 'hidden',
-                                    position: "absolute",
-                                    top: 0,
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    height: '100%'
-                                }}
-                            />
-                        </div>
-                        <div className="panel-body"
-                             style={{maxWidth: 600, margin: "auto", display: 'flex', flexWrap: 'wrap'}}>
-                            {Object.keys(grouppedMinima).map((key, index) => {
-                                return (
-                                    <ChartLegendItem key={key} legend={key} onClick={(legend, active) => {
-                                        const echartsInstance = this.echartsReact.getEchartsInstance();
-                                        echartsInstance.dispatchAction({
-                                            type: 'legendToggleSelect',
-                                            name: legend
-                                        });
-                                    }}/>
-                                )
-                            })}
-                        </div>
+                <Fragment>
+                    <Row>
+                        <Col span={24} style={{marginTop: 8, textAlign: "center"}}>
+                            <label>X Axis: </label>
+                            <Radio.Group
+                                onChange={(e) => this.setState({...this.state, xAxisOptionKey: e.target.value})}
+                                defaultValue="epoch">
+                                <Radio.Button value="epoch">Epoch</Radio.Button>
+                                <Radio.Button value="jd">JD</Radio.Button>
+                                <Radio.Button value="date">Date</Radio.Button>
+                            </Radio.Group>
+                        </Col>
+                    </Row>
+                    <div style={{position: 'relative', paddingTop: '75%', width: '100%'}}>
+                        <ReactEcharts
+                            ref={(e) => {
+                                this.echartsReact = e;
+                            }}
+                            option={this.getOption(this.props.grouppedMinima, this.props.approximation, this.state.xAxisOptionKey)}
+                            style={{
+                                overflow: 'hidden',
+                                position: "absolute",
+                                top: 0,
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                height: '100%'
+                            }}
+                        />
                     </div>
-                    <MinimaList onCustomMinimaChange={(customMinima) => this.handleCustomMinimaChange(customMinima)}
-                                minimaList={minimaList}/>
-                </>
+                    <div className="panel-body"
+                         style={{maxWidth: 600, margin: "auto", display: 'flex', flexWrap: 'wrap'}}>
+                        {Object.keys(this.props.grouppedMinima).map((key, index) => {
+                            return (
+                                <ChartLegendItem key={key} legend={key} onClick={(legend, active) => {
+                                    const echartsInstance = this.echartsReact.getEchartsInstance();
+                                    echartsInstance.dispatchAction({
+                                        type: 'legendToggleSelect',
+                                        name: legend
+                                    });
+                                }}/>
+                            )
+                        })}
+                    </div>
+                </Fragment>
             );
         }
 
         return (
             <div></div>
         )
-    }
-
-    handleCustomMinimaChange(customMinima) {
-        this.setState({...this.state, customMinima});
     }
 
     static xAxisOptions = {
@@ -228,7 +152,7 @@ export default class StarMinimaChart extends Component {
         }
     };
 
-    getOption(grouppedMinima, xAxisOptionKey) {
+    getOption(grouppedMinima, approximation, xAxisOptionKey) {
         xAxisOptionKey = xAxisOptionKey || 'epoch';
         const xAxisOption = StarMinimaChart.xAxisOptions[xAxisOptionKey];
         const series = Object.keys(grouppedMinima).map(key => {
@@ -250,6 +174,19 @@ export default class StarMinimaChart extends Component {
                 }
             };
         });
+
+        series.push({
+            name: 'approximation',
+            type: 'line',
+            data: approximation || [],
+            showSymbol: false,
+            smooth: true,
+            lineStyle: {
+                color: 'black'
+            },
+            xAxisIndex: 1,
+        });
+
         return {
             title: {},
             tooltip: {
@@ -257,7 +194,7 @@ export default class StarMinimaChart extends Component {
                     return `
 ${params.marker}${params.seriesName}<br/>
 <br/>
-O-C: ${params.data[1]}<br/>
+O-C: ${params.data[1].toFixed(5)}<br/>
 Epoch: ${params.data[0]}<br/>
 JD: ${params.data[2]}<br/>
 Date: ${params.data[3].toISOString()}`;
@@ -297,10 +234,18 @@ Date: ${params.data[3].toISOString()}`;
                     right: 60, bottom: 80, left: 50, top: 30,
                 },
             ],
-            xAxis: {
+            xAxis: [{
                 type: xAxisOption.axisType,
                 scale: true,
-            },
+                min: 'dataMin',
+                max: 'dataMax',
+            }, {
+                type: 'value',
+                min: 'dataMin',
+                max: 'dataMax',
+                scale: true,
+                show: false,
+            }],
             yAxis: {
                 type: 'value',
                 scale: true,
@@ -308,25 +253,27 @@ Date: ${params.data[3].toISOString()}`;
             dataZoom: [
                 {
                     type: 'inside',
-                    filterMode: 'empty'
+                    filterMode: 'empty',
+                    xAxisIndex: [0, 1]
                 },
                 {
                     type: 'slider',
                     showDataShadow: false,
                     bottom: 15,
-                    filterMode: 'empty'
+                    filterMode: 'empty',
+                    xAxisIndex: [0, 1]
                 },
                 {
                     type: 'inside',
                     orient: 'vertical',
-                    filterMode: 'empty'
+                    filterMode: 'empty',
                 },
                 {
                     type: 'slider',
                     orient: 'vertical',
                     showDataShadow: false,
                     right: 15,
-                    filterMode: 'empty'
+                    filterMode: 'empty',
                 }
             ],
             animation: false,
