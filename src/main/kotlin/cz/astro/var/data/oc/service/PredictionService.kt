@@ -2,9 +2,10 @@ package cz.astro.`var`.data.oc.service
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import cz.astro.`var`.data.czev.*
-import cz.astro.`var`.data.czev.repository.PredpovediRepository
 import cz.astro.`var`.data.czev.repository.toMap
 import cz.astro.`var`.data.czev.service.CosmicCoordinatesModel
+import cz.astro.`var`.data.oc.repository.Star
+import cz.astro.`var`.data.oc.repository.StarMinimaCounts
 import cz.astro.`var`.data.oc.repository.StarRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -14,6 +15,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 /**
  * @author Michal
@@ -26,12 +28,19 @@ interface PredictionService {
 
 @Component
 class PredictionServiceImpl(
-        private val starRepository: StarRepository,
-        private val predpovediRepository: PredpovediRepository
+        private val starRepository: StarRepository
 ) : PredictionService {
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(PredictionServiceImpl::class.java)
+    }
+
+    private fun getPoints(minimaCounts: Map<String, StarMinimaCounts>, star: Star, kind: String): Int {
+        val counts = minimaCounts.get("${star.constellationId}$kind${star.starId}")
+        if (counts != null) {
+            return Math.max(10 - (counts.ccdCount ?: 0) - ((counts.allCount ?: 0 - (counts.ccdCount ?: 0)) * 0.1).roundToInt(), 0)
+        }
+        return 10
     }
 
     @Cacheable("predictions")
@@ -39,7 +48,8 @@ class PredictionServiceImpl(
         val startTime = System.nanoTime()
         val jdNight = night.toJulianDay() + 0.5
         val result = HashSet<PredictionResultModel>()
-        val body = predpovediRepository.findAll().toMap { "${it.starName} ${it.cons}" }
+//        val body = predpovediRepository.findAll().toMap { "${it.starName} ${it.cons}" }
+        val minimaCounts = starRepository.findMinimaCountsSince(night.minusYears(10).toJulianDay() - 2400000).toMap { "${it.constellationId}${it.kind}${it.starId}" }
         val nights = findNights(jdNight, jdNight + 1, latitude, longitude)
         starRepository.findStarsWithElements()
                 .forEach { star ->
@@ -48,12 +58,12 @@ class PredictionServiceImpl(
                         val period = it.period
                         val periodDouble = period.toDouble()
                         var calculatedMinimum = calculateMinimum(m0.toDouble(), periodDouble, jdNight)
-                        var points: Int? = null
+                        val points: Int = getPoints(minimaCounts, star, it.kind)
                         val starName = "${star.starName} ${star.constellation}"
-                        val predpoved = body[starName]
-                        if (predpoved != null) {
-                            points = predpoved.body
-                        }
+//                        val predpoved = body[starName]
+//                        if (predpoved != null) {
+//                            points = predpoved.body
+//                        }
                         while (calculatedMinimum < jdNight + 1) {
                             if (isNight(calculatedMinimum, nights)) {
                                 val objHorizontalCoords = transformEquatorialToHorizontalCoordinates(CosmicCoordinatesModel(star.coordinates.raValue(), star.coordinates.decValue()), latitude, longitude, calculatedMinimum)

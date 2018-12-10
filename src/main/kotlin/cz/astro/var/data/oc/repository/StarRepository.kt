@@ -23,4 +23,16 @@ interface StarRepository : JpaRepository<Star, Int> {
 
     @Query("select distinct s from Star s LEFT JOIN FETCH s.elements LEFT JOIN FETCH s.brightness")
     fun findStarsWithElements(): List<Star>
+
+    @Query(value="SELECT m.NSTAR AS starId, m.NCONS as constellationId, m.KIND as kind, c.mCount as ccdCount, COUNT(*) AS allCount FROM minima m LEFT JOIN (SELECT NSTAR, NCONS, KIND, COUNT(*) AS mCount FROM minima WHERE COL = 'ccd' GROUP BY NSTAR, NCONS, KIND) c ON m.NSTAR = c.NSTAR AND m.NCONS = c.NCONS AND m.KIND = c.KIND WHERE JD >= ?1 AND JC = 24 GROUP BY m.NSTAR, m.NCONS, m.KIND", nativeQuery = true)
+    fun findMinimaCountsSince(jd: Double): List<StarMinimaCounts>
+}
+
+
+interface StarMinimaCounts {
+    val starId: Int
+    val constellationId: Int
+    val kind: String
+    val ccdCount: Int?
+    val allCount: Int?
 }
