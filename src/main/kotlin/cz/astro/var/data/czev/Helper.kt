@@ -3,6 +3,7 @@ package cz.astro.`var`.data.czev
 import cz.astro.`var`.data.czev.service.CosmicCoordinatesModel
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.JulianFields
 import kotlin.math.*
@@ -188,20 +189,8 @@ fun findSunrise(jdStart: Double, jdEnd: Double, latitude: Double, longitude: Dou
     }
 }
 
-fun main(args: Array<String>) {
-    val jdNight = 2458447.5
-    val nights = findNights(2458447.5, 2458448.5, 50.0, 15.0)
-    nights.forEach {
-        val start = fromJulianDate(it[0])
-        val end = fromJulianDate(it[1])
-        println("$start - $end")
-    }
-    var i = 0.0
-    while (i <= 1) {
-        val sunCoords = getSunCoordinates(jdNight + i)
-        val horiSunCoords = transformEquatorialToHorizontalCoordinates(sunCoords, 50.0, 15.0, jdNight + i)
-        println("${fromJulianDate(jdNight + i)} --- ${horiSunCoords.altitude}")
-        i += JD_MINUTE
-    }
-}
 
+fun LocalDate.toJulianDay(): Double {
+    val julianDay = (1461 * (this.year + 4800 + (this.monthValue - 14) / 12)) / 4 + (367 * (this.monthValue - 2 - 12 * ((this.monthValue - 14) / 12))) / 12 - (3 * ((this.year + 4900 + (this.monthValue - 14) / 12) / 100)) / 4 + this.dayOfMonth - 32075
+    return julianDay - 0.5
+}

@@ -12,11 +12,17 @@ import java.io.InputStreamReader
 import java.io.StringWriter
 import java.math.BigDecimal
 
+/**
+ * Interface for providing formatting input into wanted output for export
+ */
 interface ExportFormatterService<I, O> {
     fun format(input: I): O
 }
 
 // TODO: create implementation to map single record -- maybe it will be useful to map streams
+/**
+ * Interface for exporting czev catalogue to csv
+ */
 interface CzevStarCsvExportFormatterService : ExportFormatterService<List<CzevStarExportModel>, String>
 
 @Component
@@ -53,11 +59,16 @@ class CzevStarCsvExportFormatterServiceImpl : CzevStarCsvExportFormatterService 
     }
 }
 
-
+/**
+ * Interface for transforming given input into output for import
+ */
 interface ImportReaderService<I, O> {
     fun read(input: I): O
 }
 
+/**
+ * Intarface for transforming InputStream of csv file into import result of czev star drafts
+ */
 interface CzevStarDraftCsvImportReader : ImportReaderService<InputStream, ImportResult<CzevStarDraftImportModel>>
 
 // TODO: add possible options such as fail/skip on errors, header, custom order of columns...

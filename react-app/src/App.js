@@ -11,8 +11,19 @@ import "./App.css";
 import "./components/ocgate/StarList.css";
 import "antd/dist/antd.css";
 
-import {Button, Card, Col, Form, Icon, Input, InputNumber, Layout, Menu, Row, Spin} from 'antd';
-import ReactEcharts from "echarts-for-react";
+import {
+    Button,
+    Card,
+    Col,
+    Form,
+    Icon,
+    Input,
+    InputNumber,
+    Layout,
+    Menu,
+    notification,
+    Row
+} from 'antd';
 import {AuthConsumer, AuthProvider, OnlyAdmin, OnlyAuth} from "./components/AuthContext";
 import "./components/http"
 import {Predictions} from "./components/predictions/Predictions";
@@ -77,21 +88,37 @@ class App extends Component {
                                             return isAuth ? (
                                                 <Link to="/logout">Log out</Link>
                                             ) : (
-                                                <Link to="/login">Log in</Link>
+                                                <>
+                                                    <Link style={{marginRight: 8}} to="/login">Log in</Link>
+                                                    <Link to="/register">Register</Link>
+                                                </>
                                             )
                                         }}
                                     </AuthConsumer>
                                 </Col>
                             </Row>
                         </Header>
-                        <Switch>
-                            <Route exact path="/logout" component={Logout}/>
-                            <Route exact path="/login" component={Login}/>
-                            <Route exact path="/oc" component={OcGate}/>
-                            <Route exact path="/predictions" component={Predictions}/>
-                            <Route path="/czev" component={Czev}/>
-                            <Redirect to="/czev"/>
-                        </Switch>
+                        <AuthConsumer>
+                            {({isAuth}) =>
+                                (
+                                    <Switch>
+                                        {isAuth && (
+                                            <Route exact path="/logout" component={Logout}/>
+                                        )}
+                                        {!isAuth && (
+                                            <Route exact path="/login" component={Login}/>
+                                        )}
+                                        {!isAuth && (
+                                            <Route exact path="/register" component={Register}/>
+                                        )}
+                                        <Route exact path="/oc" component={OcGate}/>
+                                        <Route exact path="/predictions" component={Predictions}/>
+                                        <Route path="/czev" component={Czev}/>
+                                        <Redirect to="/czev"/>
+                                    </Switch>
+                                )
+                            }
+                        </AuthConsumer>
                     </Layout>
                 </AuthProvider>
             </Router>
@@ -100,10 +127,6 @@ class App extends Component {
 }
 
 class Logout extends Component {
-    constructor(props) {
-        super(props);
-    }
-
     render() {
         return (
             <Fragment>
@@ -117,6 +140,86 @@ class Logout extends Component {
         )
     }
 }
+
+class RegisterComponent extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {registered: false};
+    }
+
+    handleSubmit = (e) => {
+        e.preventDefault();
+        const component = this;
+        console.log(e);
+        this.props.form.validateFieldsAndScroll((err, values) => {
+            if (!err) {
+                axios.post(BASE_URL + "/auth/signup", values)
+                    .then(result => {
+                        notification.success({
+                            message: 'Successfully registered. You can log in now.'
+                        });
+                        component.setState({...this.state, registered: true});
+                    }).catch(e => {
+                    notification.error({
+                        message: 'Failed to register. Please try again.',
+                        description: e.response.data.message,
+                    })
+                });
+            }
+        });
+    };
+
+    render() {
+        if (this.state.registered) {
+            return (
+                <Redirect to="/login"/>
+            )
+        }
+        const {getFieldDecorator} = this.props.form;
+        return (
+            <Content style={{margin: "24px 24px 0"}}>
+                <Card>
+                    <Col offset={9} span={6}>
+                        <Form onSubmit={this.handleSubmit}>
+                            <Form.Item label="First name">
+                                {getFieldDecorator('firstName', {})(
+                                    <Input/>
+                                )}
+                            </Form.Item>
+                            <Form.Item label="Last name">
+                                {getFieldDecorator('lastName', {})(
+                                    <Input/>
+                                )}
+                            </Form.Item>
+                            <Form.Item label="E-mail">
+                                {getFieldDecorator('email', {
+                                    rules: [{
+                                        type: "email", message: "The input is not a valid email"
+                                    }],
+                                })(
+                                    <Input/>
+                                )}
+                            </Form.Item>
+                            <Form.Item label="Password">
+                                {getFieldDecorator('password', {
+                                    rules: [],
+                                })(
+                                    <Input type="password"/>
+                                )}
+                            </Form.Item>
+
+                            <Form.Item>
+                                <Button type="primary" htmlType="submit">Register</Button>
+                            </Form.Item>
+                        </Form>
+                    </Col>
+                </Card>
+            </Content>
+        )
+    }
+}
+
+const Register = Form.create()(RegisterComponent);
 
 class Login extends Component {
     constructor(props) {
@@ -285,10 +388,6 @@ export class CoordsInput extends Component {
 
 export class TableInputFilter extends Component {
 
-    constructor(props) {
-        super(props);
-    }
-
     handleOk = () => {
         this.props.actions.confirm();
     };
@@ -342,9 +441,9 @@ export class TableInputNumberFilter extends Component {
                         value={this.props.actions.selectedKeys[0]}
                         onChange={value => this.props.actions.setSelectedKeys([value])}/>
                 </div>
-                <div className="ant-table-filter-dropdown-btns"><a
-                    className="ant-table-filter-dropdown-link confirm" onClick={this.handleOk}>OK</a><a
-                    className="ant-table-filter-dropdown-link clear" onClick={this.handleReset}>Reset</a>
+                <div className="ant-table-filter-dropdown-btns">
+                    <a className="ant-table-filter-dropdown-link confirm" onClick={this.handleOk}>OK</a>
+                    <a className="ant-table-filter-dropdown-link clear" onClick={this.handleReset}>Reset</a>
                 </div>
             </div>
         )
@@ -352,10 +451,6 @@ export class TableInputNumberFilter extends Component {
 }
 
 export class TableInputRangeFilter extends Component {
-
-    constructor(props) {
-        super(props);
-    }
 
     handleOk = () => {
         this.props.actions.confirm();

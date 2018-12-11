@@ -224,7 +224,7 @@ export default class StarDetail extends Component {
                 for (let i = 0; i <= steps; i++) {
                     const predict = jdApproximation.predict(i * stepJd + 1);
                     predict[0] = predict[0] + minJd - 1;
-                    predict[1] = predict[1];
+                    // predict[1] = predict[1];
                     approximation.push(predict);
                 }
             }

@@ -109,19 +109,6 @@ data class CsvImportResultModel(
         val parsingErrors: List<ImportRecordError>
 )
 
-//data class CsvImportSettings(
-//        val discoverersStrategy: DiscoverersImportStrategy = DiscoverersImportStrategy.ABBREVIATIONS_FAIL,
-//        val validationFailStrategy: ImportValidationFailStrategy = ImportValidationFailStrategy.SKIP
-//)
-//
-//enum class ImportValidationFailStrategy {
-//    SKIP, FAIL_ALL
-//}
-//
-//enum class DiscoverersImportStrategy {
-//    ABBREVIATIONS_FAIL, NAME_CREATE_NEW, NAME_FAIL
-//}
-
 data class CzevStarApprovalModel(
         val id: Long,
         val constellation: Long,

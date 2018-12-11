@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import javax.servlet.http.HttpServletResponse
 import javax.transaction.Transactional
 import javax.validation.Valid
 import javax.validation.constraints.Email
@@ -41,9 +42,10 @@ class AuthController(
 
     @Transactional
     @PostMapping("signup")
-    fun registerUser(@Valid @RequestBody signUpRequest: SignUpRequest): ResponseEntity<*> {
+    fun registerUser(@Valid @RequestBody signUpRequest: SignUpRequest, response: HttpServletResponse): ResponseEntity<*> {
         if (userRepository.existsByEmail(signUpRequest.email)) {
-            return ResponseEntity(false, HttpStatus.BAD_REQUEST)
+            response.sendError(HttpStatus.BAD_REQUEST.value(), "User with the same email already exists")
+            return ResponseEntity("User with the same email already exists", HttpStatus.BAD_REQUEST)
         }
 
         val user = User(signUpRequest.email, passwordEncoder.encode(signUpRequest.password),

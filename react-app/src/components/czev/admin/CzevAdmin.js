@@ -8,7 +8,6 @@ import {
     Col,
     Form,
     Input,
-    InputNumber,
     Modal,
     notification,
     Radio,
@@ -27,8 +26,10 @@ export default class CzevAdmin extends Component {
     render() {
         return (
             <Switch>
-                <Route path="/czev/admin/drafts/:id" render={props => (<CzevAdminDraftDetailWithForm {...props} entities={this.props.entities}/>)}/>
-                <Route path="/czev/admin/drafts" render={props => (<CzevAdminDrafts {...props} entities={this.props.entities}/>)}/>
+                <Route path="/czev/admin/drafts/:id"
+                       render={props => (<CzevAdminDraftDetailWithForm {...props} entities={this.props.entities}/>)}/>
+                <Route path="/czev/admin/drafts"
+                       render={props => (<CzevAdminDrafts {...props} entities={this.props.entities}/>)}/>
             </Switch>
         )
     }
@@ -264,18 +265,6 @@ class CzevAdminDraftDetailComponent extends Component {
                 <Redirect to="/czev/admin/drafts"/>
             )
         }
-        const formItemLayout = {
-            labelCol: {
-                xs: {span: 24},
-                sm: {span: 6},
-            },
-            wrapperCol: {
-                xs: {span: 24},
-                sm: {span: 18},
-            },
-        };
-
-        const {getFieldDecorator} = this.props.form;
         const {originalDraft} = this.state;
         return (
             <Spin spinning={this.state.draftLoading}>

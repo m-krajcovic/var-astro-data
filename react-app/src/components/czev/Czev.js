@@ -1,4 +1,4 @@
-import React, {Component, Fragment} from "react";
+import React, {Component} from "react";
 
 import {
     Button,
@@ -33,7 +33,7 @@ import {sorterToParam} from "../common/tableHelper";
 import {CdsCallsHolder} from "../common/CdsCallsHolder";
 import {StarDraftSingleStarFormItems} from "./StarDraftSingleStarFormItems";
 import AnimateHeight from "react-animate-height";
-import {AuthConsumer, OnlyAdmin, OnlyAuth} from "../AuthContext";
+import {AuthConsumer, OnlyAuth} from "../AuthContext";
 
 const breadcrumbNameMap = {
     "/czev": "CzeV Catalogue",
@@ -756,19 +756,6 @@ class CzevStarEditComponent extends Component {
                 <Redirect to={"/czev/" + this.props.match.params.id}/>
             )
         }
-        const formItemLayout = {
-            labelCol: {
-                xs: {span: 24},
-                sm: {span: 6},
-            },
-            wrapperCol: {
-                xs: {span: 24},
-                sm: {span: 18},
-            },
-        };
-
-        const {getFieldDecorator} = this.props.form;
-
         return (
             <Spin spinning={this.state.starLoading}>
                 <Card>

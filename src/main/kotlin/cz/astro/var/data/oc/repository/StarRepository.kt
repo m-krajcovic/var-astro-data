@@ -29,10 +29,3 @@ interface StarRepository : JpaRepository<Star, Int> {
 }
 
 
-interface StarMinimaCounts {
-    val starId: Int
-    val constellationId: Int
-    val kind: String
-    val ccdCount: Int?
-    val allCount: Int?
-}

@@ -18,15 +18,24 @@ import javax.xml.bind.JAXBException
 import javax.xml.bind.UnmarshalException
 import kotlin.collections.HashMap
 
+/**
+ * Interface that provides methods for searching variable star information by coordinates
+ */
 interface VariableStarInformationCoordinatesResolverService {
     fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): CompletableFuture<List<DistanceModel<VariableStarInformationModel>>>
     fun findNearest(coordinates: CosmicCoordinatesModel): CompletableFuture<Optional<DistanceModel<VariableStarInformationModel>>>
 }
 
+/**
+ * Interface that provides methods for searching variable star information by name
+ */
 interface VariableStarInformationNameResolverService {
     fun findByName(name: String): CompletableFuture<Optional<VariableStarInformationModel>>
 }
 
+/**
+ * Interface that provides methods for searching star information by coordinates and name
+ */
 interface StarInformationResolverService {
     fun findByIdentifier(identifier: String): CompletableFuture<Optional<StarInformationModel>>
     fun findByCoordinates(coordinates: CosmicCoordinatesModel, radiusDegrees: Double): CompletableFuture<List<DistanceModel<StarInformationModel>>>
@@ -55,16 +64,28 @@ data class StarInformationModel(
 )
 
 
+/**
+ * Interface that provides methods for searching  star information from UCAC4 catalogue
+ */
 interface Ucac4StarInformationResolverService : StarInformationResolverService {
     fun isValidIdentifier(identifier: String): Boolean
     fun selectIdentifier(identifier: String): Optional<String>
 }
 
+/**
+ * Interface that provides methods for searching star information from Sesame service
+ */
 interface SesameVariableStarInformationResolverService : VariableStarInformationNameResolverService
 
+/**
+ * Interface that provides methods for searching star information from VSX service
+ */
 interface VsxVariableStarInformationResolverService : VariableStarInformationCoordinatesResolverService, VariableStarInformationNameResolverService
 
 
+/**
+ * Interface that provides methods for querying TAPVizier service
+ */
 interface TAPVizierService {
     fun query(query: String): CompletableFuture<TAPVizierResult>
 

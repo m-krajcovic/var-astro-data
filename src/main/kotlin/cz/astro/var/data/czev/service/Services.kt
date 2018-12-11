@@ -11,18 +11,30 @@ import org.springframework.stereotype.Service
  * @since 11/19/2018
  */
 
+/**
+ * Interface for managing constellation entities
+ */
 interface ConstellationService {
     fun getAll(): List<ConstellationModel>
 }
 
+/**
+ * Interface for managing filter bands entities
+ */
 interface FilterBandService {
     fun getAll(): List<FilterBandModel>
 }
 
+/**
+ * Interface for managing star observers entities
+ */
 interface StarObserverService {
     fun getAll(): List<StarObserverModel>
 }
 
+/**
+ * Interface for managing type entities
+ */
 interface StarTypeService {
     fun getAll(): List<String>
     fun validateType(type: String): Boolean
