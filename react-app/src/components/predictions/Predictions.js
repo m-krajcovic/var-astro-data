@@ -98,7 +98,7 @@ export class Predictions extends Component {
             {
                 title: 'Points',
                 dataIndex: 'points',
-                width: 80,
+                width: 90,
                 filterDropdown: (actions) => (
                     <TableInputNumberFilter actions={actions} label="Min" defaultValue={5}/>
                 ),
@@ -108,7 +108,7 @@ export class Predictions extends Component {
                 title: 'Altitude',
                 dataIndex: 'altitude',
                 render: (alt) => (<span>{alt.toFixed(2)}&deg;</span>),
-                width: 90,
+                width: 100,
                 filterDropdown: (actions) => (
                     <TableInputRangeFilter actions={actions} degrees/>
                 ),
