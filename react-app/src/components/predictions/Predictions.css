@@ -1,0 +1,45 @@
+.ReactVirtualized__List:focus {
+    outline: none;
+}
+
+.predictions-list__outer-wrapper {
+    padding-top: 8px;
+    padding-left: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.predictions-list__inner-wrapper {
+    flex: 1;
+}
+
+.predictions-list__inner-wrapper .ant-table-placeholder {
+    display: none;
+}
+
+@media only screen and (max-width: 1000px) {
+    .predictions-list__inner-wrapper {
+        width: 1000px;
+    }
+}
+
+.predictions__spinner, .predictions__spinner > .ant-spin-container {
+    display: flex;
+    flex: 1;
+    width: 100%;
+}
+
+/*
+ TODO edit naming according to some css guidelines whatever
+ */
+.predictions__filters-form .ant-form-item {
+    display: flex;
+}
+
+.predictions__filters-form .ant-form-item-label {
+    width: 90px;
+}
+
+.predictions__filters-form .ant-form-item-control-wrapper {
+    flex: 1;
+}

@@ -2,23 +2,13 @@ import React, {Component} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../api-endpoint";
 import {Alert, Button, Col, Form, Icon, List, Modal, notification, Row, Spin, Tooltip, message} from "antd";
-import {StarDraftSingleStarFormItems} from "./StarDraftSingleStarFormItems";
+import {CzevStarDraftSingleStarFormItems} from "./CzevStarDraftSingleStarFormItems";
 import {Link, Redirect} from "react-router-dom";
 import {CoordinateWrapper} from "../common/CoordinateWrapper";
 import {Copyable} from "../common/Copyable";
 import AnimateHeight from "react-animate-height";
 import {CdsCallsHolder} from "../common/CdsCallsHolder";
-import StarMap from "./StarMap";
-
-export class StarDraftSingleNewStar extends Component {
-    render() {
-        return (
-            <CdsCallsHolder>
-                <StarDraftSingleNewStarComponent {...this.props}/>
-            </CdsCallsHolder>
-        )
-    }
-}
+import StarMap from "../common/StarMap";
 
 class StarDraftSingleNewStarComponent extends Component {
     constructor(props) {
@@ -129,7 +119,7 @@ class StarDraftSingleNewStarComponent extends Component {
             <Row gutter={8}>
                 <Col span={24} sm={{span: 16}}>
                     <Form onSubmit={this.handleSubmit}>
-                        <StarDraftSingleStarFormItems
+                        <CzevStarDraftSingleStarFormItems
                             form={this.props.form}
 
                             onCoordsBlur={this.handleCoordsBlur}
@@ -173,6 +163,18 @@ class StarDraftSingleNewStarComponent extends Component {
         );
     }
 }
+
+export class StarDraftSingleNewStarWithCds extends Component {
+    render() {
+        return (
+            <CdsCallsHolder>
+                <StarDraftSingleNewStarComponent {...this.props}/>
+            </CdsCallsHolder>
+        )
+    }
+}
+
+export const CzevStarDraftSingleNewStar = Form.create()(StarDraftSingleNewStarWithCds);
 
 
 export class CoordsInfoResultsWrapper extends Component {
@@ -427,3 +429,4 @@ function StarInfoResultWrapper(props) {
         />
     );
 }
+

@@ -3,7 +3,7 @@ import axios from "axios";
 import {BASE_URL} from "../../api-endpoint";
 import {Alert, Button, Col, Icon, message, Row, Upload, List} from "antd";
 
-export class StarDraftCsvImportWrapper extends Component {
+export class CzevStarDraftCsvImport extends Component {
     constructor(props) {
         super(props);
         this.state = {

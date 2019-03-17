@@ -77,22 +77,22 @@
     min-height: 200px;
 }
 
-.minima-list .loadable {
+.loadable {
     position: relative;
 }
 
-.minima-list .loadable::after {
+.loadable::after {
     content: '';
     display: block;
     position: absolute;
-    top: -8px;
+    top: -16px;
     left: -8px;
     width: 0;
     height: 4px;
-    background-color: #0038a8;
+    background-color: #1890ff;
 }
 
-.minima-list .loadable.loading::after {
+.loadable.loading::after {
     width: calc(100% + 16px);
     transition: width 1s;
 }

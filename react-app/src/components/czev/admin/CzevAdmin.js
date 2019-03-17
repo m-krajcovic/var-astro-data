@@ -17,8 +17,8 @@ import {
 import {CzevStarDraftsTable} from "../CzevStarDraftsTable";
 import axios from "axios";
 import {BASE_URL} from "../../../api-endpoint";
-import {StarDraftSingleStarFormItems} from "../StarDraftSingleStarFormItems";
-import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "../StarDraftSingleNewStar";
+import {CzevStarDraftSingleStarFormItems} from "../CzevStarDraftSingleStarFormItems";
+import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "../CzevStarDraftSingleNewStar";
 import {CdsCallsHolder} from "../../common/CdsCallsHolder";
 
 
@@ -284,7 +284,7 @@ class CzevAdminDraftDetailComponent extends Component {
                     <Row gutter={8}>
                         <Col span={24} sm={{span: 16}}>
                             <Form onSubmit={this.handleApproval}>
-                                <StarDraftSingleStarFormItems
+                                <CzevStarDraftSingleStarFormItems
                                     form={this.props.form}
 
                                     onCoordsBlur={this.handleCoordsBlur}
