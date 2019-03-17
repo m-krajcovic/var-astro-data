@@ -3,6 +3,7 @@ import StarMinimaChart from "./StarMinimaChart";
 import regression from "regression";
 import MinimaList from "./MinimaList";
 import {Button, Col, InputNumber, Row, Select, Spin} from "antd";
+import {CoordinateWrapper} from "../common/CoordinateWrapper";
 
 const prependZero = function (length, number) {
     let numberStr = `${number}`;
@@ -38,7 +39,7 @@ const cValue = function (d) {
     return d.kind + " - " + methodValue(d.color);
 };
 
-const jdToDate = (jd) => {
+export const jdToDate = (jd) => {
     const added = jd - 2451545.0;
     return new Date(946728000000 + added * 86400000)
 };
@@ -173,7 +174,8 @@ export default class StarDetail extends Component {
                 "p - photographic": [],
                 's - CCD / photoelectric': [],
                 "s - visual": [],
-                "s - photographic": []
+                "s - photographic": [],
+                "user": []
             };
             const minimaList = [];
             star.minima.forEach(minima => {
@@ -243,8 +245,10 @@ export default class StarDetail extends Component {
                             <div className="panel star-detail">
                                 <div className="panel-header"><b>Coordinates</b></div>
                                 <div className="panel-body">
-                                    <div><b>RA: </b>{coordinatesToStringRa(star.coordinates)}</div>
-                                    <div><b>DEC: </b>{coordinatesToStringDec(star.coordinates)}</div>
+                                    <div><b>RA: </b><CoordinateWrapper value={coordinatesToStringRa(star.coordinates)}/>
+                                    </div>
+                                    <div><b>DEC: </b><CoordinateWrapper
+                                        value={coordinatesToStringDec(star.coordinates)}/></div>
                                 </div>
                             </div>
                             {star.brightness.map(bright => {

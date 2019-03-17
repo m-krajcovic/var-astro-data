@@ -7,6 +7,7 @@ import {BrowserRouter as Router, Link, NavLink, Redirect, Route, Switch, withRou
 import Czev from "./components/czev/Czev";
 import axios from "axios";
 
+// import 'react-virtualized/styles.css'
 import "./App.css";
 import "./components/ocgate/StarList.css";
 import "antd/dist/antd.css";
@@ -27,6 +28,7 @@ import {
 import {AuthConsumer, AuthProvider, OnlyAdmin, OnlyAuth} from "./components/AuthContext";
 import "./components/http"
 import {Predictions} from "./components/predictions/Predictions";
+import {UserProfileProvider} from "./components/common/UserProfileContext";
 
 const {Header, Content, Sider} = Layout;
 
@@ -39,7 +41,7 @@ const LinkMenu = withRouter(props => {
                 theme="dark"
                 mode="horizontal"
                 style={{lineHeight: '64px'}}
-                selectedKeys={[selectedKeys[selectedKeys.length - 1]]}
+                selectedKeys={selectedKeys}
             >
                 <Menu.Item key="/oc">
                     <NavLink to="/oc"><span className="header-link">O-C Gate</span></NavLink>
@@ -75,52 +77,54 @@ class App extends Component {
     render() {
         return (
             <Router>
-                <AuthProvider>
-                    <Layout className="layout" style={{minHeight: "100vh"}}>
-                        <Header style={{width: "100%"}}>
-                            <Row>
-                                <Col span={20}>
-                                    <LinkMenu/>
-                                </Col>
-                                <Col span={4} style={{textAlign: "right"}}>
-                                    <AuthConsumer>
-                                        {({logout, isAuth}) => {
-                                            return isAuth ? (
-                                                <Link to="/logout">Log out</Link>
-                                            ) : (
-                                                <>
-                                                    <Link style={{marginRight: 8}} to="/login">Log in</Link>
-                                                    <Link to="/register">Register</Link>
-                                                </>
-                                            )
-                                        }}
-                                    </AuthConsumer>
-                                </Col>
-                            </Row>
-                        </Header>
-                        <AuthConsumer>
-                            {({isAuth}) =>
-                                (
-                                    <Switch>
-                                        {isAuth && (
-                                            <Route exact path="/logout" component={Logout}/>
-                                        )}
-                                        {!isAuth && (
-                                            <Route exact path="/login" component={Login}/>
-                                        )}
-                                        {!isAuth && (
-                                            <Route exact path="/register" component={Register}/>
-                                        )}
-                                        <Route exact path="/oc" component={OcGate}/>
-                                        <Route exact path="/predictions" component={Predictions}/>
-                                        <Route path="/czev" component={Czev}/>
-                                        <Redirect to="/czev"/>
-                                    </Switch>
-                                )
-                            }
-                        </AuthConsumer>
-                    </Layout>
-                </AuthProvider>
+                <UserProfileProvider>
+                    <AuthProvider>
+                        <Layout className="layout" style={{minHeight: "100vh"}}>
+                            <Header style={{width: "100%"}}>
+                                <Row>
+                                    <Col span={20}>
+                                        <LinkMenu/>
+                                    </Col>
+                                    <Col span={4} style={{textAlign: "right"}}>
+                                        <AuthConsumer>
+                                            {({logout, isAuth}) => {
+                                                return isAuth ? (
+                                                    <Link to="/logout">Log out</Link>
+                                                ) : (
+                                                    <>
+                                                        <Link style={{marginRight: 8}} to="/login">Log in</Link>
+                                                        <Link to="/register">Register</Link>
+                                                    </>
+                                                )
+                                            }}
+                                        </AuthConsumer>
+                                    </Col>
+                                </Row>
+                            </Header>
+                            <AuthConsumer>
+                                {({isAuth}) =>
+                                    (
+                                        <Switch>
+                                            {isAuth && (
+                                                <Route exact path="/logout" component={Logout}/>
+                                            )}
+                                            {!isAuth && (
+                                                <Route exact path="/login" component={Login}/>
+                                            )}
+                                            {!isAuth && (
+                                                <Route exact path="/register" component={Register}/>
+                                            )}
+                                            <Route path="/oc/:const?/:star?" component={OcGate}/>
+                                            <Route exact path="/predictions" component={Predictions}/>
+                                            <Route path="/czev" component={Czev}/>
+                                            <Redirect to="/czev"/>
+                                        </Switch>
+                                    )
+                                }
+                            </AuthConsumer>
+                        </Layout>
+                    </AuthProvider>
+                </UserProfileProvider>
             </Router>
         );
     }
@@ -150,7 +154,6 @@ class RegisterComponent extends Component {
     handleSubmit = (e) => {
         e.preventDefault();
         const component = this;
-        console.log(e);
         this.props.form.validateFieldsAndScroll((err, values) => {
             if (!err) {
                 axios.post(BASE_URL + "/auth/signup", values)
@@ -267,8 +270,30 @@ class OcGate extends Component {
             selectedElement: 'server',
             starLoading: false,
             starsLoading: false,
-            constellationsLoading: false
+            constellationsLoading: false,
+            selectedConstellationName: null,
+            selectedStarName: null,
         };
+    }
+
+    componentWillReceiveProps(nextProps, nextContext) {
+        if (nextProps.match.params) {
+            // router params changed
+            const constName = nextProps.match.params["const"];
+            const starName = nextProps.match.params["star"];
+
+            if (constName !== this.state.selectedConstellationName) { // if const param has changed
+                this.onConstellationSelected(constName, starName); // load stars & star detail if needed
+                this.setState((s) => { // update selected const for future checks
+                    return {...s, selectedConstellationName: constName, selectedStarName: null};
+                })
+            } else if (starName !== this.state.selectedStarName) { // only starname has changed
+                this.onStarSelected(starName); // load details for given star
+                this.setState(s => {
+                    return {...s, selectedStarName: starName};
+                });
+            }
+        }
     }
 
     componentDidMount() {
@@ -282,31 +307,48 @@ class OcGate extends Component {
             }));
     }
 
-    onConstellationSelected(constellation) {
+    onConstellationSelected(constellation, starName) {
         this.setState({...this.state, starsLoading: true});
         fetch(BASE_URL + "/oc/constellations/" + constellation + "/stars").then(response => response.json())
-            .then(value => this.setState({...this.state, stars: value, starsLoading: false}));
+            .then(value => this.setState(state => {
+                return {...state, stars: value, starsLoading: false}
+            }))
+            .then(_ => {
+                if (starName) {
+                    this.onStarSelected(starName)
+                }
+            });
     }
 
-    onStarSelected(star) {
-        this.setState({...this.state, starLoading: true});
-        fetch(BASE_URL + "/oc/stars/" + star.starId).then(response => response.json()).then(value => {
-            this.setState({...this.state, selectedStar: value, starLoading: false, selectedElement: 'server'});
-        });
+    onStarSelected(starName) {
+        const star = this.state.stars.find(s => s.starName === starName);
+        if (star) {
+            this.setState({...this.state, starLoading: true});
+            fetch(BASE_URL + "/oc/stars/" + star.starId).then(response => response.json()).then(value => {
+                this.setState({...this.state, selectedStar: value, starLoading: false, selectedElement: 'server'});
+            });
+        }
     }
 
     render() {
+        let selectedConstName = null;
+        let selectedStarName = null;
+        if (this.props.match.params) {
+            selectedConstName = this.props.match.params["const"];
+            selectedStarName = this.props.match.params["star"];
+        }
         return (
             <Content>
                 <Sider theme="light"
                        style={{overflow: 'auto', height: 'calc(100vh - 64px)', position: 'fixed', top: 64, left: 0}}>
                     <ConstellationList constellations={this.state.constellations}
-                                       onSelected={constellation => this.onConstellationSelected(constellation)}
+                                       selectedConstellationName={selectedConstName}
                                        loading={this.state.constellationsLoading}/>
                 </Sider>
                 <Sider theme="light"
                        style={{overflow: 'auto', height: 'calc(100vh - 64px)', position: 'fixed', top: 64, left: 200}}>
-                    <StarList stars={this.state.stars} onSelected={star => this.onStarSelected(star)}
+                    <StarList stars={this.state.stars}
+                              selectedStarName={selectedStarName}
                               loading={this.state.starsLoading}/>
                 </Sider>
                 <div className="stars-detail-wrapper" style={{
@@ -425,6 +467,9 @@ export class TableInputNumberFilter extends Component {
     }
 
     handleOk = () => {
+        if (this.props.onOk) {
+            this.props.onOk(this.props.actions.selectedKeys[0]);
+        }
         this.props.actions.confirm();
     };
 

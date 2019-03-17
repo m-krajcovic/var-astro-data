@@ -1,12 +1,17 @@
 import React, {Component} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../api-endpoint";
-import {Link} from "react-router-dom";
-import {Card, Col, DatePicker, Icon, Popover, Row, Spin, Switch as ASwitch, Table, Layout} from "antd";
-import moment from "moment";
+import {Card, Col, DatePicker, Layout, Row, Spin, Table} from "antd";
 import {CoordsInput, TableInputFilter, TableInputNumberFilter, TableInputRangeFilter} from "../../App";
-import ReactEcharts from "echarts-for-react";
+import moment from "moment";
+import {PredictionsVirtualizedList} from "./PredictionsVirtualizedList";
 
+
+import "./Predictions.css";
+import {UserProfileConsumer} from "../common/UserProfileContext";
+import {AuthConsumer} from "../AuthContext";
+
+// TODO: state in url (date, lat, long)
 export class Predictions extends Component {
     constructor(props) {
         super(props);
@@ -16,9 +21,75 @@ export class Predictions extends Component {
             showElements: false,
             latitude: 50,
             longitude: 15,
-            date: null
+            date: null,
+            filters: [],
         };
         this.cache = {};
+        this.columns = [
+            {
+                title: 'Star',
+                dataIndex: 'name',
+                filterDropdown: (actions) => (
+                    <TableInputFilter actions={actions}/>
+                ),
+                width: 200,
+            },
+            {
+                title: 'P/S',
+                dataIndex: 'kind',
+                width: 60
+            },
+            {
+                title: 'Time',
+                dataIndex: 'minimumDateTime',
+                width: 100
+            },
+            {
+                title: 'Points',
+                dataIndex: 'points',
+                width: 90,
+                filterDropdown: (actions) => (
+                    <UserProfileConsumer>
+                        {({config, updateConfig}) => {
+                            return (
+                                <TableInputNumberFilter actions={actions}
+                                                        onOk={(val) => {
+                                                            updateConfig({...config, predictionPoints: val})
+                                                        }}
+                                                        label="Min"
+                                                        defaultValue={config.predictionPoints}/>
+                            )
+                        }}
+                    </UserProfileConsumer>
+                )
+            },
+            {
+                title: 'Altitude',
+                dataIndex: 'altitude',
+                width: 100,
+                filterDropdown: (actions) => (
+                    <TableInputRangeFilter actions={actions} degrees/>
+                ),
+            },
+            {
+                title: 'Azimuth',
+                dataIndex: 'azimuth',
+                filters: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"].map(d => {
+                    return {
+                        text: d,
+                        value: d
+                    }
+                }),
+                width: 110
+            },
+            {
+                title: 'Magnitudes',
+                dataIndex: 'magnitudes',
+                filterDropdown: (actions) => (
+                    <TableInputRangeFilter actions={actions}/>
+                )
+            }
+        ];
     }
 
     loadPredictions(latitude, longitude, dateString, cacheKey) {
@@ -33,13 +104,19 @@ export class Predictions extends Component {
                     longitude: longitude
                 }
             }).then(result => {
-                this.cache[cacheKey] = result.data;
-                this.setState({...this.state, loading: false, predictions: result.data});
+                result.data.forEach(r => {
+                    r.minimumDateTime = moment(r.minimumDateTime);
+                });
+                const sortedData = result.data.sort((a, b) => {
+                    return a.minimumDateTime.diff(b.minimumDateTime);
+                });
+                this.cache[cacheKey] = sortedData;
+                this.setState({...this.state, loading: false, predictions: sortedData});
             });
         }
     }
 
-    handleOnChange = (date, dateString) => {
+    handleOnDateChange = (date, dateString) => {
         if (dateString && this.state.date !== dateString) {
             const cacheKey = `${this.state.latitude} ${this.state.longitude} ${dateString}`;
             if (this.cache[cacheKey]) {
@@ -63,122 +140,43 @@ export class Predictions extends Component {
         }
     };
 
+    handleTableChange = (pagination, filters) => {
+        this.setState({...this.state, filters: filters});
+    };
 
     render() {
-        const columns = [
-            {
-                title: 'Star',
-                dataIndex: 'name',
-                filterDropdown: (actions) => (
-                    <TableInputFilter actions={actions}/>
-                ),
-                onFilter: (value, record) => record.name.toLowerCase().indexOf(value.toLowerCase()) !== -1,
-                width: 200,
-                render: (name, record) => (
-                    <span><Link to="/oc">{name}</Link> <Popover overlayClassName="popover-minima-graph"
-                        content={(<MinimalMinimaGraph id={record.id} kind={record.kind}/>)}><Icon
-                        type="dot-chart" className="clickable-icon"/></Popover></span>
-                )
-            },
-            {
-                title: 'P/S',
-                dataIndex: 'kind',
-                width: 40
-            },
-            {
-                title: 'Time',
-                dataIndex: 'minimumDateTime',
-                defaultSortOrder: 'ascend',
-                sorter: (a, b) => a.minimum - b.minimum,
-                render: (dt, record) => {
-                    return (<span title={`${dt} (${record.minimum})`}>{dt.split(' ')[1]}</span>)
-                },
-                width: 100
-            },
-            {
-                title: 'Points',
-                dataIndex: 'points',
-                width: 90,
-                filterDropdown: (actions) => (
-                    <TableInputNumberFilter actions={actions} label="Min" defaultValue={5}/>
-                ),
-                onFilter: (value, record) => record.points == null || record.points >= value
-            },
-            {
-                title: 'Altitude',
-                dataIndex: 'altitude',
-                render: (alt) => (<span>{alt.toFixed(2)}&deg;</span>),
-                width: 100,
-                filterDropdown: (actions) => (
-                    <TableInputRangeFilter actions={actions} degrees/>
-                ),
-                onFilter: (value, record) => !(value.max && record.altitude > value.max) && !(value.min && record.altitude < value.min)
-            },
-            {
-                title: 'Azimuth',
-                dataIndex: 'azimuth',
-                filters: ["N", "NE", "SE", "S", "SW", "W", "NW"].map(d => {
-                    return {
-                        text: d,
-                        value: d
-                    }
-                }),
-                onFilter: (value, record) => record.azimuth === value,
-                width: 100
-            },
-            {
-                title: 'Magnitudes',
-                dataIndex: 'magnitudes',
-                render: (magnitudes) => {
-                    return magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", ")
-                },
-                filterDropdown: (actions) => (
-                    <TableInputRangeFilter actions={actions}/>
-                ),
-                onFilter: (value, record) => {
-                    for (let i = 0; i < record.magnitudes.length; i++) {
-                        const m = record.magnitudes[i];
-                        if (!(value.max && m.min > value.max) && !(value.min && m.max < value.min)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            }
-        ];
-        if (this.state.showElements) {
-            columns.push({
-                title: 'Elements',
-                dataIndex: 'elements'
-            });
-        }
         return (
-            <Layout.Content style={{margin: "24px 24px 0"}}>
-                <Spin spinning={this.state.loading}>
-                    <Card>
+            <Layout.Content style={{margin: "24px", display: "flex"}}>
+                <Spin spinning={this.state.loading} wrapperClassName={"predictions__spinner"}>
+                    <Card style={{height: "100%", display: "flex", minHeight: 400, width: "100%"}}
+                          bodyStyle={{display: "flex", flexDirection: "column", width: "100%"}}>
                         <Row style={{marginBottom: 12}} gutter={4}>
-                            <Col span={24} sm={{span: 8}}>
+                            <Col span={24} sm={{span: 12}}>
                                 <label>Night of: </label>
                                 <DatePicker allowClear={false}
-                                            disabledDate={(current) => current < moment().startOf('day').subtract(1, 'day')}
                                             showToday
-                                            onChange={this.handleOnChange}/>
+                                            onChange={this.handleOnDateChange}/>
                             </Col>
-                            <Col span={24} sm={{span: 8}}>
+                            <Col span={24} sm={{span: 12}}>
                                 <CoordsInput
                                     onSubmit={(val) => this.handleCoordinatesChange(val.latitude, val.longitude)}/>
                             </Col>
-                            <Col span={24} sm={{span: 8}}>
-                                <span><ASwitch
-                                    onChange={(checked) => this.setState({...this.state, showElements: checked})}/><span
-                                    style={{marginLeft: 4}}>Show elements</span></span>
-                            </Col>
                         </Row>
-                        <Table
-                            scroll={{x: 800}} size="small" rowKey={(r) => `${r.id}@${r.kind}@${r.minimum}`}
-                            columns={columns}
-                            dataSource={this.state.predictions}
-                            pagination={{pageSize: 100, position: "both", showQuickJumper: true}}/>
+
+                        <div className="predictions-list__outer-wrapper" style={{flex: "1 1 auto", overflow: "auto"}}>
+                            <div className="predictions-list__inner-wrapper" style={{flex: "0"}}>
+                                <Table
+                                    columns={this.columns}
+                                    dataSource={[]}
+                                    bordered={false}
+                                    onChange={this.handleTableChange}
+                                />
+                            </div>
+                            <div className="predictions-list__inner-wrapper">
+                                <PredictionsVirtualizedList predictions={this.state.predictions}
+                                                            filters={this.state.filters}/>
+                            </div>
+                        </div>
                     </Card>
                 </Spin>
             </Layout.Content>
@@ -186,93 +184,3 @@ export class Predictions extends Component {
     }
 }
 
-class MinimalMinimaGraph extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            failed: false,
-            loading: false,
-            data: []
-        }
-    }
-
-    ocCalc = (m0, period, minima) => {
-        let e = Math.round((minima - m0) / period);
-        let oc = minima - (m0 + period * e);
-        return oc.toFixed(5);
-    };
-
-    componentDidMount() {
-        this.setState({...this.state, loading: true});
-        axios.get(BASE_URL + "/oc/stars/" + this.props.id + "/minima", {
-            params: {
-                kind: this.props.kind
-            }
-        }).then(result => {
-            const data = result.data.minima.map(minima => {
-                const oc = this.ocCalc(result.data.m0, result.data.period, minima);
-                const epoch = Math.round((minima - result.data.m0) / result.data.period);
-                return [epoch, oc];
-            });
-            this.setState({...this.state, loading: false, data: data});
-        }).catch(e => {
-            this.setState({...this.state, failed: true});
-        });
-    }
-
-    getChartOption(data) {
-        return {
-            title: {
-                show: false
-            },
-            tooltip: {
-                show: false,
-                trigger: 'none'
-            },
-            legend: {
-                show: false,
-            },
-            grid: [
-                {
-                    right: 15, bottom: 35, left: 45, top: 15,
-                },
-            ],
-            xAxis: {
-                name: 'Epoch',
-                type: 'value',
-                scale: true,
-            },
-            yAxis: {
-                name: 'O-C',
-                type: 'value',
-                scale: true,
-            },
-            animation: false,
-            series: [{
-                name: 'minimas',
-                type: 'scatter',
-                symbolSize: 8,
-                data: data,
-                itemStyle: {
-                    color: '#1890ff'
-                }
-            }]
-        };
-    }
-
-    render() {
-        return (
-            <Spin spinning={this.state.loading}>
-            <span>
-                <ReactEcharts
-                    option={this.getChartOption(this.state.data)}
-                    style={{
-                        width: 400,
-                        height: 300
-                    }}
-                />
-            </span>
-            </Spin>
-        )
-    }
-}

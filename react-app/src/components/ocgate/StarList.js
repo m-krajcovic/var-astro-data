@@ -1,8 +1,8 @@
 import React, {Component} from 'react';
+import {Link} from "react-router-dom";
 class StarList extends Component {
     constructor(props) {
         super(props);
-        this.state = {selectedStar: null};
     }
 
     render() {
@@ -17,7 +17,7 @@ class StarList extends Component {
                     {this.props.stars.map(star => {
                         return (
                             <StarListItem key={star.starName}
-                                          className={this.state.selectedStar === star ? "selected" : ""} star={star}
+                                          className={this.props.selectedStarName === star.starName ? "selected" : ""} star={star}
                                           onClick={(name) => this.onSelected(name)}/>
                         )
                     })}
@@ -36,7 +36,6 @@ class StarList extends Component {
         if (this.props.onSelected) {
             this.props.onSelected(star);
         }
-        this.setState({selectedStar: star});
     }
 }
 
@@ -44,7 +43,9 @@ class StarListItem extends Component {
     render() {
         return (
             <li style={this.props.style} className={this.props.className}
-                onClick={() => this.onClick()}>{this.props.star.starName} ({this.props.star.minimaCount})</li>
+                onClick={() => this.onClick()}>
+                <Link to={"/oc/" + this.props.star.constellation + "/" + this.props.star.starName}>{this.props.star.starName} ({this.props.star.minimaCount})</Link>
+            </li>
         )
     }
 

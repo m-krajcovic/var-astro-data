@@ -1,7 +1,7 @@
 import React, {Component, Fragment} from "react";
 import {AutoComplete, Button, Checkbox, Col, Icon, InputNumber, Select, Spin, Tooltip, Form, Input} from "antd";
 
-export class StarDraftSingleStarFormItems extends Component {
+export class CzevStarDraftSingleStarFormItems extends Component {
     constructor(props) {
         super(props);
         this.defaultTypes = ["EB", "EW", "EA", "DSCT", "HADS", "RRAB", "RRC", "ELL", "UV", "M", "SR", "CV", "ACV", "DCEP"];

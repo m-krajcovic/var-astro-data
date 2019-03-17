@@ -1,114 +1,18 @@
 import React, {Component} from "react";
-import {Alert, Badge, Button, Card, Col, Form, Modal, notification, Radio, Row, Spin} from "antd";
-import {Redirect, Route, Switch} from "react-router-dom";
+import {CdsCallsHolder} from "../common/CdsCallsHolder";
 import axios from "axios";
-import {BASE_URL} from "../../../api-endpoint";
-import {CzevStarDraftsTable} from "../CzevStarDraftsTable";
-import {CzevStarDraftSingleStarFormItems} from "../CzevStarDraftSingleStarFormItems";
-import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "../CzevStarDraftSingleNewStar";
-import {CdsCallsHolder} from "../../common/CdsCallsHolder";
+import {BASE_URL} from "../../api-endpoint";
+import {Button, Card, Col, Modal, notification, Row, Spin, Form} from "antd";
+import {Redirect} from "react-router-dom";
+import {CzevStarDraftSingleStarFormItems} from "./CzevStarDraftSingleStarFormItems";
+import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "./CzevStarDraftSingleNewStar";
 
-export default class CzevUser extends Component {
-    render() {
-        return (
-            <Switch>
-                <Route path="/czev/user/drafts/:id" render={props => (<CzevUserDraftDetailWithForm {...props} entities={this.props.entities}/>)}/>
-                <Route path="/czev/user/drafts" render={props => (<CzevUserDrafts {...props} entities={this.props.entities}/>)}/>
-            </Switch>
-        )
-    }
-}
-
-export class CzevUserDrafts extends Component {
+class CzevStarEditComponent extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            mode: 'waiting',
-            waitingDrafts: [],
-            rejectedDrafts: [],
-            draftsLoading: false,
-        }
-    }
-
-    componentDidMount() {
-        this.setState({...this.state, draftsLoading: true});
-        axios.get(BASE_URL + "/czev/user/drafts")
-            .then(result => {
-                const waitingDrafts = [];
-                const rejectedDrafts = [];
-                result.data.forEach(draft => {
-                    if (draft.rejected) {
-                        rejectedDrafts.push(draft);
-                    } else {
-                        waitingDrafts.push(draft);
-                    }
-                });
-                this.setState({...this.state, draftsLoading: false, waitingDrafts, rejectedDrafts})
-            });
-    }
-
-    handleRadioGroupChange = (e) => {
-        this.setState({...this.state, mode: e.target.value})
-    };
-
-    handleRowClick = (draft) => {
-        this.props.history.push('/czev/user/drafts/' + draft.id)
-    };
-
-    handleRemove = (id) => {
-        axios.delete(`${BASE_URL}/czev/drafts/${id}`)
-            .then(result => {
-                notification.success({
-                    message: 'Draft deleted'
-                });
-                this.componentDidMount()
-            })
-            .catch(e => {
-                notification.error({
-                    message: 'Failed to delete draft',
-                    description: e.response.data.message,
-                });
-            })
-    };
-
-    render() {
-        return (
-            <Card>
-                <Radio.Group onChange={this.handleRadioGroupChange} defaultValue="waiting" style={{marginBottom: 8}}>
-                    <Radio.Button value="waiting">Waiting for approval<Badge style={{marginLeft: 4, top: -1}}
-                                                                             showZero={false}
-                                                                             count={this.state.waitingDrafts.length}/></Radio.Button>
-                    <Radio.Button value="rejected">Rejected<Badge style={{marginLeft: 4, top: -1}} showZero={false}
-                                                                  count={this.state.rejectedDrafts.length}/></Radio.Button>
-                </Radio.Group>
-                <CzevStarDraftsTable
-                    showRemove
-                    onRemoveClick={this.handleRemove}
-                    onRowClick={this.handleRowClick}
-                    data={this.state.mode === 'waiting' ? this.state.waitingDrafts : this.state.rejectedDrafts}
-                    loading={this.state.draftsLoading}/>
-            </Card>
-        )
-    }
-}
-
-export class CzevUserDraftDetail extends Component {
-    render() {
-        return (
-            <CdsCallsHolder>
-                <CzevUserDraftDetailComponent {...this.props}/>
-            </CdsCallsHolder>
-        )
-    }
-}
-
-class CzevUserDraftDetailComponent extends Component {
-
-    constructor(props) {
-        super(props);
-        this.state = {
-            originalDraft: null,
-            draftLoading: false,
+            originalStar: null,
+            starLoading: false,
 
             finished: false,
         };
@@ -117,34 +21,34 @@ class CzevUserDraftDetailComponent extends Component {
     componentDidMount() {
         this.setState({
             ...this.state,
-            draftLoading: true
+            starLoading: true
         });
-        axios.get(BASE_URL + "/czev/drafts/" + this.props.match.params.id)
+        axios.get(BASE_URL + "/czev/stars/" + this.props.match.params.id)
             .then(result => {
-                const draft = result.data;
+                const star = result.data;
                 let newFormValues = {
-                    constellation: "" + draft.constellation.id,
-                    type: draft.type,
-                    discoverers: draft.discoverers.map(d => "" + d.id),
-                    amplitude: draft.amplitude,
-                    filterBand: draft.filterBand ? "" + draft.filterBand.id : null,
-                    crossIds: draft.crossIdentifications,
-                    coordinatesRa: draft.coordinates.ra,
-                    coordinatesDec: draft.coordinates.dec,
-                    note: draft.publicNote,
-                    epoch: draft.m0,
-                    period: draft.period,
-                    year: draft.year,
-                    jmagnitude: draft.jmagnitude,
-                    vmagnitude: draft.vmagnitude,
-                    kmagnitude: draft.kmagnitude
+                    constellation: "" + star.constellation.id,
+                    type: star.type,
+                    discoverers: star.discoverers.map(d => "" + d.id),
+                    amplitude: star.amplitude,
+                    filterBand: star.filterBand ? "" + star.filterBand.id : null,
+                    crossIds: star.crossIdentifications,
+                    coordinatesRa: star.coordinates.ra,
+                    coordinatesDec: star.coordinates.dec,
+                    note: star.publicNote,
+                    epoch: star.m0,
+                    period: star.period,
+                    year: star.year,
+                    jmagnitude: star.jmagnitude,
+                    kmagnitude: star.kmagnitude,
+                    vmagnitude: star.vmagnitude
                 };
                 this.props.form.setFieldsValue({
-                    crossidKeys: [...Array(draft.crossIdentifications.length).keys()],
+                    crossidKeys: [...Array(star.crossIdentifications.length).keys()],
                 });
                 this.props.form.setFieldsValue(newFormValues);
                 this.props.form.validateFieldsAndScroll();
-                this.setState({...this.state, originalDraft: draft, draftLoading: false});
+                this.setState({...this.state, originalStar: star, starLoading: false});
                 this.handleCoordsBlur();
                 this.handleCrossIdBlur();
             });
@@ -161,7 +65,7 @@ class CzevUserDraftDetailComponent extends Component {
                     cancelText: 'No',
                     onOk() {
                         const body = {
-                            id: component.props.match.params.id,
+                            czevId: component.props.match.params.id,
                             constellation: values.constellation,
                             type: values.type ? values.type : "",
                             discoverers: values.discoverers,
@@ -176,9 +80,10 @@ class CzevUserDraftDetailComponent extends Component {
                             year: values.year,
                             jmagnitude: values.jmagnitude,
                             vmagnitude: values.vmagnitude,
-                            kmagnitude: values.kmagnitude
+                            kmagnitude: values.kmagnitude,
+                            vsxName: ""
                         };
-                        return axios.put(BASE_URL + "/czev/drafts/" + component.props.match.params.id, body)
+                        return axios.put(BASE_URL + "/czev/stars/" + component.props.match.params.id, body)
                             .then(result => {
                                 component.setState({...component.state, finished: true});
                                 notification.success({
@@ -187,7 +92,7 @@ class CzevUserDraftDetailComponent extends Component {
                             })
                             .catch(e => {
                                 notification.error({
-                                    message: 'Failed to submit variable star discovery',
+                                    message: 'Failed to update variable star discovery',
                                     description: e.response.data.message,
                                 });
                             })
@@ -243,26 +148,12 @@ class CzevUserDraftDetailComponent extends Component {
     render() {
         if (this.state.finished) {
             return (
-                <Redirect to="/czev/user/drafts"/>
+                <Redirect to={"/czev/" + this.props.match.params.id}/>
             )
         }
-
-        const {originalDraft} = this.state;
         return (
-            <Spin spinning={this.state.draftLoading}>
+            <Spin spinning={this.state.starLoading}>
                 <Card>
-                    {originalDraft && originalDraft.rejected && (
-                        <Row style={{marginBottom: 12}}>
-                            <Col span={24}>
-                                <Alert
-                                    showIcon
-                                    type="error"
-                                    message={"This draft has been rejected on " + originalDraft.rejectedOn}
-                                    description={`Reason: ${originalDraft.rejectedReason}`}
-                                />
-                            </Col>
-                        </Row>
-                    )}
                     <Row gutter={8}>
                         <Col span={24} sm={{span: 16}}>
                             <Form onSubmit={this.handleSubmit}>
@@ -311,4 +202,14 @@ class CzevUserDraftDetailComponent extends Component {
     }
 }
 
-const CzevUserDraftDetailWithForm = Form.create()(CzevUserDraftDetail);
+ class CzevStarEditWithCds extends Component {
+    render() {
+        return (
+            <CdsCallsHolder>
+                <CzevStarEditComponent {...this.props}/>
+            </CdsCallsHolder>
+        )
+    }
+}
+
+export const CzevStarEdit = Form.create()(CzevStarEditWithCds);

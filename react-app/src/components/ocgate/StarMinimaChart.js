@@ -1,6 +1,7 @@
 import React, {Component, Fragment} from "react";
 import ReactEcharts from "echarts-for-react";
 import {Col, Radio, Row} from "antd";
+import {UserProfileConsumer} from "../common/UserProfileContext";
 
 const red = "#ba160c";
 const blue = "#0038a8";
@@ -76,60 +77,72 @@ class ChartLegendItem extends Component {
 export default class StarMinimaChart extends Component {
     constructor(props) {
         super(props);
-        this.state = {xAxisOptionKey: 'epoch'};
+        this.state = {};
         this.echartsReact = null;
     }
 
     render() {
         if (this.props.grouppedMinima) {
-
             return (
                 <Fragment>
-                    <Row>
-                        <Col span={24} style={{marginTop: 8, textAlign: "center"}}>
-                            <label>X Axis: </label>
-                            <Radio.Group
-                                onChange={(e) => this.setState({...this.state, xAxisOptionKey: e.target.value})}
-                                defaultValue="epoch">
-                                <Radio.Button value="epoch">Epoch</Radio.Button>
-                                <Radio.Button value="jd">JD</Radio.Button>
-                                <Radio.Button value="date">Date</Radio.Button>
-                            </Radio.Group>
-                        </Col>
-                    </Row>
-                    <div style={{position: 'relative', paddingTop: '75%', width: '100%'}}>
-                        <ReactEcharts
-                            ref={(e) => {
-                                this.echartsReact = e;
-                            }}
-                            option={this.getOption(this.props.grouppedMinima, this.props.approximation, this.state.xAxisOptionKey)}
-                            style={{
-                                overflow: 'hidden',
-                                position: "absolute",
-                                top: 0,
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                height: '100%'
-                            }}
-                        />
-                    </div>
+                    <UserProfileConsumer>
+                        {({config, updateConfig}) => {
+                            return (
+                                <Fragment>
+                                    <Row>
+                                        <Col span={24} style={{marginTop: 8, textAlign: "center"}}>
+                                            <label>X Axis: </label>
+                                            <Radio.Group
+                                                onChange={(e) => {
+                                                    updateConfig({...config, xAxisOptionKey: e.target.value});
+                                                }}
+                                                defaultValue={config.xAxisOptionKey}>
+                                                <Radio.Button value="epoch">Epoch</Radio.Button>
+                                                <Radio.Button value="jd">JD</Radio.Button>
+                                                <Radio.Button value="date">Date</Radio.Button>
+                                            </Radio.Group>
+                                        </Col>
+                                    </Row>
+                                    <div style={{position: 'relative', paddingTop: '75%', width: '100%'}}>
+                                        <ReactEcharts
+                                            ref={(e) => {
+                                                this.echartsReact = e;
+                                            }}
+                                            option={this.getOption(this.props.grouppedMinima, this.props.approximation, config.xAxisOptionKey)}
+                                            style={{
+                                                overflow: 'hidden',
+                                                position: "absolute",
+                                                top: 0,
+                                                bottom: 0,
+                                                left: 0,
+                                                right: 0,
+                                                height: '100%'
+                                            }}
+                                        />
+                                    </div>
+                                </Fragment>
+                            );
+                        }}
+                    </UserProfileConsumer>
                     <div className="panel-body"
                          style={{maxWidth: 600, margin: "auto", display: 'flex', flexWrap: 'wrap'}}>
-                        {Object.keys(this.props.grouppedMinima).map((key, index) => {
-                            return (
-                                <ChartLegendItem key={key} legend={key} onClick={(legend, active) => {
-                                    const echartsInstance = this.echartsReact.getEchartsInstance();
-                                    echartsInstance.dispatchAction({
-                                        type: 'legendToggleSelect',
-                                        name: legend
-                                    });
-                                }}/>
-                            )
-                        })}
+                        {Object.keys(this.props.grouppedMinima)
+                            .filter(key => this.props.grouppedMinima[key].length)
+                            .map((key, index) => {
+                                return (
+                                    <ChartLegendItem key={key} legend={key} onClick={(legend, active) => {
+                                        const echartsInstance = this.echartsReact.getEchartsInstance();
+                                        echartsInstance.dispatchAction({
+                                            type: 'legendToggleSelect',
+                                            name: legend
+                                        });
+                                    }}/>
+                                )
+                            })}
                     </div>
                 </Fragment>
-            );
+            )
+                ;
         }
 
         return (
@@ -187,7 +200,30 @@ export default class StarMinimaChart extends Component {
             xAxisIndex: 1,
         });
 
-        return {
+        const datasets = [{
+            dimensions: ['epoch', 'oc', 'julianDate', 'date'],
+            source: grouppedMinima["p - CCD / photoelectric"]
+        }, {
+            dimensions: ['epoch', 'oc', 'julianDate', 'date'],
+            source: grouppedMinima["p - visual"]
+        }, {
+            dimensions: ['epoch', 'oc', 'julianDate', 'date'],
+            source: grouppedMinima["p - photographic"]
+        }, {
+            dimensions: ['epoch', 'oc', 'julianDate', 'date'],
+            source: grouppedMinima['s - CCD / photoelectric']
+        }, {
+            dimensions: ['epoch', 'oc', 'julianDate', 'date'],
+            source: grouppedMinima["s - visual"]
+        }, {
+            dimensions: ['epoch', 'oc', 'julianDate', 'date'],
+            source: grouppedMinima["s - photographic"]
+        }, {
+            dimensions: ['epoch', 'oc', 'julianDate', 'date'],
+            source: grouppedMinima['user']
+        }];
+
+        let options = {
             title: {},
             tooltip: {
                 formatter: (params) => {
@@ -206,29 +242,7 @@ Date: ${params.data[3].toISOString()}`;
                 orient: 'horizontal',
                 bottom: 10,
             },
-            dataset: [{
-                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-                source: grouppedMinima["p - CCD / photoelectric"]
-            }, {
-                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-                source: grouppedMinima["p - visual"]
-            }, {
-                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-                source: grouppedMinima["p - photographic"]
-            }, {
-                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-                source: grouppedMinima['s - CCD / photoelectric']
-            }, {
-                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-                source: grouppedMinima["s - visual"]
-            }, {
-                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-                source: grouppedMinima["s - photographic"]
-            }, {
-                dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-                source: grouppedMinima['user']
-            }
-            ],
+            dataset: datasets,
             grid: [
                 {
                     right: 60, bottom: 80, left: 50, top: 30,
@@ -279,5 +293,6 @@ Date: ${params.data[3].toISOString()}`;
             animation: false,
             series: series
         };
+        return options;
     }
 }
