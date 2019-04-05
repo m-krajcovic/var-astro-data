@@ -5,14 +5,17 @@ import {Card, Col, DatePicker, Layout, Row, Spin, Table, Tag} from "antd";
 import {CoordsInput, TableInputFilter, TableInputNumberFilter, TableInputRangeFilter} from "../../App";
 import moment from "moment";
 import {PredictionsVirtualizedList} from "./PredictionsVirtualizedList";
-
+import {addUrlProps, UrlQueryParamTypes} from 'react-url-query';
 
 import "./Predictions.css";
 import {UserProfileConsumer} from "../common/UserProfileContext";
-import {AuthConsumer} from "../AuthContext";
+
+const urlPropsQueryConfig = {
+    date: {type: UrlQueryParamTypes.string},
+};
 
 // TODO: state in url (date, lat, long)
-export class Predictions extends Component {
+class PredictionsPage extends Component {
     static columns = [
         {
             title: 'Star',
@@ -78,7 +81,15 @@ export class Predictions extends Component {
             )
         }
     ];
-    static cache = {};
+
+    static defaultProps = {
+        date: moment().format("YYYY-MM-DD"),
+    };
+
+    // static propTypes = {
+    //     date: PropTypes.string,
+    //     onChangeDate: PropTypes.func,
+    // };
 
     constructor(props) {
         super(props);
@@ -88,13 +99,73 @@ export class Predictions extends Component {
             showElements: false,
             latitude: 50,
             longitude: 15,
-            date: null,
+            // date: null,
             filters: [],
         };
     }
 
-    loadPredictions(latitude, longitude, dateString, cacheKey) {
-        if (latitude != null && longitude != null && dateString != null && cacheKey != null) {
+    componentDidMount() {
+        this.handleOnDateChange(this.props.date);
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.date !== this.props.date) {
+            this.handleOnDateChange(this.props.date);
+        }
+    }
+
+    getCacheKey = (lat, lon, date) => {
+        return `predictions#${lat}#${lon}#${date}`
+    };
+
+    getFromCache = (lat, lon, date) => {
+        return this.getFromCacheWithKey(this.getCacheKey(lat, lon, date))
+    };
+
+    getFromCacheWithKey = (cacheKey) => {
+        const fromCache = sessionStorage.getItem(cacheKey);
+        if (fromCache != null) {
+            return this.parseFromCache(fromCache);
+        }
+        return null;
+    };
+
+    parseFromCache = (fromCache) => {
+        const data = JSON.parse(fromCache).data;
+        data.predictions.forEach(r => {
+            r.minimumDateTime = moment(r.minimumDateTime);
+        });
+        return data;
+    };
+
+    saveToCache = (lat, lon, date, data) => {
+        const queueString = sessionStorage.getItem("predictions_queue");
+        let queue = [];
+        if (queueString != null) {
+            queue = JSON.parse(queueString);
+        }
+
+        let cacheKey = this.getCacheKey(lat, lon, date);
+        queue.push(cacheKey);
+        for (let i = 0; i < 5; i++) {
+            try {
+                sessionStorage.setItem(cacheKey, JSON.stringify({timestamp: Date(), data: data}));
+                sessionStorage.setItem("predictions_queue", JSON.stringify(queue));
+                break;
+            } catch (e) {
+                if (queue.length > 0) {
+                    const toDelete = queue[0];
+                    sessionStorage.removeItem(toDelete);
+                    queue = queue.splice(1);
+                } else {
+                    break;
+                }
+            }
+        }
+    };
+
+    loadPredictions(latitude, longitude, dateString) {
+        if (latitude != null && longitude != null && dateString != null) {
             this.setState(state => {
                 return {...state, loading: true}
             });
@@ -111,32 +182,33 @@ export class Predictions extends Component {
                 result.data.predictions = result.data.predictions.sort((a, b) => {
                     return a.minimumDateTime.diff(b.minimumDateTime);
                 });
-                Predictions.cache[cacheKey] = result.data;
+                this.saveToCache(latitude, longitude, dateString, result.data);
                 this.setState({...this.state, loading: false, predictionsResult: result.data});
             });
         }
     }
 
-    handleOnDateChange = (date, dateString) => {
-        if (dateString && this.state.date !== dateString) {
-            const cacheKey = `${this.state.latitude} ${this.state.longitude} ${dateString}`;
-            if (Predictions.cache[cacheKey]) {
-                this.setState({...this.state, date: dateString, predictionsResult: Predictions.cache[cacheKey]});
+    handleOnDateChange = (dateString) => {
+        if (dateString) {
+            const fromCache = this.getFromCache(this.state.latitude, this.state.longitude, dateString);
+            if (fromCache != null) {
+                this.setState({...this.state, date: dateString, predictionsResult: fromCache});
             } else {
                 this.setState({...this.state, date: dateString});
-                this.loadPredictions(this.state.latitude, this.state.longitude, dateString, cacheKey);
+                this.loadPredictions(this.state.latitude, this.state.longitude, dateString);
             }
+            this.props.onChangeDate(dateString);
         }
     };
 
     handleCoordinatesChange = (latitude, longitude) => {
         if (latitude != null && longitude != null && (this.state.latitude !== latitude || this.state.longitude !== longitude)) {
-            const cacheKey = `${latitude} ${longitude} ${this.state.date}`;
-            if (Predictions.cache[cacheKey]) {
-                this.setState({...this.state, latitude, longitude, predictionsResult: Predictions.cache[cacheKey]});
+            const fromCache = this.getFromCache(latitude, longitude, this.props.date);
+            if (fromCache != null) {
+                this.setState({...this.state, latitude, longitude, predictionsResult: fromCache});
             } else {
                 this.setState({...this.state, latitude, longitude});
-                this.loadPredictions(latitude, longitude, this.state.date, cacheKey);
+                this.loadPredictions(latitude, longitude, this.props.date);
             }
         }
     };
@@ -156,7 +228,8 @@ export class Predictions extends Component {
                                 <label>Night of: </label>
                                 <DatePicker allowClear={false}
                                             showToday
-                                            onChange={this.handleOnDateChange}/>
+                                            value={moment(this.props.date)}
+                                            onChange={(date, dateString) => this.handleOnDateChange(dateString)}/>
                             </Col>
                             <Col span={24} sm={{span: 12}}>
                                 <CoordsInput
@@ -164,9 +237,9 @@ export class Predictions extends Component {
                             </Col>
                         </Row>
                         <Row>
-                            {this.state.predictionsResult.nights.map(interval => {
+                            {this.state.predictionsResult.nights.map((interval, index) => {
                                 return (
-                                    <Tag>{interval.sunset} - {interval.sunrise}</Tag>
+                                    <span key={index}>Nautical twilights: {interval.sunset} - {interval.sunrise}</span>
                                 )
                             })}
                         </Row>
@@ -191,3 +264,4 @@ export class Predictions extends Component {
     }
 }
 
+export const Predictions = addUrlProps({urlPropsQueryConfig})(PredictionsPage);
