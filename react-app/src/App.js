@@ -29,6 +29,7 @@ import {AuthConsumer, AuthProvider, OnlyAdmin, OnlyAuth} from "./components/Auth
 import "./components/http"
 import {Predictions} from "./components/predictions/Predictions";
 import {UserProfileProvider} from "./components/common/UserProfileContext";
+import {RouterToUrlQuery} from "react-url-query";
 
 const {Header, Content, Sider} = Layout;
 
@@ -77,54 +78,56 @@ class App extends Component {
     render() {
         return (
             <Router>
-                <UserProfileProvider>
-                    <AuthProvider>
-                        <Layout className="layout" style={{minHeight: "100vh"}}>
-                            <Header style={{width: "100%"}}>
-                                <Row>
-                                    <Col span={20}>
-                                        <LinkMenu/>
-                                    </Col>
-                                    <Col span={4} style={{textAlign: "right"}}>
-                                        <AuthConsumer>
-                                            {({logout, isAuth}) => {
-                                                return isAuth ? (
-                                                    <Link to="/logout">Log out</Link>
-                                                ) : (
-                                                    <>
-                                                        <Link style={{marginRight: 8}} to="/login">Log in</Link>
-                                                        <Link to="/register">Register</Link>
-                                                    </>
-                                                )
-                                            }}
-                                        </AuthConsumer>
-                                    </Col>
-                                </Row>
-                            </Header>
-                            <AuthConsumer>
-                                {({isAuth}) =>
-                                    (
-                                        <Switch>
-                                            {isAuth && (
-                                                <Route exact path="/logout" component={Logout}/>
-                                            )}
-                                            {!isAuth && (
-                                                <Route exact path="/login" component={Login}/>
-                                            )}
-                                            {!isAuth && (
-                                                <Route exact path="/register" component={Register}/>
-                                            )}
-                                            <Route path="/oc/:const?/:star?" component={OcGate}/>
-                                            <Route exact path="/predictions" component={Predictions}/>
-                                            <Route path="/czev" component={Czev}/>
-                                            <Redirect to="/czev"/>
-                                        </Switch>
-                                    )
-                                }
-                            </AuthConsumer>
-                        </Layout>
-                    </AuthProvider>
-                </UserProfileProvider>
+                <RouterToUrlQuery>
+                    <UserProfileProvider>
+                        <AuthProvider>
+                            <Layout className="layout" style={{minHeight: "100vh"}}>
+                                <Header style={{width: "100%"}}>
+                                    <Row>
+                                        <Col span={20}>
+                                            <LinkMenu/>
+                                        </Col>
+                                        <Col span={4} style={{textAlign: "right"}}>
+                                            <AuthConsumer>
+                                                {({logout, isAuth}) => {
+                                                    return isAuth ? (
+                                                        <Link to="/logout">Log out</Link>
+                                                    ) : (
+                                                        <>
+                                                            <Link style={{marginRight: 8}} to="/login">Log in</Link>
+                                                            <Link to="/register">Register</Link>
+                                                        </>
+                                                    )
+                                                }}
+                                            </AuthConsumer>
+                                        </Col>
+                                    </Row>
+                                </Header>
+                                <AuthConsumer>
+                                    {({isAuth}) =>
+                                        (
+                                            <Switch>
+                                                {isAuth && (
+                                                    <Route exact path="/logout" component={Logout}/>
+                                                )}
+                                                {!isAuth && (
+                                                    <Route exact path="/login" component={Login}/>
+                                                )}
+                                                {!isAuth && (
+                                                    <Route exact path="/register" component={Register}/>
+                                                )}
+                                                <Route path="/oc/:const?/:star?" component={OcGate}/>
+                                                <Route exact path="/predictions" component={Predictions}/>
+                                                <Route path="/czev" component={Czev}/>
+                                                <Redirect to="/czev"/>
+                                            </Switch>
+                                        )
+                                    }
+                                </AuthConsumer>
+                            </Layout>
+                        </AuthProvider>
+                    </UserProfileProvider>
+                </RouterToUrlQuery>
             </Router>
         );
     }
