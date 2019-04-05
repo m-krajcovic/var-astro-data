@@ -2,9 +2,14 @@ package cz.astro.`var`.data.czev.repository
 
 import cz.astro.`var`.data.czev.decStringToDegrees
 import cz.astro.`var`.data.czev.raStringToDegrees
+import cz.astro.`var`.data.czev.service.ServiceException
+import org.hibernate.annotations.GenericGenerator
 import org.hibernate.annotations.NaturalId
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
+import org.springframework.util.StringUtils
+import org.springframework.web.multipart.MultipartFile
+import java.io.IOException
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*
@@ -63,6 +68,14 @@ class CzevStar(
             field = value
         }
 
+    @NotAudited
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "star", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var files: MutableSet<StarAdditionalFile> = HashSet()
+        set(value) {
+            value.forEach { it.star = this }
+            field = value
+        }
+
     @Version
     var lastChange: LocalDateTime = LocalDateTime.now()
 
@@ -85,6 +98,9 @@ class CzevStarDraft(
         var coordinates: CosmicCoordinates,
         @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
         var crossIdentifications: MutableSet<StarIdentification>,
+        @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+        @NotAudited
+        var files: MutableSet<StarAdditionalFile>,
         @Column(precision = 15, scale = 7, nullable = true) var m0: BigDecimal?,
         @Column(precision = 10, scale = 7, nullable = true) var period: BigDecimal?,
         @ManyToMany
@@ -294,6 +310,46 @@ class StarIdentification(
     override fun hashCode(): Int {
         return name.hashCode()
     }
+}
+
+@Entity
+@Table(name = "czev_StarAdditionalFile")
+class StarAdditionalFile(
+        val fileName: String,
+        val fileType: String,
+        @Lob
+        val data: ByteArray
+) {
+    companion object {
+        fun fromMultipartFile(file: MultipartFile): StarAdditionalFile {
+            // Normalize file name
+            val fileName = StringUtils.cleanPath(file.originalFilename ?: throw ServiceException("File has no name"))
+
+            try {
+                // Check if the file's name contains invalid characters
+                if (fileName.contains("..")) {
+                    throw ServiceException("Sorry! Filename contains invalid path sequence $fileName")
+                }
+
+                return StarAdditionalFile(
+                        fileName,
+                        file.contentType ?: throw ServiceException("File has no type")
+                        , file.bytes
+                )
+            } catch (ex: IOException) {
+                throw ServiceException("Could not store file $fileName. Please try again!")
+            }
+        }
+    }
+
+    @Id
+    @GeneratedValue(generator = "uuid")
+    @GenericGenerator(name = "uuid", strategy = "uuid2")
+    var id: String = ""
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    var star: CzevStar? = null
+
 }
 
 @Entity

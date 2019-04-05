@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {Alert, Badge, Button, Card, Col, Form, Modal, notification, Radio, Row, Spin} from "antd";
+import {Alert, Avatar, Badge, Button, Card, Col, Form, Icon, List, Modal, notification, Radio, Row, Spin} from "antd";
 import {Redirect, Route, Switch} from "react-router-dom";
 import axios from "axios";
 import {BASE_URL} from "../../../api-endpoint";
@@ -7,13 +7,17 @@ import {CzevStarDraftsTable} from "../CzevStarDraftsTable";
 import {CzevStarDraftSingleStarFormItems} from "../CzevStarDraftSingleStarFormItems";
 import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "../CzevStarDraftSingleNewStar";
 import {CdsCallsHolder} from "../../common/CdsCallsHolder";
+import {AdditionalFilesUpload} from "../AdditionalFilesUpload";
+import {UploadedFilesListFormItem} from "../UploadedFilesList";
 
 export default class CzevUser extends Component {
     render() {
         return (
             <Switch>
-                <Route path="/czev/user/drafts/:id" render={props => (<CzevUserDraftDetailWithForm {...props} entities={this.props.entities}/>)}/>
-                <Route path="/czev/user/drafts" render={props => (<CzevUserDrafts {...props} entities={this.props.entities}/>)}/>
+                <Route path="/czev/user/drafts/:id"
+                       render={props => (<CzevUserDraftDetailWithForm {...props} entities={this.props.entities}/>)}/>
+                <Route path="/czev/user/drafts"
+                       render={props => (<CzevUserDrafts {...props} entities={this.props.entities}/>)}/>
             </Switch>
         )
     }
@@ -109,7 +113,8 @@ class CzevUserDraftDetailComponent extends Component {
         this.state = {
             originalDraft: null,
             draftLoading: false,
-
+            newFiles: [],
+            deletedFiles: [],
             finished: false,
         };
     }
@@ -160,25 +165,60 @@ class CzevUserDraftDetailComponent extends Component {
                     okText: 'Yes',
                     cancelText: 'No',
                     onOk() {
-                        const body = {
-                            id: component.props.match.params.id,
-                            constellation: values.constellation,
-                            type: values.type ? values.type : "",
-                            discoverers: values.discoverers,
-                            amplitude: values.amplitude,
-                            filterBand: values.filterBand,
-                            crossIdentifications: values.crossIds,
-                            coordinates: {ra: values.coordinatesRa, dec: values.coordinatesDec},
-                            publicNote: values.note ? values.note : "",
-                            privateNote: "",
-                            m0: values.epoch,
-                            period: values.period,
-                            year: values.year,
-                            jmagnitude: values.jmagnitude,
-                            vmagnitude: values.vmagnitude,
-                            kmagnitude: values.kmagnitude
-                        };
-                        return axios.put(BASE_URL + "/czev/drafts/" + component.props.match.params.id, body)
+
+                        const formData = new FormData();
+                        component.state.newFiles.forEach(file => {
+                            formData.append('newFiles', file);
+                        });
+                        component.state.deletedFiles.forEach(file => {
+                            formData.append('deletedFiles', file);
+                        });
+                        formData.append('id', component.props.match.params.id);
+                        formData.append('constellation', values.constellation);
+                        formData.append('type', values.type ? values.type : "");
+                        values.discoverers.forEach(disc => {
+                            formData.append('discoverers', disc);
+                        });
+                        values.crossIds.forEach(id => {
+                            formData.append('crossIdentifications', id);
+                        });
+                        formData.append('rightAscension', values.coordinatesRa);
+                        formData.append('declination', values.coordinatesDec);
+                        formData.append('publicNote', values.note ? values.note : "");
+                        formData.append('privateNote', "");
+                        formData.append('year', values.year);
+                        if (values.amplitude) formData.append('amplitude', values.amplitude);
+                        if (values.filterBand) formData.append('filterBand', values.filterBand);
+                        if (values.epoch) formData.append('m0', values.epoch);
+                        if (values.period) formData.append('period', values.period);
+                        if (values.jmagnitude) formData.append('jmagnitude', values.jmagnitude);
+                        if (values.vmagnitude) formData.append('vmagnitude', values.vmagnitude);
+                        if (values.kmagnitude) formData.append('kmagnitude', values.kmagnitude);
+
+
+                        // const body = {
+                        //     id: component.props.match.params.id,
+                        //     constellation: values.constellation,
+                        //     type: values.type ? values.type : "",
+                        //     discoverers: values.discoverers,
+                        //     amplitude: values.amplitude,
+                        //     filterBand: values.filterBand,
+                        //     crossIdentifications: values.crossIds,
+                        //     rightAscension: values.coordinatesRa,
+                        //     declination: values.coordinatesDec,
+                        //     // coordinates: {ra: values.coordinatesRa, dec: values.coordinatesDec},
+                        //     publicNote: values.note ? values.note : "",
+                        //     privateNote: "",
+                        //     m0: values.epoch,
+                        //     period: values.period,
+                        //     year: values.year,
+                        //     jmagnitude: values.jmagnitude,
+                        //     vmagnitude: values.vmagnitude,
+                        //     kmagnitude: values.kmagnitude,
+                        //     newFiles: this.state.newFiles,
+                        //     deletedFiles: this.state.deletedFiles,
+                        // };
+                        return axios.put(BASE_URL + "/czev/drafts/" + component.props.match.params.id, formData)
                             .then(result => {
                                 component.setState({...component.state, finished: true});
                                 notification.success({
@@ -275,6 +315,8 @@ class CzevUserDraftDetailComponent extends Component {
 
                                     entities={this.props.entities}
                                 />
+                                {originalDraft && <UploadedFilesListFormItem onChange={(deletedFiles) => this.setState({...this.state, deletedFiles})} files={originalDraft.files}/>}
+                                <AdditionalFilesUpload onChange={(newFiles) => this.setState({...this.state, newFiles})}/>
                                 <Form.Item
                                     wrapperCol={{
                                         xs: {span: 24, offset: 0},

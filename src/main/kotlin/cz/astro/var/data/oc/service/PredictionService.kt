@@ -8,5 +8,5 @@ import java.time.LocalDate
  * @since 11/26/2018
  */
 interface PredictionService {
-    fun getAllPredictionsForNight(night: LocalDate, latitude: Double = 50.0, longitude: Double = 15.0): Set<PredictionResultModel>
+    fun getAllPredictionsForNight(night: LocalDate, latitude: Double = 50.0, longitude: Double = 15.0): PredictionsResultModel
 }

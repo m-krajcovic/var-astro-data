@@ -22,6 +22,7 @@ class CzevStarDraftServiceImpl(
         private val observerRepository: StarObserverRepository,
         private val filterBandRepository: FilterBandRepository,
         private val starIdentificationRepository: StarIdentificationRepository
+//        ,private val fileRepository: StarAdditionalFileRepository
 ) : CzevStarDraftService {
 
     @PreAuthorize("hasRole('USER')")
@@ -52,7 +53,7 @@ class CzevStarDraftServiceImpl(
                         newDrafts.add(
                                 CzevStarDraft(
                                         constellation, type, filterband, record.amplitude, record.coordinates.toEntity(), record.crossIds.mapIndexed { i, id -> StarIdentification(id, null, i) }.toMutableSet(),
-                                        record.m0, record.period, discoverers, record.year, record.privateNote, record.publicNote, user)
+                                        HashSet(), record.m0, record.period, discoverers, record.year, record.privateNote, record.publicNote, user)
                         )
                     } else {
                         error.messages.add("Star with cross-id ${record.crossIds.joinToString()} already exists in the catalogue")
@@ -100,12 +101,17 @@ class CzevStarDraftServiceImpl(
                 throw ServiceException("Star with same cross-id already exists")
             }
             crossIdentifications.clear()
-            crossIdentifications.addAll(model.crossIdentifications.mapIndexed {i, it -> StarIdentification(it, null, i) }.toMutableSet())
+            crossIdentifications.addAll(model.crossIdentifications.mapIndexed { i, it -> StarIdentification(it, null, i) }.toMutableSet())
 
             typeValid = typeValidator.validate(model.type)
             if (!typeValid) {
                 type = typeValidator.tryFixCase(type)
             }
+            if (model.deletedFiles != null) {
+                files.removeAll { model.deletedFiles.contains(it.id) }
+            }
+            files.addAll(model.newFiles?.map { StarAdditionalFile.fromMultipartFile(it) } ?: emptyList())
+
             publicNote = model.publicNote
             amplitude = model.amplitude
             m0 = model.m0
@@ -114,7 +120,7 @@ class CzevStarDraftServiceImpl(
             filterBand = newFilterBand
             year = model.year
             discoverers = observers
-            coordinates = CosmicCoordinates(model.coordinates.ra, model.coordinates.dec)
+            coordinates = CosmicCoordinates(model.rightAscension, model.declination)
             jmagnitude = model.jmagnitude
             kmagnitude = model.kmagnitude
             vmagnitude = model.vmagnitude
@@ -185,15 +191,15 @@ class CzevStarDraftServiceImpl(
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
-    override fun getAll(): List<CzevStarDraftModel> {
-        return czevStarDraftRepository.findAllFetched().map { it.toModel() }
+    override fun getAll(): List<CzevStarDraftListModel> {
+        return czevStarDraftRepository.findAllFetched().map { it.toListModel() }
     }
 
     @PreAuthorize("hasRole('USER')")
     @Transactional(readOnly = true)
-    override fun getAllForCurrentUser(): List<CzevStarDraftModel> {
+    override fun getAllForCurrentUser(): List<CzevStarDraftListModel> {
         val user = securityService.currentUser
-        return czevStarDraftRepository.findForUserFetched(User(user.id)).map { it.toModel() }
+        return czevStarDraftRepository.findForUserFetched(User(user.id)).map { it.toListModel() }
     }
 
     private fun CzevStarDraft.toPublished(model: CzevStarApprovalModel, typeValidator: StarTypeValidator): CzevStar {
@@ -205,7 +211,7 @@ class CzevStarDraftServiceImpl(
         val newFilterBand = model.filterBand?.let { filterBandRepository.findById(it).orElseThrow { ServiceException("Filter band does not exist") } }
 
         val czevStar = CzevStar(model.m0, model.period, .0, .0, model.publicNote, model.privateNote, newConstellation, model.type, newFilterBand,
-                observers, model.coordinates.toEntity(), model.year, mutableSetOf(), null, "", model.vmagnitude, model.jmagnitude, model.kmagnitude, model.amplitude, createdBy)
+                observers, CosmicCoordinates(model.rightAscension, model.declination), model.year, mutableSetOf(), null, "", model.vmagnitude, model.jmagnitude, model.kmagnitude, model.amplitude, createdBy)
 
         val newIds = model.crossIdentifications.toMutableSet()
         newIds.removeIf { crossIdentifications.contains(StarIdentification(it, null, 0)) }
@@ -215,7 +221,16 @@ class CzevStarDraftServiceImpl(
 
         crossIdentifications.clear()
 
-        czevStar.crossIdentifications = model.crossIdentifications.mapIndexed {i, it -> StarIdentification(it, null, i) }.toMutableSet()
+        czevStar.crossIdentifications = model.crossIdentifications.mapIndexed { i, it -> StarIdentification(it, null, i) }.toMutableSet()
+
+        if (model.deletedFiles != null) {
+            files.removeAll { model.deletedFiles.contains(it.id) }
+        }
+        files.addAll(model.newFiles?.map { StarAdditionalFile.fromMultipartFile(it) } ?: emptyList())
+
+        czevStar.files = files.toMutableSet()
+        files.clear()
+
         czevStar.typeValid = typeValidator.validate(model.type)
         if (!czevStar.typeValid) {
             czevStar.type = typeValidator.tryFixCase(type)
@@ -238,8 +253,9 @@ class CzevStarDraftServiceImpl(
         }
 
         val czevStarDraft = CzevStarDraft(
-                newConstellation, type, newFilterBand, amplitude, CosmicCoordinates(coordinates.ra, coordinates.dec), crossIds,
-                m0, period, observers, year, privateNote, publicNote, user, false, null, "", null, false, jmagnitude, vmagnitude, kmagnitude)
+                newConstellation, type, newFilterBand, amplitude, CosmicCoordinates(rightAscension, declination), crossIds,
+                files?.map { StarAdditionalFile.fromMultipartFile(it) }?.toMutableSet()
+                        ?: mutableSetOf(), m0, period, observers, year, privateNote, publicNote, user, false, null, "", null, false, jmagnitude, vmagnitude, kmagnitude)
         czevStarDraft.typeValid = typeValidator.validate(type)
         if (!czevStarDraft.typeValid) {
             czevStarDraft.type = typeValidator.tryFixCase(type)

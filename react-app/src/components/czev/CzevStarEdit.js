@@ -6,6 +6,8 @@ import {Button, Card, Col, Modal, notification, Row, Spin, Form} from "antd";
 import {Redirect} from "react-router-dom";
 import {CzevStarDraftSingleStarFormItems} from "./CzevStarDraftSingleStarFormItems";
 import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "./CzevStarDraftSingleNewStar";
+import {UploadedFilesListFormItem} from "./UploadedFilesList";
+import {AdditionalFilesUpload} from "./AdditionalFilesUpload";
 
 class CzevStarEditComponent extends Component {
     constructor(props) {
@@ -13,7 +15,8 @@ class CzevStarEditComponent extends Component {
         this.state = {
             originalStar: null,
             starLoading: false,
-
+            newFiles: [],
+            deletedFiles: [],
             finished: false,
         };
     }
@@ -64,26 +67,57 @@ class CzevStarEditComponent extends Component {
                     okText: 'Yes',
                     cancelText: 'No',
                     onOk() {
-                        const body = {
-                            czevId: component.props.match.params.id,
-                            constellation: values.constellation,
-                            type: values.type ? values.type : "",
-                            discoverers: values.discoverers,
-                            amplitude: values.amplitude,
-                            filterBand: values.filterBand,
-                            crossIdentifications: values.crossIds,
-                            coordinates: {ra: values.coordinatesRa, dec: values.coordinatesDec},
-                            publicNote: values.note ? values.note : "",
-                            privateNote: "",
-                            m0: values.epoch,
-                            period: values.period,
-                            year: values.year,
-                            jmagnitude: values.jmagnitude,
-                            vmagnitude: values.vmagnitude,
-                            kmagnitude: values.kmagnitude,
-                            vsxName: ""
-                        };
-                        return axios.put(BASE_URL + "/czev/stars/" + component.props.match.params.id, body)
+
+                        const formData = new FormData();
+                        component.state.newFiles.forEach(file => {
+                            formData.append('newFiles', file);
+                        });
+                        component.state.deletedFiles.forEach(file => {
+                            formData.append('deletedFiles', file);
+                        });
+                        formData.append('czevId', component.props.match.params.id);
+                        formData.append('constellation', values.constellation);
+                        formData.append('type', values.type ? values.type : "");
+                        values.discoverers.forEach(disc => {
+                            formData.append('discoverers', disc);
+                        });
+                        values.crossIds.forEach(id => {
+                            formData.append('crossIdentifications', id);
+                        });
+                        formData.append('rightAscension', values.coordinatesRa);
+                        formData.append('declination', values.coordinatesDec);
+                        formData.append('publicNote', values.note ? values.note : "");
+                        formData.append('privateNote', "");
+                        formData.append('year', values.year);
+                        if (values.amplitude) formData.append('amplitude', values.amplitude);
+                        if (values.filterBand) formData.append('filterBand', values.filterBand);
+                        if (values.epoch) formData.append('m0', values.epoch);
+                        if (values.period) formData.append('period', values.period);
+                        if (values.jmagnitude) formData.append('jmagnitude', values.jmagnitude);
+                        if (values.vmagnitude) formData.append('vmagnitude', values.vmagnitude);
+                        if (values.kmagnitude) formData.append('kmagnitude', values.kmagnitude);
+
+
+                        // const body = {
+                        //     czevId: component.props.match.params.id,
+                        //     constellation: values.constellation,
+                        //     type: values.type ? values.type : "",
+                        //     discoverers: values.discoverers,
+                        //     amplitude: values.amplitude,
+                        //     filterBand: values.filterBand,
+                        //     crossIdentifications: values.crossIds,
+                        //     coordinates: {ra: values.coordinatesRa, dec: values.coordinatesDec},
+                        //     publicNote: values.note ? values.note : "",
+                        //     privateNote: "",
+                        //     m0: values.epoch,
+                        //     period: values.period,
+                        //     year: values.year,
+                        //     jmagnitude: values.jmagnitude,
+                        //     vmagnitude: values.vmagnitude,
+                        //     kmagnitude: values.kmagnitude,
+                        //     vsxName: ""
+                        // };
+                        return axios.put(BASE_URL + "/czev/stars/" + component.props.match.params.id, formData)
                             .then(result => {
                                 component.setState({...component.state, finished: true});
                                 notification.success({
@@ -151,6 +185,7 @@ class CzevStarEditComponent extends Component {
                 <Redirect to={"/czev/" + this.props.match.params.id}/>
             )
         }
+        const {originalStar} = this.state;
         return (
             <Spin spinning={this.state.starLoading}>
                 <Card>
@@ -166,6 +201,8 @@ class CzevStarEditComponent extends Component {
 
                                     entities={this.props.entities}
                                 />
+                                {originalStar && <UploadedFilesListFormItem onChange={(deletedFiles) => this.setState({...this.state, deletedFiles})} files={originalStar.files}/>}
+                                <AdditionalFilesUpload onChange={(newFiles) => this.setState({...this.state, newFiles})}/>
                                 <Form.Item
                                     wrapperCol={{
                                         xs: {span: 24, offset: 0},

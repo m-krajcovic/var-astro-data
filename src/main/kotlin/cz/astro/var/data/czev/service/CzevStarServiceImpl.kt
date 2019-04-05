@@ -42,8 +42,14 @@ class CzevStarServiceImpl(
             }
 
             crossIdentifications.clear()
-            crossIdentifications.addAll(model.crossIdentifications.mapIndexed {i, it -> StarIdentification(it, null, i)}.toMutableSet())
+            crossIdentifications.addAll(model.crossIdentifications.mapIndexed { i, it -> StarIdentification(it, null, i) }.toMutableSet())
             crossIdentifications.forEach { it.star = this }
+
+            if (model.deletedFiles != null) {
+                files.removeAll { model.deletedFiles.contains(it.id) }
+            }
+            files.addAll(model.newFiles?.map { StarAdditionalFile.fromMultipartFile(it) } ?: emptyList())
+            files.forEach { file -> file.star = this }
 
             typeValid = typeValidator.validate(model.type)
             if (!typeValid) {
@@ -60,7 +66,7 @@ class CzevStarServiceImpl(
             filterBand = newFilterBand
             year = model.year
             discoverers = observers
-            coordinates = CosmicCoordinates(model.coordinates.ra, model.coordinates.dec)
+            coordinates = CosmicCoordinates(model.rightAscension, model.declination)
             // TODO allow vsx change
 //            vsxId = model.vsxId
 //            vsxName = model.vsxName

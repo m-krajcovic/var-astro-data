@@ -3,8 +3,8 @@ package cz.astro.`var`.data.oc.controller
 import cz.astro.`var`.data.czev.controller.toOkOrNotFound
 import cz.astro.`var`.data.oc.repository.ConstellationStarSummary
 import cz.astro.`var`.data.oc.repository.StarRepository
-import cz.astro.`var`.data.oc.service.PredictionResultModel
 import cz.astro.`var`.data.oc.service.PredictionService
+import cz.astro.`var`.data.oc.service.PredictionsResultModel
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.format.annotation.DateTimeFormat
@@ -41,7 +41,7 @@ class StarController(private val starRepository: StarRepository,
     @GetMapping("predictions")
     fun getAllPredictions(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
                           @RequestParam(defaultValue = "50.0") latitude: Double,
-                          @RequestParam(defaultValue = "15.0") longitude: Double): Set<PredictionResultModel> {
+                          @RequestParam(defaultValue = "15.0") longitude: Double): PredictionsResultModel {
         return predictionService.getAllPredictionsForNight(date, latitude, longitude)
     }
 

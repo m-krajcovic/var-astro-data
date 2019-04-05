@@ -6,6 +6,7 @@ import {OnlyAuth} from "../AuthContext";
 import {Link} from "react-router-dom";
 import {CoordinateWrapper} from "../common/CoordinateWrapper";
 import StarMap from "../common/StarMap";
+import {UploadedFilesList} from "./UploadedFilesList";
 
 export class CzevStarDetail extends Component {
 
@@ -56,6 +57,7 @@ export class CzevStarDetail extends Component {
                     <div><b>Year of discovery: </b>{data.year}</div>
                     <div><b>Discoverer: </b>{data.discoverers.map(d => `${d.firstName} ${d.lastName}`).join(", ")}</div>
                     <div><b>Note: </b>{data.publicNote}</div>
+                    <div><b>Files: </b><UploadedFilesList files={data.files} disableActions/></div>
                 </Col>
                 <Col span={24} xxl={{span: 8}} md={{span: 12}}>
                     <div style={{textAlign: 'center'}}>

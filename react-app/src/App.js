@@ -393,6 +393,7 @@ export class CoordsInput extends Component {
                     <Col span={8} gutter={4}>
                         <label>Lat: </label>
                         <InputNumber
+                            defaultValue={this.props.latitude}
                             formatter={value => `${value}°`}
                             parser={value => value.replace('°', '')}
                             value={this.state.latitude}
@@ -404,6 +405,7 @@ export class CoordsInput extends Component {
                         <InputNumber
                             formatter={value => `${value}°`}
                             parser={value => value.replace('°', '')}
+                            defaultValue={this.props.longitude}
                             value={this.state.longitude}
                             onChange={(val) => this.setState({...this.state, longitude: val})}
                             placeholder="longitude"/>

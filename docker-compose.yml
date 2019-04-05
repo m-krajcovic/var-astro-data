@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  vad-mysql:
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=test
+      - MYSQL_PASSWORD=root
+    ports:
+      - 6603:3306
+    volumes:
+      - my-datavolume:/var/lib/mysql
+  vad-webapp:
+    image: dtpa/var-astro-data
+    depends_on:
+      - vad-mysql
+    ports:
+      - 8080:8080
+    environment:
+      - MYSQL_DB_HOST=vad-mysql
+      - MYSQL_DB_USERNAME=root
+      - MYSQL_DB_PASSWORD=root
+      - MYSQL_DB_PORT=3306
+volumes:
+  my-datavolume:

@@ -6,9 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.fge.jsonpatch.JsonPatch
 import com.github.fge.jsonpatch.JsonPatchException
 import cz.astro.`var`.data.czev.service.*
+import org.springframework.core.io.ByteArrayResource
+import org.springframework.core.io.Resource
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
@@ -16,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.validation.Valid
+
 
 @RestController
 @CrossOrigin(origins = ["http://localhost:3000"])
@@ -31,6 +36,7 @@ class CzevController(
         private val typeService: StarTypeService,
         private val filterBandService: FilterBandService,
         private val starObserverService: StarObserverService,
+        private val fileService: StarAdditionalFileService,
         private val objectMapper: ObjectMapper) {
 
     @GetMapping("stars")
@@ -44,7 +50,7 @@ class CzevController(
     }
 
     @GetMapping("drafts")
-    fun getDrafts(): List<CzevStarDraftModel> {
+    fun getDrafts(): List<CzevStarDraftListModel> {
         return draftService.getAll()
     }
 
@@ -56,7 +62,8 @@ class CzevController(
 
     @PostMapping("drafts")
     @ResponseStatus(HttpStatus.CREATED)
-    fun insertDraft(@Valid @RequestBody draft: CzevStarDraftNewModel): CzevStarDraftModel {
+    fun insertDraft(@Valid draft: CzevStarDraftNewModel, @RequestParam("files", required = false) files: Array<MultipartFile>?): CzevStarDraftModel {
+        draft.files = files
         return draftService.insert(draft)
     }
 
@@ -88,7 +95,8 @@ class CzevController(
     }
 
     @PutMapping("drafts/{id}")
-    fun putDraft(@PathVariable id: Long, @Valid @RequestBody draft: CzevStarDraftUpdateModel): CzevStarDraftModel {
+    fun putDraft(@PathVariable id: Long, @Valid draft: CzevStarDraftUpdateModel, @RequestParam("newFiles", required = false) newFiles: Array<MultipartFile>?): CzevStarDraftModel {
+        draft.newFiles = newFiles
         return draftService.update(draft)
     }
 
@@ -111,7 +119,8 @@ class CzevController(
     }
 
     @PutMapping("stars/{id}")
-    fun putStar(@PathVariable id: Long, @Valid @RequestBody draft: CzevStarUpdateModel): CzevStarDetailsModel {
+    fun putStar(@PathVariable id: Long, @Valid draft: CzevStarUpdateModel, @RequestParam("newFiles", required = false) newFiles: Array<MultipartFile>?): CzevStarDetailsModel {
+        draft.newFiles = newFiles
         return starService.update(draft)
     }
 
@@ -123,7 +132,8 @@ class CzevController(
     }
 
     @PostMapping("stars")
-    fun approveDraft(@Valid @RequestBody model: CzevStarApprovalModel): ResponseEntity<CzevStarDetailsModel> {
+    fun approveDraft(@Valid model: CzevStarApprovalModel, @RequestParam("newFiles", required = false) newFiles: Array<MultipartFile>?): ResponseEntity<CzevStarDetailsModel> {
+        model.newFiles = newFiles
         return draftService.approve(model).toOkOrNotFound()
     }
 
@@ -207,6 +217,18 @@ class CzevController(
     @GetMapping("filterBands")
     fun getAllFilterBands(): List<FilterBandModel> {
         return filterBandService.getAll()
+    }
+
+
+    @GetMapping("/files/{fileId}")
+    fun downloadFile(@PathVariable fileId: String): ResponseEntity<Resource> {
+        // Load file from database
+        val dbFile = fileService.getFile(fileId)
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(dbFile.fileType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"${dbFile.fileName}\"")
+                .body(ByteArrayResource(dbFile.data))
     }
 
 }

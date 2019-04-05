@@ -91,3 +91,8 @@
 .czev-catalogue-search-form .ant-form-item-control-wrapper {
     flex: 1;
 }
+
+
+.uploaded-files_list .ant-list-item-content {
+    position: relative;
+}

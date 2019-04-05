@@ -5,6 +5,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
+
 /**
  * @author Michal
  * @version 1.0
@@ -40,6 +41,10 @@ interface StarTypeService {
     fun validateType(type: String): Boolean
 }
 
+interface StarAdditionalFileService {
+    fun getFile(id: String): StarAdditionalFileModel
+}
+
 @Service
 class ConstellationServiceImpl(
         private val constellationRepository: ConstellationRepository
@@ -54,7 +59,7 @@ class FilterBandServiceImpl(
         private val filterBandRepository: FilterBandRepository
 ) : FilterBandService {
     override fun getAll(): List<FilterBandModel> {
-        return filterBandRepository.findAll(Sort.by(FilterBand::name.name)).asSequence().map { it.toModel() }.filter { f -> f != null}.map { it!! }.toList()
+        return filterBandRepository.findAll(Sort.by(FilterBand::name.name)).asSequence().map { it.toModel() }.filter { f -> f != null }.map { it!! }.toList()
     }
 }
 
@@ -78,5 +83,16 @@ class StarTypeServiceImpl(
 
     override fun getAll(): List<String> {
         return typeRepository.findAll().map { it.name }
+    }
+}
+
+@Service
+class StarAdditionalFileServiceImpl(
+        private val fileRepository: StarAdditionalFileRepository
+) : StarAdditionalFileService {
+    // TODO: permissions
+//    @PreAuthorize("hasRole('USER')")
+    override fun getFile(id: String): StarAdditionalFileModel {
+        return fileRepository.findById(id).map { it.toModel() }.orElseThrow { ServiceException("File not found") }
     }
 }
