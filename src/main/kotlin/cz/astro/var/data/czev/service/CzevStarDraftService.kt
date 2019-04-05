@@ -12,8 +12,8 @@ interface CzevStarDraftService {
     fun insertAll(drafts: List<CzevStarDraftNewModel>)
     fun importCsv(import: CsvImportModel): CsvImportResultModel
     fun getById(id: Long): Optional<CzevStarDraftModel>
-    fun getAll(): List<CzevStarDraftModel>
-    fun getAllForCurrentUser(): List<CzevStarDraftModel>
+    fun getAll(): List<CzevStarDraftListModel>
+    fun getAllForCurrentUser(): List<CzevStarDraftListModel>
     fun deleteAll(ids: List<Long>)
     fun delete(id: Long): Boolean
     fun update(model: CzevStarDraftUpdateModel): CzevStarDraftModel

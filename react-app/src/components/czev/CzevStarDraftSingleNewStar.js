@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../api-endpoint";
-import {Alert, Button, Col, Form, Icon, List, Modal, notification, Row, Spin, Tooltip, message} from "antd";
+import {Alert, Button, Col, Form, Icon, List, Modal, notification, Row, Spin, Tooltip, message, Upload} from "antd";
 import {CzevStarDraftSingleStarFormItems} from "./CzevStarDraftSingleStarFormItems";
 import {Link, Redirect} from "react-router-dom";
 import {CoordinateWrapper} from "../common/CoordinateWrapper";
@@ -9,12 +9,14 @@ import {Copyable} from "../common/Copyable";
 import AnimateHeight from "react-animate-height";
 import {CdsCallsHolder} from "../common/CdsCallsHolder";
 import StarMap from "../common/StarMap";
+import {AdditionalFilesUpload} from "./AdditionalFilesUpload";
 
 class StarDraftSingleNewStarComponent extends Component {
     constructor(props) {
         super(props);
         this.state = {
             finished: false,
+            files: []
         };
     }
 
@@ -29,36 +31,44 @@ class StarDraftSingleNewStarComponent extends Component {
                     okText: 'Yes',
                     cancelText: 'No',
                     onOk() {
-                        const body = {
-                            constellation: values.constellation,
-                            type: values.type ? values.type : "",
-                            discoverers: values.discoverers,
-                            amplitude: values.amplitude,
-                            filterBand: values.filterBand,
-                            crossIdentifications: values.crossIds,
-                            coordinates: {ra: values.coordinatesRa, dec: values.coordinatesDec},
-                            publicNote: values.note ? values.note : "",
-                            privateNote: "",
-                            m0: values.epoch,
-                            period: values.period,
-                            year: values.year,
-                            jmagnitude: values.jmagnitude,
-                            vmagnitude: values.vmagnitude,
-                            kmagnitude: values.kmagnitude
-                        };
-                        return axios.post(BASE_URL + "/czev/drafts", body)
-                            .then(result => {
-                                component.setState({...component.state, finished: true});
-                                notification.success({
-                                    message: (<span>Variable star discovery submitted</span>)
-                                });
-                            })
-                            .catch(e => {
-                                notification.error({
-                                    message: 'Failed to submit variable star discovery',
-                                    description: e.response.data.message,
-                                });
-                            })
+                        const formData = new FormData();
+                        component.state.files.forEach(file => {
+                            formData.append('files', file);
+                        });
+                        formData.append('constellation', values.constellation);
+                        formData.append('type', values.type ? values.type : "");
+                        values.discoverers.forEach(disc => {
+                            formData.append('discoverers', disc);
+                        });
+                        values.crossIds.forEach(id => {
+                            formData.append('crossIdentifications', id);
+                        });
+                        formData.append('rightAscension', values.coordinatesRa);
+                        formData.append('declination', values.coordinatesDec);
+                        formData.append('publicNote', values.note ? values.note : "");
+                        formData.append('privateNote', "");
+                        formData.append('year', values.year);
+                        if (values.amplitude) formData.append('amplitude', values.amplitude);
+                        if (values.filterBand) formData.append('filterBand', values.filterBand);
+                        if (values.epoch) formData.append('m0', values.epoch);
+                        if (values.period) formData.append('period', values.period);
+                        if (values.jmagnitude) formData.append('jmagnitude', values.jmagnitude);
+                        if (values.vmagnitude) formData.append('vmagnitude', values.vmagnitude);
+                        if (values.kmagnitude) formData.append('kmagnitude', values.kmagnitude);
+
+                        return axios({
+                            method: 'post', url: BASE_URL + "/czev/drafts", data: formData
+                        }).then(result => {
+                            component.setState({...component.state, finished: true});
+                            notification.success({
+                                message: (<span>Variable star discovery submitted</span>)
+                            });
+                        }).catch(e => {
+                            notification.error({
+                                message: 'Failed to submit variable star discovery',
+                                description: e.response.data.message,
+                            });
+                        })
                     },
                     onCancel() {
                     },
@@ -130,6 +140,7 @@ class StarDraftSingleNewStarComponent extends Component {
 
                             entities={this.props.entities}
                         />
+                        <AdditionalFilesUpload onChange={(files) => this.setState({...this.state, files})}/>
                         <Form.Item
                             wrapperCol={{
                                 xs: {span: 24, offset: 0},
@@ -180,8 +191,12 @@ export const CzevStarDraftSingleNewStar = Form.create()(StarDraftSingleNewStarWi
 export class CoordsInfoResultsWrapper extends Component {
     constructor(props) {
         super(props);
-        this.state = {mapVisible: false, onUcacCopy: () => {}};
+        this.state = {
+            mapVisible: false, onUcacCopy: () => {
+            }
+        };
     }
+
     render() {
         const {result} = this.props;
         if (!result) {
@@ -303,15 +318,18 @@ function Ucac4ResultWrapper(props) {
                             </div>
                             <div>
                                                        <span style={{display: "inline-block", marginRight: 4}}>
-                                                            RA: <CoordinateWrapper size="large" value={model.coordinates.ra}/>
+                                                            RA: <CoordinateWrapper size="large"
+                                                                                   value={model.coordinates.ra}/>
                                                        </span>
                                 <span style={{display: "inline-block"}}>
-                                                           DEC: <CoordinateWrapper size="large" value={model.coordinates.dec}/>
+                                                           DEC: <CoordinateWrapper size="large"
+                                                                                   value={model.coordinates.dec}/>
                                                        </span>
                             </div>
                             <div>
                                 {Object.keys(model.magnitudes).map(k => (
-                                    <span key={k} style={{marginRight: 4}}><b>{k}: </b> <Copyable value={model.magnitudes[k]}/></span>
+                                    <span key={k} style={{marginRight: 4}}><b>{k}: </b> <Copyable
+                                        value={model.magnitudes[k]}/></span>
                                 ))}
                             </div>
                         </div>

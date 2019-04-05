@@ -27,16 +27,17 @@ class PredictionServiceImpl(
     private fun getPoints(minimaCounts: Map<String, StarMinimaCounts>, star: Star, kind: String): Int {
         val counts = minimaCounts.get("${star.constellationId}$kind${star.starId}")
         if (counts != null) {
-            return Math.max(10 - (counts.ccdCount ?: 0) - ((counts.allCount ?: 0 - (counts.ccdCount ?: 0)) * 0.1).roundToInt(), 0)
+            return Math.max(10 - (counts.ccdCount ?: 0) - ((counts.allCount ?: 0-(counts.ccdCount
+                    ?: 0)) * 0.1).roundToInt(), 0)
         }
         return 10
     }
 
     @Cacheable("predictions")
-    override fun getAllPredictionsForNight(night: LocalDate, latitude: Double, longitude: Double): Set<PredictionResultModel> {
+    override fun getAllPredictionsForNight(night: LocalDate, latitude: Double, longitude: Double): PredictionsResultModel {
         val startTime = System.nanoTime()
         val jdNight = night.toJulianDay() + 0.5
-        val result = HashSet<PredictionResultModel>()
+        val result = HashSet<PredictionsStarModel>()
         val minimaCounts = starRepository.findMinimaCountsSince(night.minusYears(10).toJulianDay() - 2400000).toMap { "${it.constellationId}${it.kind}${it.starId}" }
         val nights = findNights(jdNight, jdNight + 1, latitude, longitude)
         starRepository.findStarsWithElements()
@@ -52,7 +53,7 @@ class PredictionServiceImpl(
                             if (isNight(calculatedMinimum, nights)) {
                                 val objHorizontalCoords = transformEquatorialToHorizontalCoordinates(CosmicCoordinatesModel(star.coordinates.raValue(), star.coordinates.decValue()), latitude, longitude, calculatedMinimum)
                                 if (objHorizontalCoords.altitude >= 20) {
-                                    result.add(PredictionResultModel(star.id, starName,
+                                    result.add(PredictionsStarModel(star.id, starName,
                                             it.kind, calculatedMinimum.toBigDecimal(), fromJulianDate(calculatedMinimum), points, objHorizontalCoords.altitude, getCardinalDirection(objHorizontalCoords.azimuth),
                                             star.brightness.map { b -> PredictionMagnitudeModel(b.col, b.maxP, b.minP) },
                                             "24${it.minimum9}+$period*E"))
@@ -65,6 +66,6 @@ class PredictionServiceImpl(
         val endTime = System.nanoTime()
         val totalTime = endTime - startTime
         logger.debug("Calculating predictions took {} ms", TimeUnit.NANOSECONDS.toMillis(totalTime))
-        return result
+        return PredictionsResultModel(result, nights.map { NightInterval(fromJulianDate(it[0]).toLocalTime(), fromJulianDate(it[1]).toLocalTime()) })
     }
 }

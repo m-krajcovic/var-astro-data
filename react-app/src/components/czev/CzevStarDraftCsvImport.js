@@ -45,7 +45,7 @@ export class CzevStarDraftCsvImport extends Component {
             beforeUpload: (file) => {
                 const isLt256KB = file.size / 1024 < 256;
                 if (!isLt256KB) {
-                    message.error('Image must be smaller than 256KB!');
+                    message.error('File must be smaller than 256KB!');
                 } else {
                     this.setState(({fileList}) => ({
                         fileList: [file],

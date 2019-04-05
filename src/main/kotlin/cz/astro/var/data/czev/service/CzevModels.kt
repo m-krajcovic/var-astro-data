@@ -8,6 +8,7 @@ import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.czev.validation.Declination
 import cz.astro.`var`.data.czev.validation.RightAscension
 import cz.astro.`var`.data.security.UserPrincipal
+import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -32,6 +33,26 @@ data class CzevStarDraftModel(
         val kmagnitude: Double?,
         val vmagnitude: Double?,
         val year: Int,
+        val files: List<StarAdditionalFileListModel>,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        val lastChange: LocalDateTime,
+        val createdBy: UserModel,
+        val rejected: Boolean,
+        val rejectedReason: String,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        val rejectedOn: LocalDateTime?
+)
+
+data class CzevStarDraftListModel(
+        val id: Long,
+        val constellation: ConstellationModel,
+        val type: String,
+        val typeValid: Boolean,
+        val discoverers: List<StarObserverModel>,
+        val crossIdentifications: List<String>,
+        val coordinates: CosmicCoordinatesModel,
+        val m0: BigDecimal?,
+        val period: BigDecimal?,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         val lastChange: LocalDateTime,
         val createdBy: UserModel,
@@ -49,9 +70,12 @@ data class CzevStarDraftUpdateModel(
         val amplitude: Double?,
         val filterBand: Long?,
         val crossIdentifications: List<String>,
-        val coordinates: CosmicCoordinatesModel,
+        @RightAscension val rightAscension: BigDecimal,
+        @Declination val declination: BigDecimal,
         val privateNote: String,
         val publicNote: String,
+        val deletedFiles: Set<String>?,
+        var newFiles: Array<MultipartFile>?,
         val m0: BigDecimal?,
         val period: BigDecimal?,
         val year: Int,
@@ -67,9 +91,12 @@ data class CzevStarDraftNewModel(
         val amplitude: Double?,
         val filterBand: Long?,
         val crossIdentifications: List<String>,
-        val coordinates: CosmicCoordinatesModel,
+//        val coordinates: CosmicCoordinatesModel,
+        @RightAscension val rightAscension: BigDecimal,
+        @Declination val declination: BigDecimal,
         val privateNote: String,
         val publicNote: String,
+        var files: Array<MultipartFile>?,
         val m0: BigDecimal?,
         val period: BigDecimal?,
         val year: Int,
@@ -117,7 +144,8 @@ data class CzevStarApprovalModel(
         val amplitude: Double?,
         val filterBand: Long?,
         val crossIdentifications: List<String>,
-        val coordinates: CosmicCoordinatesModel,
+        @RightAscension val rightAscension: BigDecimal,
+        @Declination val declination: BigDecimal,
         val privateNote: String,
         val publicNote: String,
         val m0: BigDecimal?,
@@ -125,7 +153,9 @@ data class CzevStarApprovalModel(
         val year: Int,
         val jmagnitude: Double?,
         val vmagnitude: Double?,
-        val kmagnitude: Double?
+        val kmagnitude: Double?,
+        val deletedFiles: Set<String>?,
+        var newFiles: Array<MultipartFile>?
 )
 
 data class CzevStarDetailsModel(
@@ -146,15 +176,16 @@ data class CzevStarDetailsModel(
         val year: Int,
         val publicNote: String,
         val vsxName: String,
-        val vsxId: Long?
+        val vsxId: Long?,
+        val files: List<StarAdditionalFileListModel>
 )
 
 data class CzevStarUpdateModel(
         val czevId: Long,
-        val coordinates: CosmicCoordinatesModel,
+        @RightAscension val rightAscension: BigDecimal,
+        @Declination val declination: BigDecimal,
         val constellation: Long,
         val type: String,
-        val typeValid: Boolean,
         val jmagnitude: Double?,
         val vmagnitude: Double?,
         val kmagnitude: Double?,
@@ -166,8 +197,10 @@ data class CzevStarUpdateModel(
         val crossIdentifications: List<String>,
         val year: Int,
         val publicNote: String,
-        val vsxName: String,
-        val vsxId: Long?
+//        val vsxName: String,
+//        val vsxId: Long?,
+        val deletedFiles: Set<String>?,
+        var newFiles: Array<MultipartFile>?
 )
 
 data class CzevStarExportModel(
@@ -261,11 +294,24 @@ data class UserModel(
         val name: String
 )
 
+data class StarAdditionalFileModel(
+        val id: String,
+        val fileName: String,
+        val fileType: String,
+        val data: ByteArray
+)
+
+data class StarAdditionalFileListModel(
+        val id: String,
+        val fileName: String,
+        val fileType: String
+)
+
 fun CzevStar.toDetailsModel(): CzevStarDetailsModel {
     return CzevStarDetailsModel(
             czevId, coordinates.toModel(), constellation.toModel(), type, typeValid, jmagnitude, vmagnitude, kmagnitude, amplitude,
             discoverers.toModels(), m0, period, filterBand.toModel(), crossIdentifications.sortedBy { it.orderNumber }.map { it.name }.toList(),
-            year, publicNote, vsxName, vsxId
+            year, publicNote, vsxName, vsxId, files.map { it.toListModel() }
     )
 }
 
@@ -318,8 +364,21 @@ fun CzevStarDraft.toModel(): CzevStarDraftModel {
     return CzevStarDraftModel(
             id, constellation.toModel(), type, typeValid, discoverers.toModels(), amplitude, filterBand.toModel(),
             crossIdentifications.sortedBy { it.orderNumber }.map { it.name }.toList(), coordinates.toModel(), privateNote, publicNote, m0, period, jmagnitude, kmagnitude, vmagnitude, year,
+            files.map { it.toListModel() }, lastChange, principal, rejected, rejectedNote, rejectedOn
+    )
+}
+
+fun CzevStarDraft.toListModel(): CzevStarDraftListModel {
+    val principal = UserModel(createdBy.id, createdBy.email)
+    return CzevStarDraftListModel(
+            id, constellation.toModel(), type, typeValid, discoverers.toModels(),
+            crossIdentifications.sortedBy { it.orderNumber }.map { it.name }.toList(), coordinates.toModel(), m0, period,
             lastChange, principal, rejected, rejectedNote, rejectedOn
     )
+}
+
+fun StarAdditionalFile.toListModel(): StarAdditionalFileListModel {
+    return StarAdditionalFileListModel(id, fileName, fileType)
 }
 
 fun ConstellationModel.toEntity(): Constellation {
@@ -349,4 +408,8 @@ fun CosmicCoordinatesModel.toEntity(): CosmicCoordinates {
 
 fun UserPrincipal.toModel(): UserModel {
     return UserModel(id, email)
+}
+
+fun StarAdditionalFile.toModel(): StarAdditionalFileModel {
+    return StarAdditionalFileModel(id, fileName, fileType, data)
 }

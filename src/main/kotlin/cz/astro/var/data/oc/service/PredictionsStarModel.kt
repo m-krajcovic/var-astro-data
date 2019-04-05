@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-class PredictionResultModel(
+class PredictionsStarModel(
         val id: Int,
         val name: String,
         val kind: String,
@@ -21,7 +21,7 @@ class PredictionResultModel(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as PredictionResultModel
+        other as PredictionsStarModel
 
         if (id != other.id) return false
         if (kind != other.kind) return false

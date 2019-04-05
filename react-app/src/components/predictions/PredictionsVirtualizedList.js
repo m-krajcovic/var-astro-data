@@ -6,9 +6,6 @@ import {Icon, Popover} from "antd";
 import {PredictionsMinimaGraph} from "./PredictionsMinimaGraph";
 
 export class PredictionsVirtualizedList extends Component {
-    constructor(props) {
-        super(props);
-    }
 
     render() {
         let predictions = this.props.predictions;
