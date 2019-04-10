@@ -246,7 +246,7 @@ class PredictionsPage extends Component {
                         <div className="predictions-list__outer-wrapper" style={{flex: "1 1 auto", overflow: "auto"}}>
                             <div className="predictions-list__inner-wrapper" style={{flex: "0"}}>
                                 <Table
-                                    columns={Predictions.columns}
+                                    columns={PredictionsPage.columns}
                                     dataSource={[]}
                                     bordered={false}
                                     onChange={this.handleTableChange}
