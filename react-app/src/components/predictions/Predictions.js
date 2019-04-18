@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../api-endpoint";
-import {Card, Col, DatePicker, Layout, Row, Spin, Table, Tag} from "antd";
+import {Card, Col, DatePicker, Icon, Layout, Popover, Row, Spin, Table, Tag} from "antd";
 import {CoordsInput, TableInputFilter, TableInputNumberFilter, TableInputRangeFilter} from "../../App";
 import moment from "moment";
 import {PredictionsVirtualizedList} from "./PredictionsVirtualizedList";
@@ -9,13 +9,17 @@ import {addUrlProps, UrlQueryParamTypes} from 'react-url-query';
 
 import "./Predictions.css";
 import {UserProfileConsumer} from "../common/UserProfileContext";
+import {Link} from "react-router-dom";
+import {PredictionsMinimaGraph} from "./PredictionsMinimaGraph";
+import {CoordinateWrapper} from "../common/CoordinateWrapper";
 
 const urlPropsQueryConfig = {
     date: {type: UrlQueryParamTypes.string},
 };
 
 class SessionCache {
-    constructor() {}
+    constructor() {
+    }
 }
 
 // TODO: state in url (date, lat, long)
@@ -28,6 +32,26 @@ class PredictionsPage extends Component {
                 <TableInputFilter actions={actions}/>
             ),
             width: 200,
+            render: (record) => {
+                const nameSplit = record.name.split(" ");
+                return (<span>
+                <Link
+                    to={"/oc/" + nameSplit[1] + "/" + nameSplit[0]}>{record.name}</Link>
+                                            <Popover
+                                                overlayClassName="popover-minima-graph"
+                                                content={(<PredictionsMinimaGraph id={record.id}
+                                                                                  kind={record.kind}/>)}
+                                            >
+                                                <Icon
+                                                    style={{
+                                                        verticalAlign: "-0.25em",
+                                                        paddingLeft: 2
+                                                    }}
+                                                    type="dot-chart"
+                                                    className="clickable-icon"/>
+                                            </Popover>
+            </span>)
+            }
         },
         {
             title: 'P/S',
@@ -37,7 +61,11 @@ class PredictionsPage extends Component {
         {
             title: 'Time',
             dataIndex: 'minimumDateTime',
-            width: 70
+            width: 70,
+            itemProps: (record) => {
+                return {title: `${record.minimumDateTime} (${record.minimum})`}
+            },
+            render: (record) => record.minimumDateTime.format("HH:mm")
         },
         {
             title: 'Points',
@@ -65,6 +93,7 @@ class PredictionsPage extends Component {
             filterDropdown: (actions) => (
                 <TableInputRangeFilter actions={actions} degrees/>
             ),
+            render: (record) => (<span>{Math.round(record.altitude)}&deg;</span>)
         },
         {
             title: 'Az.',
@@ -78,21 +107,26 @@ class PredictionsPage extends Component {
             width: 70
         },
         {
-            title: 'Len',
+            title: 'L (h)',
             dataIndex: 'minimaLength',
             width: 70
         },
         {
             title: 'Coordinates',
             dataIndex: 'coordinates',
-            width: 230
+            width: 230,
+            render: (record) => (
+                <span><CoordinateWrapper size="small" value={record.coordinates.raString}/>&nbsp;<CoordinateWrapper
+                    size="small" value={record.coordinates.decString}/></span>)
         },
         {
             title: 'Magnitudes',
             dataIndex: 'magnitudes',
             filterDropdown: (actions) => (
                 <TableInputRangeFilter actions={actions}/>
-            )
+            ),
+            noStyle: true,
+            render: record => record.magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", ")
         }
     ];
 
@@ -266,7 +300,8 @@ class PredictionsPage extends Component {
                             </div>
                             <div className="predictions-list__inner-wrapper">
                                 <PredictionsVirtualizedList predictions={this.state.predictionsResult.predictions}
-                                                            filters={this.state.filters}/>
+                                                            filters={this.state.filters}
+                                                            columns={PredictionsPage.columns}/>
                             </div>
                         </div>
                     </Card>
