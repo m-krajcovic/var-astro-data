@@ -55,8 +55,6 @@ export class PredictionsVirtualizedList extends Component {
                         rowHeight={30}
                         rowRenderer={({index, key, style}) => {
                             const record = predictions[index];
-                            const nameSplit = record.name.split(" ");
-                            const date = record.minimumDateTime;
                             return (
                                 <List.Item key={key} style={style}>
                                     <div style={{
@@ -64,54 +62,71 @@ export class PredictionsVirtualizedList extends Component {
                                         width: "100%",
                                         flexWrap: "nowrap"
                                     }}>
-                                                            <span style={{flex: "0 0 200px", padding: "0 16px"}}>
-                                                                <Link
-                                                                    to={"/oc/" + nameSplit[1] + "/" + nameSplit[0]}>{record.name}</Link>
-                                                                <Popover
-                                                                    overlayClassName="popover-minima-graph"
-                                                                    content={(<PredictionsMinimaGraph id={record.id}
-                                                                                                      kind={record.kind}/>)}
-                                                                >
-                                                                    <Icon
-                                                                        style={{
-                                                                            verticalAlign: "-0.25em",
-                                                                            paddingLeft: 2
-                                                                        }}
-                                                                        type="dot-chart"
-                                                                        className="clickable-icon"/>
-                                                                </Popover>
-                                                            </span>
-                                        <span style={{
-                                            flex: "0 0 60px",
-                                            padding: "0 16px"
-                                        }}>{record.kind}</span>
-                                        <span style={{flex: "0 0 70px", padding: "0 16px"}}
-                                              title={`${record.minimumDateTime} (${record.minimum})`}>{date.format("HH:mm")}</span>
-                                        <span style={{
-                                            flex: "0 0 90px",
-                                            padding: "0 16px"
-                                        }}>{record.points}</span>
-                                        <span
-                                            style={{
-                                                flex: "0 0 70px",
-                                                padding: "0 16px"
-                                            }}>{Math.round(record.altitude)}&deg;</span>
-                                        <span style={{
-                                            flex: "0 0 70px",
-                                            padding: "0 16px"
-                                        }}>{record.azimuth}</span>
-                                        <span style={{
-                                            flex: "0 0 70px",
-                                            padding: "0 16px"
-                                        }}>{record.minimaLength}</span>
-                                        <span style={{
-                                            flex: "0 0 230px",
-                                            padding: "0 16px"
-                                        }}>
-                                            <CoordinateWrapper size="small" value={record.coordinates.raString}/>&nbsp;<CoordinateWrapper size="small" value={record.coordinates.decString}/>
-                                        </span>
-                                        <span
-                                            style={{}}>{record.magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", ")}</span>
+                                        {this.props.columns.map((col, i) => {
+                                            let body = record[col.dataIndex];
+                                            if (col.render) {
+                                                body = col.render(record);
+                                            }
+                                            let itemProps = col.itemProps ? col.itemProps(record) : {};
+                                            let style = {};
+                                            if (!col.noStyle) {
+                                                style = {padding: "0 16px", flex: `0 0 ${col.width}px`};
+                                            }
+                                            return (
+                                                <span {...itemProps} key={i} style={style}>
+                                                    {body}
+                                                </span>
+                                            )
+                                        })}
+                                        {/*<span style={{flex: "0 0 200px", padding: "0 16px"}}>*/}
+                                            {/*<Link*/}
+                                                {/*to={"/oc/" + nameSplit[1] + "/" + nameSplit[0]}>{record.name}</Link>*/}
+                                            {/*<Popover*/}
+                                                {/*overlayClassName="popover-minima-graph"*/}
+                                                {/*content={(<PredictionsMinimaGraph id={record.id}*/}
+                                                                                  {/*kind={record.kind}/>)}*/}
+                                            {/*>*/}
+                                                {/*<Icon*/}
+                                                    {/*style={{*/}
+                                                        {/*verticalAlign: "-0.25em",*/}
+                                                        {/*paddingLeft: 2*/}
+                                                    {/*}}*/}
+                                                    {/*type="dot-chart"*/}
+                                                    {/*className="clickable-icon"/>*/}
+                                            {/*</Popover>*/}
+                                        {/*</span>*/}
+                                        {/*<span style={{*/}
+                                            {/*flex: "0 0 60px",*/}
+                                            {/*padding: "0 16px"*/}
+                                        {/*}}>{record.kind}</span>*/}
+                                        {/*<span style={{flex: "0 0 70px", padding: "0 16px"}}*/}
+                                              {/*title={`${record.minimumDateTime} (${record.minimum})`}>{date.format("HH:mm")}</span>*/}
+                                        {/*<span style={{*/}
+                                            {/*flex: "0 0 90px",*/}
+                                            {/*padding: "0 16px"*/}
+                                        {/*}}>{record.points}</span>*/}
+                                        {/*<span*/}
+                                            {/*style={{*/}
+                                                {/*flex: "0 0 70px",*/}
+                                                {/*padding: "0 16px"*/}
+                                            {/*}}>{Math.round(record.altitude)}&deg;</span>*/}
+                                        {/*<span style={{*/}
+                                            {/*flex: "0 0 70px",*/}
+                                            {/*padding: "0 16px"*/}
+                                        {/*}}>{record.azimuth}</span>*/}
+                                        {/*<span style={{*/}
+                                            {/*flex: "0 0 70px",*/}
+                                            {/*padding: "0 16px"*/}
+                                        {/*}}>{record.minimaLength}</span>*/}
+                                        {/*<span style={{*/}
+                                            {/*flex: "0 0 230px",*/}
+                                            {/*padding: "0 16px"*/}
+                                        {/*}}>*/}
+                                            {/*<CoordinateWrapper size="small" value={record.coordinates.raString}/>&nbsp;*/}
+                                            {/*<CoordinateWrapper size="small" value={record.coordinates.decString}/>*/}
+                                        {/*</span>*/}
+                                        {/*<span*/}
+                                            {/*style={{}}>{record.magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", ")}</span>*/}
                                     </div>
                                 </List.Item>
                             )
