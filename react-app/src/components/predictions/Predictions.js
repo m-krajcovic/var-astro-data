@@ -14,6 +14,10 @@ const urlPropsQueryConfig = {
     date: {type: UrlQueryParamTypes.string},
 };
 
+class SessionCache {
+    constructor() {}
+}
+
 // TODO: state in url (date, lat, long)
 class PredictionsPage extends Component {
     static columns = [
@@ -33,7 +37,7 @@ class PredictionsPage extends Component {
         {
             title: 'Time',
             dataIndex: 'minimumDateTime',
-            width: 100
+            width: 70
         },
         {
             title: 'Points',
@@ -55,15 +59,15 @@ class PredictionsPage extends Component {
             )
         },
         {
-            title: 'Altitude',
+            title: 'Alt.',
             dataIndex: 'altitude',
-            width: 100,
+            width: 70,
             filterDropdown: (actions) => (
                 <TableInputRangeFilter actions={actions} degrees/>
             ),
         },
         {
-            title: 'Azimuth',
+            title: 'Az.',
             dataIndex: 'azimuth',
             filters: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"].map(d => {
                 return {
@@ -71,7 +75,17 @@ class PredictionsPage extends Component {
                     value: d
                 }
             }),
-            width: 110
+            width: 70
+        },
+        {
+            title: 'Len',
+            dataIndex: 'minimaLength',
+            width: 70
+        },
+        {
+            title: 'Coordinates',
+            dataIndex: 'coordinates',
+            width: 230
         },
         {
             title: 'Magnitudes',
@@ -99,7 +113,6 @@ class PredictionsPage extends Component {
             showElements: false,
             latitude: 50,
             longitude: 15,
-            // date: null,
             filters: [],
         };
     }
@@ -192,12 +205,11 @@ class PredictionsPage extends Component {
         if (dateString) {
             const fromCache = this.getFromCache(this.state.latitude, this.state.longitude, dateString);
             if (fromCache != null) {
-                this.setState({...this.state, date: dateString, predictionsResult: fromCache});
+                this.setState({...this.state, predictionsResult: fromCache});
             } else {
-                this.setState({...this.state, date: dateString});
+                // this.setState({...this.state, date: dateString});
                 this.loadPredictions(this.state.latitude, this.state.longitude, dateString);
             }
-            this.props.onChangeDate(dateString);
         }
     };
 
@@ -229,7 +241,7 @@ class PredictionsPage extends Component {
                                 <DatePicker allowClear={false}
                                             showToday
                                             value={moment(this.props.date)}
-                                            onChange={(date, dateString) => this.handleOnDateChange(dateString)}/>
+                                            onChange={(date, dateString) => this.props.onChangeDate(dateString)}/>
                             </Col>
                             <Col span={24} sm={{span: 12}}>
                                 <CoordsInput

@@ -17,11 +17,11 @@ const prependZero = function (length, number) {
 //     return `${prependZero(2, coords.raHours)} ${prependZero(2, coords.raMinutes)} ${prependZero(2, coords.raSeconds)} ${coords.decSign}${prependZero(2, coords.decDegrees)} ${prependZero(2, coords.decMinutes)} ${prependZero(2, coords.decSeconds)}`;
 // };
 
-const coordinatesToStringRa = function (coords) {
+export const coordinatesToStringRa = function (coords) {
     return `${prependZero(2, coords.raHours)} ${prependZero(2, coords.raMinutes)} ${prependZero(2, coords.raSeconds)}`;
 };
 
-const coordinatesToStringDec = function (coords) {
+export const coordinatesToStringDec = function (coords) {
     return `${coords.decSign}${prependZero(2, coords.decDegrees)} ${prependZero(2, coords.decMinutes)} ${prependZero(2, coords.decSeconds)}`;
 };
 
