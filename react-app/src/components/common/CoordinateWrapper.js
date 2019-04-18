@@ -7,6 +7,8 @@ export function CoordinateWrapper(props) {
     };
     if (props.size === "large") {
         style["fontSize"] = "1rem";
+    } else if (props.size === "small") {
+        style["fontSize"] = "0.75rem"
     }
     return (
         <Copyable value={props.value} style={style}/>

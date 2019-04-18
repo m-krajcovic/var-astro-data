@@ -1,6 +1,7 @@
 package cz.astro.`var`.data.oc.service
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import cz.astro.`var`.data.czev.service.CosmicCoordinatesModel
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -9,13 +10,15 @@ class PredictionsStarModel(
         val name: String,
         val kind: String,
         val minimum: BigDecimal,
+        val coordinates: CosmicCoordinatesModel,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         val minimumDateTime: LocalDateTime,
         val points: Int?,
         val altitude: Double,
         val azimuth: String,
         val magnitudes: List<PredictionMagnitudeModel>,
-        val elements: String
+        val elements: String,
+        val minimaLength: String
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

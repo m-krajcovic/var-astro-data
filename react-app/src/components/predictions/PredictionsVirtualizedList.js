@@ -4,6 +4,8 @@ import {List} from "antd";
 import {Link} from "react-router-dom";
 import {Icon, Popover} from "antd";
 import {PredictionsMinimaGraph} from "./PredictionsMinimaGraph";
+import {CoordinateWrapper} from "../common/CoordinateWrapper";
+import {coordinatesToStringDec, coordinatesToStringRa} from "../ocgate/StarDetail";
 
 export class PredictionsVirtualizedList extends Component {
 
@@ -83,7 +85,7 @@ export class PredictionsVirtualizedList extends Component {
                                             flex: "0 0 60px",
                                             padding: "0 16px"
                                         }}>{record.kind}</span>
-                                        <span style={{flex: "0 0 100px", padding: "0 16px"}}
+                                        <span style={{flex: "0 0 70px", padding: "0 16px"}}
                                               title={`${record.minimumDateTime} (${record.minimum})`}>{date.format("HH:mm")}</span>
                                         <span style={{
                                             flex: "0 0 90px",
@@ -91,13 +93,23 @@ export class PredictionsVirtualizedList extends Component {
                                         }}>{record.points}</span>
                                         <span
                                             style={{
-                                                flex: "0 0 100px",
+                                                flex: "0 0 70px",
                                                 padding: "0 16px"
                                             }}>{Math.round(record.altitude)}&deg;</span>
                                         <span style={{
-                                            flex: "0 0 110px",
+                                            flex: "0 0 70px",
                                             padding: "0 16px"
                                         }}>{record.azimuth}</span>
+                                        <span style={{
+                                            flex: "0 0 70px",
+                                            padding: "0 16px"
+                                        }}>{record.minimaLength}</span>
+                                        <span style={{
+                                            flex: "0 0 230px",
+                                            padding: "0 16px"
+                                        }}>
+                                            <CoordinateWrapper size="small" value={record.coordinates.raString}/>&nbsp;<CoordinateWrapper size="small" value={record.coordinates.decString}/>
+                                        </span>
                                         <span
                                             style={{}}>{record.magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", ")}</span>
                                     </div>

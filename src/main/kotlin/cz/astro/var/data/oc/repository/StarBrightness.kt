@@ -17,5 +17,6 @@ class StarBrightness(
     var maxP: Double,
     var minP: Double,
     var minS: Double,
-    @Column(name="COL", columnDefinition = "char") var col: String
+    @Column(name="COL", columnDefinition = "char") var col: String,
+    @Column(name="CD") var minimaLength: Int
 )

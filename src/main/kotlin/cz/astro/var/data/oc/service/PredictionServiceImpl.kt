@@ -40,6 +40,7 @@ class PredictionServiceImpl(
         val result = HashSet<PredictionsStarModel>()
         val minimaCounts = starRepository.findMinimaCountsSince(night.minusYears(10).toJulianDay() - 2400000).toMap { "${it.constellationId}${it.kind}${it.starId}" }
         val nights = findNights(jdNight, jdNight + 1, latitude, longitude)
+        val noLengthTypes = setOf("EB", "EW")
         starRepository.findStarsWithElements()
                 .forEach { star ->
                     star.elements.asSequence().filter { it.kind == "p" || it.kind == "s" }.forEach {
@@ -49,14 +50,25 @@ class PredictionServiceImpl(
                         var calculatedMinimum = calculateMinimum(m0.toDouble(), periodDouble, jdNight)
                         val points: Int = getPoints(minimaCounts, star, it.kind)
                         val starName = "${star.starName} ${star.constellation}"
+                        var minimaLength = ""
+                        if (noLengthTypes.contains(star.type)) {
+                            minimaLength = star.type
+                        } else {
+                            star.brightness.firstOrNull()?.minimaLength?.let { ml ->
+                                if (ml > 0) {
+                                    minimaLength = "%.1f".format((ml / 1000.0) * period.toDouble() * 24)
+                                }
+                            }
+                        }
+                        val type = star.type
                         while (calculatedMinimum < jdNight + 1) {
                             if (isNight(calculatedMinimum, nights)) {
                                 val objHorizontalCoords = transformEquatorialToHorizontalCoordinates(CosmicCoordinatesModel(star.coordinates.raValue(), star.coordinates.decValue()), latitude, longitude, calculatedMinimum)
                                 if (objHorizontalCoords.altitude >= 20) {
                                     result.add(PredictionsStarModel(star.id, starName,
-                                            it.kind, calculatedMinimum.toBigDecimal(), fromJulianDate(calculatedMinimum), points, objHorizontalCoords.altitude, getCardinalDirection(objHorizontalCoords.azimuth),
+                                            it.kind, calculatedMinimum.toBigDecimal(), CosmicCoordinatesModel(star.coordinates.raValue(), star.coordinates.decValue()), fromJulianDate(calculatedMinimum), points, objHorizontalCoords.altitude, getCardinalDirection(objHorizontalCoords.azimuth),
                                             star.brightness.map { b -> PredictionMagnitudeModel(b.col, b.maxP, b.minP) },
-                                            "24${it.minimum9}+$period*E"))
+                                            "24${it.minimum9}+$period*E", minimaLength))
                                 }
                             }
                             calculatedMinimum += periodDouble
