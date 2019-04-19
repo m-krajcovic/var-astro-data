@@ -22,7 +22,6 @@ class SessionCache {
     }
 }
 
-// TODO: state in url (date, lat, long)
 class PredictionsPage extends Component {
     static columns = [
         {
@@ -56,21 +55,21 @@ class PredictionsPage extends Component {
         {
             title: 'P/S',
             dataIndex: 'kind',
-            width: 60
+            width: 40
         },
         {
             title: 'Time',
             dataIndex: 'minimumDateTime',
-            width: 70,
+            width: 60,
             itemProps: (record) => {
                 return {title: `${record.minimumDateTime} (${record.minimum})`}
             },
             render: (record) => record.minimumDateTime.format("HH:mm")
         },
         {
-            title: 'Points',
+            title: 'Pts',
             dataIndex: 'points',
-            width: 90,
+            width: 70,
             filterDropdown: (actions) => (
                 <UserProfileConsumer>
                     {({config, updateConfig}) => {
@@ -87,9 +86,9 @@ class PredictionsPage extends Component {
             )
         },
         {
-            title: 'Alt.',
+            title: 'Al.',
             dataIndex: 'altitude',
-            width: 70,
+            width: 60,
             filterDropdown: (actions) => (
                 <TableInputRangeFilter actions={actions} degrees/>
             ),
@@ -104,17 +103,17 @@ class PredictionsPage extends Component {
                     value: d
                 }
             }),
-            width: 70
+            width: 60
         },
         {
-            title: 'L (h)',
+            title: 'L(h)',
             dataIndex: 'minimaLength',
-            width: 70
+            width: 50
         },
         {
             title: 'Coordinates',
             dataIndex: 'coordinates',
-            width: 230,
+            width: 200,
             render: (record) => (
                 <span><CoordinateWrapper size="small" value={record.coordinates.raString}/>&nbsp;<CoordinateWrapper
                     size="small" value={record.coordinates.decString}/></span>)
@@ -294,6 +293,7 @@ class PredictionsPage extends Component {
                                 <Table
                                     columns={PredictionsPage.columns}
                                     dataSource={[]}
+                                    size={"small"}
                                     bordered={false}
                                     onChange={this.handleTableChange}
                                 />

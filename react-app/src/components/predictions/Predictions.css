@@ -16,9 +16,17 @@
     display: none;
 }
 
-@media only screen and (max-width: 1230px) {
+.predictions-list__inner-wrapper .ant-table-small {
+    border: none;
+}
+
+.predictions-list__inner-wrapper .ant-table-small > .ant-table-content > .ant-table-body {
+    margin: 0;
+}
+
+@media only screen and (max-width: 1000px) {
     .predictions-list__inner-wrapper {
-        width: 1230px;
+        width: 1000px;
     }
 }
 

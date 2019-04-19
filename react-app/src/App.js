@@ -391,10 +391,10 @@ export class CoordsInput extends Component {
         if (this.state.editting) {
             return (
                 <Row style={{
-                    maxWidth: 400,
+                    maxWidth: 500,
                 }}>
                     <Col span={8} gutter={4}>
-                        <label>Lat: </label>
+                        <label>Latitude: </label>
                         <InputNumber
                             defaultValue={this.props.latitude}
                             formatter={value => `${value}°`}
@@ -404,7 +404,7 @@ export class CoordsInput extends Component {
                             placeholder="latitude"/>
                     </Col>
                     <Col span={8}>
-                        <label>Lon: </label>
+                        <label>Longitude: </label>
                         <InputNumber
                             formatter={value => `${value}°`}
                             parser={value => value.replace('°', '')}
@@ -424,8 +424,8 @@ export class CoordsInput extends Component {
                 maxWidth: 400,
                 lineHeight: "32px"
             }}>
-                <span style={{marginRight: 4}}>Lat: {this.state.latitude}&deg;</span>
-                <span style={{marginRight: 4}}>Lon: {this.state.longitude}&deg;</span>
+                <span style={{marginRight: 4}}>Latitude: {this.state.latitude}&deg;</span>
+                <span style={{marginRight: 4}}>Longitude: {this.state.longitude}&deg;</span>
                 <Icon className="clickable-icon blue" type="edit"
                       onClick={() => this.setState({...this.state, editting: true})}/>
             </Row>
