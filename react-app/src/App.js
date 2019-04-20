@@ -514,7 +514,7 @@ export class TableInputRangeFilter extends Component {
         return (
             <div className="ant-table-filter-dropdown">
                 <div style={{padding: 4}}>
-                    <label style={{marginRight: 4}}>Min:</label>
+                    <label style={{marginRight: 4}}>From:</label>
                     <InputNumber
                         formatter={this.props.degrees ? value => `${value}°` : value => value}
                         parser={this.props.degrees ? value => value.replace('°', '') : value => value}
@@ -524,7 +524,7 @@ export class TableInputRangeFilter extends Component {
                             max: this.props.actions.selectedKeys[0] ? this.props.actions.selectedKeys[0].max : null
                         }])}
                     />
-                    <label style={{marginRight: 4, marginLeft: 4}}>Max:</label>
+                    <label style={{marginRight: 4, marginLeft: 4}}>To:</label>
                     <InputNumber
                         formatter={this.props.degrees ? value => `${value}°` : value => value}
                         parser={this.props.degrees ? value => value.replace('°', '') : value => value}

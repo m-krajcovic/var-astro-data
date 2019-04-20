@@ -63,9 +63,9 @@ export class PredictionsVirtualizedList extends Component {
                                                 body = col.render(record);
                                             }
                                             let itemProps = col.itemProps ? col.itemProps(record) : {};
-                                            let style = {};
+                                            let style = {paddingLeft: "8px"};
                                             if (!col.noStyle) {
-                                                style = {paddingLeft: "8px", flex: `0 0 ${col.width}px`};
+                                                style['flex'] = `0 0 ${col.width}px`;
                                             }
                                             return (
                                                 <span {...itemProps} key={i} style={style}>
