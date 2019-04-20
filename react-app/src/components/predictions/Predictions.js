@@ -106,7 +106,7 @@ class PredictionsPage extends Component {
             width: 60
         },
         {
-            title: 'L(h)',
+            title: 'D(h)',
             dataIndex: 'minimaLength',
             width: 50
         },
@@ -125,7 +125,8 @@ class PredictionsPage extends Component {
                 <TableInputRangeFilter actions={actions}/>
             ),
             noStyle: true,
-            render: record => record.magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", ")
+            render: record => record.magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", "),
+            className: "predictions-list__magnitude-column"
         }
     ];
 
