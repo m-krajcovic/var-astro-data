@@ -67,6 +67,9 @@ export class PredictionsVirtualizedList extends Component {
                                             if (!col.noStyle) {
                                                 style['flex'] = `0 0 ${col.width}px`;
                                             }
+                                            if (col.customStyle) {
+                                                style = {...style, ...col.customStyle}
+                                            }
                                             return (
                                                 <span {...itemProps} key={i} style={style}>
                                                     {body}

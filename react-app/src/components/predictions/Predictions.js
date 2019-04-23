@@ -118,6 +118,12 @@ class PredictionsPage extends Component {
                 <span><CoordinateWrapper size="small" value={record.coordinates.raString}/>&nbsp;<CoordinateWrapper
                     size="small" value={record.coordinates.decString}/></span>)
         },
+        // {
+        //     title: 'Elements',
+        //     dataIndex: 'elements',
+        //     width: 200,
+        //     // customStyle: {fontSize: "0.75rem"}
+        // },
         {
             title: 'Magnitudes',
             dataIndex: 'magnitudes',
