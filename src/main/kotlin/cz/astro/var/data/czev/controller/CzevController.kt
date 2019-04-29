@@ -23,7 +23,6 @@ import javax.validation.Valid
 
 
 @RestController
-@CrossOrigin(origins = ["http://localhost:3000"])
 @RequestMapping("api/czev")
 @Validated
 class CzevController(

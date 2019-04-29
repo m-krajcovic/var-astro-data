@@ -1,0 +1,32 @@
+import React, {Component} from "react";
+
+export default class OcGateAdministrationPage extends Component {
+
+}
+
+//
+
+// NEW STAR PAGE
+//    GENERIC INFO
+//    NEW BRIGHTNESS COMPONENT
+//    NEW ELEMENT COMPONENT
+
+// NEW MINIMA PAGE
+//    ADD PUBLICATION COMPONENT
+
+// NEW BATCH MINIMA PAGE
+
+// NEW PUBLICATION PAGE
+
+
+// UPDATE STAR PAGE
+//    UPDATE GENERIC
+//    UPDATE BRIGHTNESS
+//    UPDATE ELEMENT
+
+// UPDATE MINIMA PAGE
+
+// UPDATE PUBLICATION PAGE
+
+// TODO
+// UPDATE MINIMA IN BATCH/FILTER
