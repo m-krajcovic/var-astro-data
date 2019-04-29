@@ -34,12 +34,12 @@ data class CzevStarDraftModel(
         val vmagnitude: Double?,
         val year: Int,
         val files: List<StarAdditionalFileListModel>,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        @field:JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         val lastChange: LocalDateTime,
         val createdBy: UserModel,
         val rejected: Boolean,
         val rejectedReason: String,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        @field:JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         val rejectedOn: LocalDateTime?
 )
 
@@ -53,12 +53,12 @@ data class CzevStarDraftListModel(
         val coordinates: CosmicCoordinatesModel,
         val m0: BigDecimal?,
         val period: BigDecimal?,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        @field:JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         val lastChange: LocalDateTime,
         val createdBy: UserModel,
         val rejected: Boolean,
         val rejectedReason: String,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        @field:JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         val rejectedOn: LocalDateTime?
 )
 
@@ -70,8 +70,8 @@ data class CzevStarDraftUpdateModel(
         val amplitude: Double?,
         val filterBand: Long?,
         val crossIdentifications: List<String>,
-        @RightAscension val rightAscension: BigDecimal,
-        @Declination val declination: BigDecimal,
+        @field:RightAscension val rightAscension: BigDecimal,
+        @field:Declination val declination: BigDecimal,
         val privateNote: String,
         val publicNote: String,
         val deletedFiles: Set<String>?,
@@ -92,8 +92,8 @@ data class CzevStarDraftNewModel(
         val filterBand: Long?,
         val crossIdentifications: List<String>,
 //        val coordinates: CosmicCoordinatesModel,
-        @RightAscension val rightAscension: BigDecimal,
-        @Declination val declination: BigDecimal,
+        @field:RightAscension val rightAscension: BigDecimal,
+        @field:Declination val declination: BigDecimal,
         val privateNote: String,
         val publicNote: String,
         var files: Array<MultipartFile>?,
@@ -144,8 +144,8 @@ data class CzevStarApprovalModel(
         val amplitude: Double?,
         val filterBand: Long?,
         val crossIdentifications: List<String>,
-        @RightAscension val rightAscension: BigDecimal,
-        @Declination val declination: BigDecimal,
+        @field:RightAscension val rightAscension: BigDecimal,
+        @field:Declination val declination: BigDecimal,
         val privateNote: String,
         val publicNote: String,
         val m0: BigDecimal?,
@@ -182,8 +182,8 @@ data class CzevStarDetailsModel(
 
 data class CzevStarUpdateModel(
         val czevId: Long,
-        @RightAscension val rightAscension: BigDecimal,
-        @Declination val declination: BigDecimal,
+        @field:RightAscension val rightAscension: BigDecimal,
+        @field:Declination val declination: BigDecimal,
         val constellation: Long,
         val type: String,
         val jmagnitude: Double?,
@@ -235,8 +235,8 @@ data class CzevStarListModel(
 
 @JsonDeserialize(using = CosmicCoordinatesDeserializer::class)
 data class CosmicCoordinatesModel(
-        @RightAscension val ra: BigDecimal,
-        @Declination val dec: BigDecimal
+        @field:RightAscension val ra: BigDecimal,
+        @field:Declination val dec: BigDecimal
 ) {
 
     // TODO move to helper?

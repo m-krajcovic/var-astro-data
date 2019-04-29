@@ -26,12 +26,12 @@ import java.util.HashMap;
  */
 @Configuration
 @EnableJpaRepositories(
-        basePackages = "cz.astro.var.data.czev",
+        basePackages = {"cz.astro.var.data.czev", "cz.astro.var.data.newoc"},
         entityManagerFactoryRef = "czevEntityManager",
         transactionManagerRef = "czevTransactionManager"
 )
-@ComponentScan(basePackages = "cz.astro.var.data.czev")
-@EntityScan(basePackages = "cz.astro.var.data.czev")
+@ComponentScan(basePackages = {"cz.astro.var.data.czev", "cz.astro.var.data.newoc"})
+@EntityScan(basePackages = {"cz.astro.var.data.czev", "cz.astro.var.data.newoc"})
 @EnableTransactionManagement
 public class CzevJPAConfig {
 
@@ -42,7 +42,7 @@ public class CzevJPAConfig {
     public LocalContainerEntityManagerFactoryBean czevEntityManager() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(czevDataSource());
-        em.setPackagesToScan("cz.astro.var.data.czev");
+        em.setPackagesToScan("cz.astro.var.data.czev", "cz.astro.var.data.newoc");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
