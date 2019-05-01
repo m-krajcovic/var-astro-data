@@ -1,7 +1,6 @@
 package cz.astro.`var`.data.newoc.service
 
 import cz.astro.`var`.data.czev.repository.ConstellationRepository
-import cz.astro.`var`.data.czev.repository.Publication
 import cz.astro.`var`.data.czev.repository.UserRepository
 import cz.astro.`var`.data.czev.service.*
 import cz.astro.`var`.data.newoc.repository.*

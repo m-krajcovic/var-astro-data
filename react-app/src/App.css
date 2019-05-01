@@ -87,3 +87,7 @@ body {
 .popover-minima-graph .ant-popover-inner-content {
     padding: 0;
 }
+
+.table-small-nomargin .ant-table-small > .ant-table-content > .ant-table-body {
+    margin: 0;
+}
