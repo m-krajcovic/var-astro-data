@@ -48,6 +48,12 @@ interface PublicationsService {
     fun update(id: Long, model: PublicationUpdateModel)
 }
 
+interface ObservationsService {
+    fun getAllMethods(): List<IdNameModel>
+    fun getAllKinds(): List<IdNameModel>
+    fun getAllFilters(): List<IdNameModel>
+}
+
 /*
 * MODELS
 * */
@@ -373,4 +379,25 @@ class PublicationsServiceImpl(private val publicationsRepository: PublicationsRe
             link = model.link
         }
     }
+}
+
+@Service
+@Transactional
+class ObservationsServiceImpl(
+        private val observationMethodRepository: ObservationMethodRepository,
+        private val observationKindRepository: ObservationKindRepository,
+        private val observationFilterRepository: ObservationFilterRepository
+): ObservationsService {
+    override fun getAllMethods(): List<IdNameModel> {
+        return observationMethodRepository.findAll().map(IdNameEntity::toModel)
+    }
+
+    override fun getAllKinds(): List<IdNameModel> {
+        return observationKindRepository.findAll().map(IdNameEntity::toModel)
+    }
+
+    override fun getAllFilters(): List<IdNameModel> {
+        return observationFilterRepository.findAll().map(IdNameEntity::toModel)
+    }
+
 }

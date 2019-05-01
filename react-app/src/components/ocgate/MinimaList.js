@@ -24,10 +24,6 @@ export default class MinimaList extends Component {
 }
 
 class DatabaseMinimaList extends Component {
-    constructor(props) {
-        super(props);
-    }
-
     render() {
         return (
             <table style={{paddingLeft: 0}}>

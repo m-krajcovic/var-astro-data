@@ -1,9 +1,9 @@
 import React, {Component} from "react";
 import {AuthConsumer} from "../../AuthContext";
 import {Route, Switch} from "react-router-dom";
-import axios from "axios";
-import {OcGateAdminStarsListComponent} from "./OcGateAdminStarsListComponent";
-import {OcGateAdminStarDetailComponent} from "./OcGateAdminStarDetailComponent";
+// import axios from "axios";
+import {OcGateAdminStarsListPage} from "./OcGateAdminStarsListPage";
+import {OcGateAdminStarDetailPage} from "./OcGateAdminStarDetailPage";
 
 export default class OcGateAdminPage extends Component {
     render() {
@@ -16,7 +16,8 @@ export default class OcGateAdminPage extends Component {
                             {/*render={props => (*/}
                             {/*/!*<CzevAdmin {...props} entities={{...this.state}}/>*!/*/}
                             {/*)}/>)}*/}
-                            <Route path="/admin/ocgate/stars/:id" component={OcGateAdminStarDetailComponent}/>
+                            <Route path="/admin/ocgate/stars/:id" component={OcGateAdminStarDetailPage}/>
+                            <Route path="/admin/ocgate/stars" component={OcGateAdminStarsListPage}/>
                             <Route path="/admin/ocgate" component={OcGateAdminLandingPage}/>
                         </Switch>)
                 }}
@@ -28,7 +29,6 @@ class OcGateAdminLandingPage extends Component {
     render() {
         return (
             <span>Hello from the oc gate admin page
-                <OcGateAdminStarsListComponent/>
             </span>
         );
     }

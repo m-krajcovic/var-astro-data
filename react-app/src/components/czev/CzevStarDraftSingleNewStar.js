@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../api-endpoint";
-import {Alert, Button, Col, Form, Icon, List, Modal, notification, Row, Spin, Tooltip, message, Upload} from "antd";
+import {Alert, Button, Col, Form, Icon, List, Modal, notification, Row, Spin, Tooltip, message} from "antd";
 import {CzevStarDraftSingleStarFormItems} from "./CzevStarDraftSingleStarFormItems";
 import {Link, Redirect} from "react-router-dom";
 import {CoordinateWrapper} from "../common/CoordinateWrapper";

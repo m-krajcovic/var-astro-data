@@ -3,10 +3,6 @@ import './ConstellationList.css';
 import {Link} from "react-router-dom";
 
 class ConstellationList extends Component {
-    constructor(props) {
-        super(props);
-    }
-
     render() {
         if (this.props.loading) {
             return (

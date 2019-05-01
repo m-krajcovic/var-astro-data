@@ -76,7 +76,7 @@ export class UploadedFilesList extends Component {
                                                       }}/>])}
                         >
                             {inDeleted && <WillBeRemovedSpan/>}
-                            <a href={`${BASE_URL}/czev/files/${file.id}`} target="_blank" style={{
+                            <a href={`${BASE_URL}/czev/files/${file.id}`} target="_blank" rel="noopener noreferrer" style={{
                                 opacity: inDeleted ? 0.2 : 1
                             }}>
                                 <List.Item.Meta
