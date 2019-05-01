@@ -1,7 +1,8 @@
 import React, {Component, Fragment} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../../api-endpoint";
-import {Spin, Table} from "antd";
+import {Spin, Table, Layout, Card} from "antd";
+import {AnchorButton} from "../../common/AnchorButton";
 
 // STAR DETAILS
 //    STAR INFO
@@ -28,12 +29,12 @@ class StarBrightnessItem extends Component {
     }
 }
 
-class StarBrightnessesInfoComponent extends Component {
+class StarBrightnessInfoComponent extends Component {
     render() {
         return (
             <div style={{marginTop: "0.5rem"}}>
-                <h3>Brightnesses</h3>
-                {this.props.brightnesses.map(b => (<StarBrightnessItem brightness={b} key={b.id}/>))}
+                <h3>Brightness</h3>
+                {this.props.brightness.map(b => (<StarBrightnessItem brightness={b} key={b.id}/>))}
             </div>
         )
     }
@@ -45,7 +46,8 @@ class StarMinimaInfoTableComponent extends Component {
             <Table
                 dataSource={this.props.minimas}
                 size="small"
-                className="table-small-nomargin"
+                rowKey="id"
+                scroll={{x: 800}}
             >
                 <Table.Column
                     title="JD"
@@ -70,8 +72,8 @@ class StarMinimaInfoTableComponent extends Component {
 class StarMinimaInfoComponent extends Component {
     render() {
         return (
-            <div>
-                <h3>Minimas</h3>
+            <div style={{marginTop: "0.5rem"}}>
+                <h3>Minimas ({this.props.minimas.length})</h3>
                 <StarMinimaInfoTableComponent showKind={true} minimas={this.props.minimas}/>
             </div>
         )
@@ -97,8 +99,8 @@ class StarElementItem extends Component {
                 <div><span style={spanStyle}>M0:</span> {this.props.element.minimum}</div>
                 <div><span style={spanStyle}>Period:</span> {this.props.element.period}</div>
                 <div>
-                    <div>Minimas: {this.props.element.minimas.length} <a
-                        onClick={() => this.setState({minimaShow: !this.state.minimaShow})}>{this.state.minimaShow ? 'Hide' : 'Show'}</a>
+                    <div style={this.state.minimaShow ? {marginBottom: "0.5rem"} : {}}>Minimas: {this.props.element.minimas.length} <AnchorButton size="small"
+                        onClick={() => this.setState({minimaShow: !this.state.minimaShow})}>{this.state.minimaShow ? 'Hide' : 'Show'}</AnchorButton>
                     </div>
                     {this.state.minimaShow && (<StarMinimaInfoTableComponent minimas={this.props.element.minimas}/>)}
                 </div>
@@ -125,12 +127,14 @@ class StarGenericInfoComponent extends Component {
                 <h2>{this.props.star.name} {this.props.star.constellation.abbreviation} {this.props.star.comp && (
                     <span> ({this.props.star.comp})</span>)}</h2>
                 <div><b>Constellation: </b> {this.props.star.constellation.name}</div>
+                <div><b>Coordinates: </b> {this.props.star.coordinates.raString} {this.props.star.coordinates.decString}</div>
+                <div><b>Type: </b> {this.props.star.type}</div>
             </div>
         );
     }
 }
 
-export class OcGateAdminStarDetailComponent extends Component {
+export class OcGateAdminStarDetailPage extends Component {
     constructor(props) {
         super(props);
         this.state = {star: null};
@@ -160,16 +164,20 @@ export class OcGateAdminStarDetailComponent extends Component {
 
     render() {
         return (
-            <Spin spinning={!this.state.star}>
-                {this.state.star && (
-                    <Fragment>
-                        <StarGenericInfoComponent star={this.state.star}/>
-                        <StarBrightnessesInfoComponent brightnesses={this.state.star.brightness}/>
-                        <StarElementsInfoComponent elements={this.state.star.elements}/>
-                        <StarMinimaInfoComponent minimas={this.state.minimas}/>
-                    </Fragment>
-                )}
-            </Spin>
+            <Layout.Content style={{margin: "24px 24px 0"}}>
+                <Card>
+                    <Spin spinning={!this.state.star}>
+                        {this.state.star && (
+                            <Fragment>
+                                <StarGenericInfoComponent star={this.state.star}/>
+                                <StarBrightnessInfoComponent brightness={this.state.star.brightness}/>
+                                <StarElementsInfoComponent elements={this.state.star.elements}/>
+                                <StarMinimaInfoComponent minimas={this.state.minimas}/>
+                            </Fragment>
+                        )}
+                    </Spin>
+                </Card>
+            </Layout.Content>
         );
     }
 }

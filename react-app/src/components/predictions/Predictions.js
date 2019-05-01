@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../api-endpoint";
-import {Card, Col, DatePicker, Icon, Layout, Popover, Row, Spin, Table, Tag} from "antd";
+import {Card, Col, DatePicker, Icon, Layout, Popover, Row, Spin, Table} from "antd";
 import {CoordsInput, TableInputFilter, TableInputNumberFilter, TableInputRangeFilter} from "../../App";
 import moment from "moment";
 import {PredictionsVirtualizedList} from "./PredictionsVirtualizedList";
@@ -17,10 +17,10 @@ const urlPropsQueryConfig = {
     date: {type: UrlQueryParamTypes.string},
 };
 
-class SessionCache {
-    constructor() {
-    }
-}
+// class SessionCache {
+//     constructor() {
+//     }
+// }
 
 class PredictionsPage extends Component {
     static columns = [

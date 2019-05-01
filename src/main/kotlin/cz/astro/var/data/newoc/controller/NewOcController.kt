@@ -12,7 +12,8 @@ import javax.validation.Valid
 class NewOcController(
         private val starsService: StarsService,
         private val publicationsService: PublicationsService,
-        private val constellationsService: ConstellationService
+        private val constellationsService: ConstellationService,
+        private val observationsService: ObservationsService
 ) {
 //    GET
 //    constellations
@@ -49,6 +50,16 @@ class NewOcController(
 
     @GetMapping("publications")
     fun getAllPublications(): List<PublicationModel> = publicationsService.getAll()
+
+    @GetMapping("observations/methods")
+    fun getAllObservationMethods(): List<IdNameModel> = observationsService.getAllMethods()
+
+    @GetMapping("observations/kinds")
+    fun getAllObservationKinds(): List<IdNameModel> = observationsService.getAllKinds()
+
+    @GetMapping("observations/filters")
+    fun getAllObservationFilters(): List<IdNameModel> = observationsService.getAllFilters()
+
 
 
     @PutMapping("stars/{id}")

@@ -31,6 +31,8 @@ import {Predictions} from "./components/predictions/Predictions";
 import {UserProfileProvider} from "./components/common/UserProfileContext";
 import {RouterToUrlQuery} from "react-url-query";
 import AdminPage from "./components/admin/AdminPage";
+import {ObservationsProvider} from "./components/ocgate/ObservationsContext";
+import {AnchorButton} from "./components/common/AnchorButton";
 
 const {Header, Content, Sider} = Layout;
 
@@ -82,53 +84,55 @@ class App extends Component {
                 <RouterToUrlQuery>
                     <UserProfileProvider>
                         <AuthProvider>
-                            <Layout className="layout" style={{minHeight: "100vh"}}>
-                                <Header style={{width: "100%"}}>
-                                    <Row>
-                                        <Col span={20}>
-                                            <LinkMenu/>
-                                        </Col>
-                                        <Col span={4} style={{textAlign: "right"}}>
-                                            <AuthConsumer>
-                                                {({logout, isAuth}) => {
-                                                    return isAuth ? (
-                                                        <Link to="/logout">Log out</Link>
-                                                    ) : (
-                                                        <>
-                                                            <Link style={{marginRight: 8}} to="/login">Log in</Link>
-                                                            <Link to="/register">Register</Link>
-                                                        </>
-                                                    )
-                                                }}
-                                            </AuthConsumer>
-                                        </Col>
-                                    </Row>
-                                </Header>
-                                <AuthConsumer>
-                                    {({isAuth, isAdmin}) =>
-                                        (
-                                            <Switch>
-                                                {isAuth && (
-                                                    <Route exact path="/logout" component={Logout}/>
-                                                )}
-                                                {!isAuth && (
-                                                    <Route exact path="/login" component={Login}/>
-                                                )}
-                                                {!isAuth && (
-                                                    <Route exact path="/register" component={Register}/>
-                                                )}
-                                                <Route path="/oc/:const?/:star?" component={OcGate}/>
-                                                <Route exact path="/predictions" component={Predictions}/>
-                                                <Route path="/czev" component={Czev}/>
-                                                {isAdmin && (
-                                                    <Route path="/admin" component={AdminPage}/>
-                                                )}
-                                                <Redirect to="/czev"/>
-                                            </Switch>
-                                        )
-                                    }
-                                </AuthConsumer>
-                            </Layout>
+                            <ObservationsProvider>
+                                <Layout className="layout" style={{minHeight: "100vh"}}>
+                                    <Header style={{width: "100%"}}>
+                                        <Row>
+                                            <Col span={20}>
+                                                <LinkMenu/>
+                                            </Col>
+                                            <Col span={4} style={{textAlign: "right"}}>
+                                                <AuthConsumer>
+                                                    {({logout, isAuth}) => {
+                                                        return isAuth ? (
+                                                            <Link to="/logout">Log out</Link>
+                                                        ) : (
+                                                            <>
+                                                                <Link style={{marginRight: 8}} to="/login">Log in</Link>
+                                                                <Link to="/register">Register</Link>
+                                                            </>
+                                                        )
+                                                    }}
+                                                </AuthConsumer>
+                                            </Col>
+                                        </Row>
+                                    </Header>
+                                    <AuthConsumer>
+                                        {({isAuth, isAdmin}) =>
+                                            (
+                                                <Switch>
+                                                    {isAuth && (
+                                                        <Route exact path="/logout" component={Logout}/>
+                                                    )}
+                                                    {!isAuth && (
+                                                        <Route exact path="/login" component={Login}/>
+                                                    )}
+                                                    {!isAuth && (
+                                                        <Route exact path="/register" component={Register}/>
+                                                    )}
+                                                    <Route path="/oc/:const?/:star?" component={OcGate}/>
+                                                    <Route exact path="/predictions" component={Predictions}/>
+                                                    <Route path="/czev" component={Czev}/>
+                                                    {isAdmin && (
+                                                        <Route path="/admin" component={AdminPage}/>
+                                                    )}
+                                                    <Redirect to="/czev"/>
+                                                </Switch>
+                                            )
+                                        }
+                                    </AuthConsumer>
+                                </Layout>
+                            </ObservationsProvider>
                         </AuthProvider>
                     </UserProfileProvider>
                 </RouterToUrlQuery>
@@ -456,9 +460,13 @@ export class TableInputFilter extends Component {
                         value={this.props.actions.selectedKeys[0]}
                         onChange={e => this.props.actions.setSelectedKeys([e.target.value])}/>
                 </div>
-                <div className="ant-table-filter-dropdown-btns"><a
-                    className="ant-table-filter-dropdown-link confirm" onClick={this.handleOk}>OK</a><a
-                    className="ant-table-filter-dropdown-link clear" onClick={this.handleReset}>Reset</a>
+                <div className="ant-table-filter-dropdown-btns">
+                    <AnchorButton
+                        className="ant-table-filter-dropdown-link confirm"
+                        onClick={this.handleOk}>OK</AnchorButton>
+                    <AnchorButton
+                        className="ant-table-filter-dropdown-link clear"
+                        onClick={this.handleReset}>Reset</AnchorButton>
                 </div>
             </div>
         )
@@ -496,8 +504,10 @@ export class TableInputNumberFilter extends Component {
                         onChange={value => this.props.actions.setSelectedKeys([value])}/>
                 </div>
                 <div className="ant-table-filter-dropdown-btns">
-                    <a className="ant-table-filter-dropdown-link confirm" onClick={this.handleOk}>OK</a>
-                    <a className="ant-table-filter-dropdown-link clear" onClick={this.handleReset}>Reset</a>
+                    <AnchorButton className="ant-table-filter-dropdown-link confirm"
+                                  onClick={this.handleOk}>OK</AnchorButton>
+                    <AnchorButton className="ant-table-filter-dropdown-link clear"
+                                  onClick={this.handleReset}>Reset</AnchorButton>
                 </div>
             </div>
         )
@@ -539,9 +549,10 @@ export class TableInputRangeFilter extends Component {
                         }])}
                     />
                 </div>
-                <div className="ant-table-filter-dropdown-btns"><a
-                    className="ant-table-filter-dropdown-link confirm" onClick={this.handleOk}>OK</a><a
-                    className="ant-table-filter-dropdown-link clear" onClick={this.handleReset}>Reset</a>
+                <div className="ant-table-filter-dropdown-btns"><AnchorButton
+                    className="ant-table-filter-dropdown-link confirm"
+                    onClick={this.handleOk}>OK</AnchorButton><AnchorButton
+                    className="ant-table-filter-dropdown-link clear" onClick={this.handleReset}>Reset</AnchorButton>
                 </div>
             </div>
         )

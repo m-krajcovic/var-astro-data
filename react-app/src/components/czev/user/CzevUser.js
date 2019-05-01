@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {Alert, Avatar, Badge, Button, Card, Col, Form, Icon, List, Modal, notification, Radio, Row, Spin} from "antd";
+import {Alert, Badge, Button, Card, Col, Form, Modal, notification, Radio, Row, Spin} from "antd";
 import {Redirect, Route, Switch} from "react-router-dom";
 import axios from "axios";
 import {BASE_URL} from "../../../api-endpoint";
