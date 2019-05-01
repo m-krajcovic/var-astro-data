@@ -30,6 +30,7 @@ import "./components/http"
 import {Predictions} from "./components/predictions/Predictions";
 import {UserProfileProvider} from "./components/common/UserProfileContext";
 import {RouterToUrlQuery} from "react-url-query";
+import AdminPage from "./components/admin/AdminPage";
 
 const {Header, Content, Sider} = Layout;
 
@@ -104,7 +105,7 @@ class App extends Component {
                                     </Row>
                                 </Header>
                                 <AuthConsumer>
-                                    {({isAuth}) =>
+                                    {({isAuth, isAdmin}) =>
                                         (
                                             <Switch>
                                                 {isAuth && (
@@ -119,6 +120,9 @@ class App extends Component {
                                                 <Route path="/oc/:const?/:star?" component={OcGate}/>
                                                 <Route exact path="/predictions" component={Predictions}/>
                                                 <Route path="/czev" component={Czev}/>
+                                                {isAdmin && (
+                                                    <Route path="/admin" component={AdminPage}/>
+                                                )}
                                                 <Redirect to="/czev"/>
                                             </Switch>
                                         )
