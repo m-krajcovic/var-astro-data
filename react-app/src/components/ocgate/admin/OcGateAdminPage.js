@@ -4,6 +4,7 @@ import {Route, Switch} from "react-router-dom";
 // import axios from "axios";
 import {OcGateAdminStarsListPage} from "./OcGateAdminStarsListPage";
 import {OcGateAdminStarDetailPage} from "./OcGateAdminStarDetailPage";
+import {OcGateAdminStarNewPage} from "./OcGateAdminStarNewPage";
 
 export default class OcGateAdminPage extends Component {
     render() {
@@ -16,6 +17,7 @@ export default class OcGateAdminPage extends Component {
                             {/*render={props => (*/}
                             {/*/!*<CzevAdmin {...props} entities={{...this.state}}/>*!/*/}
                             {/*)}/>)}*/}
+                            <Route path="/admin/ocgate/stars/new" component={OcGateAdminStarNewPage}/>
                             <Route path="/admin/ocgate/stars/:id" component={OcGateAdminStarDetailPage}/>
                             <Route path="/admin/ocgate/stars" component={OcGateAdminStarsListPage}/>
                             <Route path="/admin/ocgate" component={OcGateAdminLandingPage}/>
