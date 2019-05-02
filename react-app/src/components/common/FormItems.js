@@ -19,7 +19,6 @@ export const formItemLayoutWithOutLabel = {
     },
 };
 
-
 export class TypeFormItem extends Component {
     constructor(props) {
         super(props);
@@ -116,7 +115,9 @@ export class TypeFormItem extends Component {
                            validateStatus={!this.state.typeValid ? "warning" : ""}
                            help={!this.state.typeValid ? "This is not a valid VSX variable star type, but you can still submit it" : ""}
                            hasFeedback>
-                    {getFieldDecorator('type', {})(
+                    {getFieldDecorator('type', {
+                        initialValue: this.props.initialValue
+                    })(
                         <AutoComplete
                             onSearch={this.handleTypeSearch}
                             dataSource={this.state.typeOptions}
@@ -138,7 +139,6 @@ export class TypeFormItem extends Component {
     }
 }
 
-
 export class CoordinatesFormItem extends Component {
     constructor(props) {
         super(props);
@@ -158,10 +158,10 @@ export class CoordinatesFormItem extends Component {
         const {getFieldDecorator} = this.props.form;
 
         return (
-            <Form.Item {...formItemLayout} label="Coordinates (J2000)" required={this.props.required}>
+            <Form.Item {...formItemLayout} label="Coordinates" required={this.props.required}>
                 <Col span={12}>
                     <Form.Item>
-                        {getFieldDecorator('coordinatesRa', {
+                        {getFieldDecorator('coordinates.ra', {
                             rules: [{
                                 pattern: this.coordinatesRaRegexp,
                                 message: 'The input is not valid right ascension!',
@@ -170,6 +170,7 @@ export class CoordinatesFormItem extends Component {
                             }, {
                                 validator: this.validateRaRange
                             }],
+                            initialValue: this.props.initialValue ? this.props.initialValue.ra : null
                         })(
                             <Input placeholder="Right ascension" onBlur={this.props.onCoordsBlur}
                                    style={{
@@ -181,7 +182,7 @@ export class CoordinatesFormItem extends Component {
                 </Col>
                 <Col span={12}>
                     <Form.Item>
-                        {getFieldDecorator('coordinatesDec', {
+                        {getFieldDecorator('coordinates.dec', {
                             rules: [{
                                 pattern: this.coordinatesDecRegexp,
                                 message: 'The input is not valid declination!',
@@ -190,6 +191,7 @@ export class CoordinatesFormItem extends Component {
                             }, {
                                 validator: this.validateDecRange
                             }],
+                            initialValue: this.props.initialValue ? this.props.initialValue.dec : null
                         })(
                             <Input placeholder="Declination" onBlur={this.props.onCoordsBlur}
                                    style={{borderBottomLeftRadius: 0, borderTopLeftRadius: 0}}/>
@@ -317,15 +319,20 @@ export class NumberFormItem extends Component {
 }
 
 export class IdNameSelectFormItem extends Component {
+    defaultOptionName = (o) => o.name;
+
     render() {
         const {getFieldDecorator} = this.props.form;
+
+        let optionName = this.props.optionName || this.defaultOptionName;
+
         return (
             <Form.Item {...formItemLayout} label={this.props.label}>
                 <Spin spinning={this.props.loading}>
                     {getFieldDecorator(this.props.field, {
                         rules: [
                             {required: this.props.required, message: "Please select something"}
-                        ]
+                        ], initialValue: this.props.initialValue != null ? "" + this.props.initialValue : []
                     })(
                         <Select
                             mode={this.props.mode || "single"}
@@ -336,7 +343,7 @@ export class IdNameSelectFormItem extends Component {
                         >
                             {this.props.options.map(o => {
                                 return (
-                                    <Select.Option key={o.id}>{this.props.optionName(o)}</Select.Option>
+                                    <Select.Option key={o.id}>{optionName(o)}</Select.Option>
                                 )
                             })}
                         </Select>
@@ -353,7 +360,9 @@ export class TextAreaFormItem extends Component {
 
         return (
             <Form.Item {...formItemLayout} label={this.props.label}>
-                {getFieldDecorator(this.props.field, {})(
+                {getFieldDecorator(this.props.field, {
+                    initialValue: this.props.initialValue
+                })(
                     <Input.TextArea/>
                 )}
             </Form.Item>
@@ -367,7 +376,9 @@ export class InputFormItem extends Component {
 
         return (
             <Form.Item {...formItemLayout} label={this.props.label} required={this.props.required}>
-                {getFieldDecorator(this.props.field, {})(
+                {getFieldDecorator(this.props.field, {
+                    initialValue: this.props.initialValue
+                })(
                     <Input/>
                 )}
             </Form.Item>

@@ -19,7 +19,8 @@ class Star(
         var constellation: Constellation,
         @Embedded
         var coordinates: CosmicCoordinates,
-        var comp: String,
+        @Column(nullable = true)
+        var comp: String?,
         var type: String,
         @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL], orphanRemoval = true)
         var brightness: MutableSet<StarBrightness>,

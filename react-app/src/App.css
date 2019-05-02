@@ -91,3 +91,18 @@ body {
 .table-small-nomargin .ant-table-small > .ant-table-content > .ant-table-body {
     margin: 0;
 }
+
+
+.brightness-item-wrapper {
+    margin-bottom: 3rem;
+}
+
+.brightness-item-wrapper:not(:last-child) .ant-form-item:last-child > .ant-form-item-control-wrapper:after {
+    content: '';
+    height: 1px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    background-color: #ccc;
+    margin-top: 1.5rem;
+}

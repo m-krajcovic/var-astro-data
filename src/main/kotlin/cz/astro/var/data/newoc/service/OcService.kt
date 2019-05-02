@@ -1,9 +1,12 @@
 package cz.astro.`var`.data.newoc.service
 
 import cz.astro.`var`.data.czev.repository.ConstellationRepository
+import cz.astro.`var`.data.czev.repository.User
 import cz.astro.`var`.data.czev.repository.UserRepository
 import cz.astro.`var`.data.czev.service.*
 import cz.astro.`var`.data.newoc.repository.*
+import cz.astro.`var`.data.security.SecurityService
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -61,7 +64,7 @@ class StarNewModel(
         val name: String,
         val constellationId: Long,
         val coordinates: CosmicCoordinatesModel,
-        val comp: String,
+        val comp: String?,
         val type: String,
         @field:Size(min = 1)
         val brightness: List<StarBrightnessNewModel>,
@@ -73,7 +76,7 @@ class StarUpdateModel(
         val name: String,
         val constellationId: Long,
         val coordinates: CosmicCoordinatesModel,
-        val comp: String,
+        val comp: String?,
         val type: String
 )
 
@@ -82,7 +85,7 @@ class StarListModel(
         val name: String,
         val constellation: ConstellationModel,
         val coordinates: CosmicCoordinatesModel,
-        val comp: String,
+        val comp: String?,
         val type: String
 )
 
@@ -91,7 +94,7 @@ class StarDetailsModel(
         val name: String,
         val constellation: ConstellationModel,
         val coordinates: CosmicCoordinatesModel,
-        val comp: String,
+        val comp: String?,
         val type: String,
         val brightness: List<StarBrightnessModel>,
         val elements: List<StarElementModel>
@@ -208,6 +211,7 @@ fun StarPublication.toModel(): PublicationModel {
 * */
 @Service
 @Transactional
+@PreAuthorize("hasRole('ADMIN')")
 class StarsServiceImpl(
         private val starsRepository: StarsRepository,
         private val constellationRepository: ConstellationRepository,
@@ -219,7 +223,8 @@ class StarsServiceImpl(
         private val publicationsRepository: PublicationsRepository,
         private val minimaRepository: MinimaRepository,
         private val minimaBatchRepository: MinimaBatchRepository,
-        private val starBrightnessRepository: StarBrightnessRepository
+        private val starBrightnessRepository: StarBrightnessRepository,
+        private val securityService: SecurityService
 ) : StarsService {
     override fun updateStarBrightness(brightnessId: Long, model: StarBrightnessNewModel) {
         val entity = starBrightnessRepository.findById(brightnessId).orElseThrow { ServiceException("Star brightness doesn't exist") }
@@ -305,9 +310,7 @@ class StarsServiceImpl(
     }
 
     override fun insertMinimas(minimas: List<StarMinimaNewModel>) {
-        // TODO user
-        val user = userRepository.findAll().first()
-        var importBatch = MinimaImportBatch(LocalDateTime.now(), user)
+        var importBatch = MinimaImportBatch(LocalDateTime.now(), User(securityService.currentUser.id))
         importBatch = minimaBatchRepository.save(importBatch)
         minimas.forEach { minima ->
             val starElement = starElementRepository.findById(minima.starElementId).orElseThrow { ServiceException("Star element doesn't exist") }
@@ -387,7 +390,8 @@ class ObservationsServiceImpl(
         private val observationMethodRepository: ObservationMethodRepository,
         private val observationKindRepository: ObservationKindRepository,
         private val observationFilterRepository: ObservationFilterRepository
-): ObservationsService {
+) : ObservationsService {
+
     override fun getAllMethods(): List<IdNameModel> {
         return observationMethodRepository.findAll().map(IdNameEntity::toModel)
     }
@@ -399,5 +403,4 @@ class ObservationsServiceImpl(
     override fun getAllFilters(): List<IdNameModel> {
         return observationFilterRepository.findAll().map(IdNameEntity::toModel)
     }
-
 }

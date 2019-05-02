@@ -182,8 +182,8 @@ class CzevUserDraftDetailComponent extends Component {
                         values.crossIds.forEach(id => {
                             formData.append('crossIdentifications', id);
                         });
-                        formData.append('rightAscension', values.coordinatesRa);
-                        formData.append('declination', values.coordinatesDec);
+                        formData.append('rightAscension', values.coordinates.ra);
+                        formData.append('declination', values.coordinates.dec);
                         formData.append('publicNote', values.note ? values.note : "");
                         formData.append('privateNote', "");
                         formData.append('year', values.year);
@@ -241,11 +241,11 @@ class CzevUserDraftDetailComponent extends Component {
 
     handleCoordsBlur = () => {
         const {form: {validateFields}} = this.props;
-        validateFields(["coordinatesRa", "coordinatesDec"], (err, values) => {
-            if (!err && values && values.coordinatesRa && values.coordinatesDec) {
+        validateFields(["coordinates.ra", "coordinates.dec"], (err, values) => {
+            if (!err && values && values.coordinates.ra && values.coordinates.dec) {
                 this.props.cds.loadByCoordinates({
-                    ra: values.coordinatesRa,
-                    dec: values.coordinatesDec
+                    ra: values.coordinates.ra,
+                    dec: values.coordinates.dec
                 });
             }
         });
@@ -268,8 +268,8 @@ class CzevUserDraftDetailComponent extends Component {
         const {form} = this.props;
         const {J, K, V} = model.magnitudes;
         let valuesFromUcac = {
-            coordinatesRa: model.coordinates.ra,
-            coordinatesDec: model.coordinates.dec,
+            "coordinates.ra": model.coordinates.ra,
+            "coordinates.dec": model.coordinates.dec,
             "crossIds[0]": `UCAC4 ${model.identifier}`,
             vmagnitude: V,
             jmagnitude: J,

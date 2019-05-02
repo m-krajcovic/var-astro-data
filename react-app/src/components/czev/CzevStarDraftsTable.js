@@ -1,5 +1,6 @@
 import React, {Component} from "react";
-import {Icon, Popconfirm, Table} from "antd";
+import {Table} from "antd";
+import {IconDeletePopconfirm} from "../common/DeletePopconfirm";
 
 export class CzevStarDraftsTable extends Component {
     static columns = [
@@ -96,7 +97,7 @@ export class CzevStarDraftsTable extends Component {
                             onClick: e => e.stopPropagation()
                         };
                     },
-                    render: id => (<DraftDeletePopconfirm onConfirm={() => this.props.onRemoveClick(id)}/>)
+                    render: id => (<IconDeletePopconfirm onConfirm={() => this.props.onRemoveClick(id)}/>)
                 }
             )
         }
@@ -113,32 +114,5 @@ export class CzevStarDraftsTable extends Component {
                 size="small" rowKey="id" columns={columns} dataSource={this.props.data}
                 loading={this.props.loading}/>
         )
-    }
-}
-
-class DraftDeletePopconfirm extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {visible: false}
-    }
-
-    render() {
-        return (
-            <Popconfirm visible={this.state.visible} title="Are you sure？" okText="Yes"
-                        cancelText="No"
-                        onConfirm={e => {
-                            e.stopPropagation();
-                            this.props.onConfirm();
-                        }}
-                        onCancel={e => {
-                            e.stopPropagation();
-                            this.setState({...this.state, visible: false})
-                        }}>
-                <Icon onClick={e => {
-                    e.stopPropagation();
-                    this.setState({...this.state, visible: true})
-                }} className="clickable-icon" type="delete"/>
-            </Popconfirm>
-        );
     }
 }
