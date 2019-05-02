@@ -1,50 +1,188 @@
 import React, {Component, Fragment} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../../api-endpoint";
-import {Spin, Table, Layout, Card, Button, Modal, Form, Radio, Input, notification, Popconfirm} from "antd";
+import {Table, Layout, Card, Button, Modal, Form, notification} from "antd";
 import {AnchorButton} from "../../common/AnchorButton";
 import {
-    CoordinatesFormItem, formItemLayoutWithOutLabel,
-    IdNameSelectFormItem,
+    CoordinatesFormItem, IdNameSelectFormItem,
     InputFormItem,
     NumberFormItem,
     TypeFormItem
 } from "../../common/FormItems";
 import {ObservationsConsumer} from "../ObservationsContext";
 import AnimateHeight from "react-animate-height";
-import {AnchorDeletePopconfirm} from "../../common/DeletePopconfirm";
 import {EditDeleteAnchorButtons} from "../../common/EditDeleteAnchorButtons";
 import {Redirect} from "react-router-dom";
 
-class StarBrightnessItem extends Component {
-    render() {
-        const spanStyle = {
-            display: "inline-block",
-            width: 80,
-            marginRight: "0.5rem"
-        };
-        return (
-            <div>
-                <b style={{marginRight: "0.5rem"}}>{this.props.brightness.filter.name}:</b>
-                <span style={spanStyle}>MIN S: {this.props.brightness.minS}</span>
-                <span style={spanStyle}>MIN P: {this.props.brightness.minP}</span>
-                <span style={spanStyle}>MAX P: {this.props.brightness.maxP}</span>
-                <EditDeleteAnchorButtons/>
-            </div>
-        );
-    }
-}
+const StarBrightnessItem = Form.create()(
+    class extends Component {
 
-class StarBrightnessInfoComponent extends Component {
-    render() {
-        return (
-            <div style={{marginTop: "0.5rem"}}>
-                <h3>Brightness</h3>
-                {this.props.brightness.map(b => (<StarBrightnessItem brightness={b} key={b.id}/>))}
-            </div>
-        )
-    }
-}
+        static defaultProps = {
+            onChange: () => {
+            }
+        };
+
+        constructor(props) {
+            super(props);
+            this.state = {minimaShow: false, loading: false};
+        }
+
+        handleDelete = () => {
+            axios.delete(BASE_URL + "/ocgate/stars/brightness/" + this.props.brightness.id)
+                .then(result => {
+                    notification.success({
+                        message: "Brightness deleted"
+                    });
+                    this.props.onChange()
+                })
+                .catch(reason => {
+                    // :(
+                });
+        };
+
+        handleEdit = () => {
+            this.setState({...this.state, modalVisible: true});
+        };
+
+        handleEditSubmit = () => {
+            this.props.form.validateFieldsAndScroll((err, values) => {
+                if (!err) {
+                    this.setState({...this.state, loading: true});
+                    axios.put(BASE_URL + "/ocgate/stars/brightness/" + this.props.brightness.id, values)
+                        .then(result => {
+                            notification.success({
+                                message: "Edited star brightness information"
+                            });
+                            this.setState({...this.state, loading: false});
+                            this.props.onChange();
+                        })
+                        .catch(reason => {
+                            // :(
+                        });
+                }
+            });
+        };
+
+        render() {
+            const spanStyle = {
+                display: "inline-block",
+                width: 80,
+                marginRight: "0.5rem"
+            };
+            return (
+                <div>
+                    <b style={{marginRight: "0.5rem"}}>{this.props.brightness.filter.name}:</b>
+                    <span style={spanStyle}>MIN S: {this.props.brightness.minS}</span>
+                    <span style={spanStyle}>MIN P: {this.props.brightness.minP}</span>
+                    <span style={spanStyle}>MAX P: {this.props.brightness.maxP}</span>
+                    <EditDeleteAnchorButtons onEdit={this.handleEdit} onDelete={this.handleDelete}/>
+                    <Modal
+                        visible={this.state.modalVisible}
+                        title="Edit star brightness"
+                        okText="Submit"
+                        onCancel={() => this.setState({...this.state, modalVisible: false})}
+                        onOk={this.handleEditSubmit}
+                        confirmLoading={this.state.loading}
+                    >
+                        <ObservationsConsumer>
+                            {({loading, filters}) => (
+                                <Form layout="vertical">
+                                    <IdNameSelectFormItem loading={loading} form={this.props.form}
+                                                          label="Filter"
+                                                          field="filterId"
+                                                          initialValue={this.props.brightness.filter.id}
+                                                          options={filters} required={true}/>
+                                    <NumberFormItem form={this.props.form} label="Min S"
+                                                    initialValue={this.props.brightness.minS}
+                                                    field="minS"/>
+                                    <NumberFormItem form={this.props.form} label="Min P"
+                                                    initialValue={this.props.brightness.minP}
+                                                    field="minP"/>
+                                    <NumberFormItem form={this.props.form} label="Max P"
+                                                    initialValue={this.props.brightness.maxP}
+                                                    field="maxP"/>
+                                </Form>
+                            )}
+                        </ObservationsConsumer>
+                    </Modal>
+                </div>
+            );
+        }
+    });
+
+const StarBrightnessInfoComponent = Form.create()(
+    class extends Component {
+
+        constructor(props) {
+            super(props);
+            this.state = {
+                modalVisible: false,
+                loading: false
+            }
+        }
+
+        handleAdd = () => {
+            this.setState({
+                modalVisible: true
+            })
+        };
+
+        handleAddSubmit = () => {
+            this.props.form.validateFieldsAndScroll((err, values) => {
+                if (!err) {
+                    values["publicationIds"] = [];
+                    this.setState({...this.state, loading: true});
+                    axios.post(BASE_URL + `/ocgate/stars/${this.props.star.id}/brightness`, values)
+                        .then(result => {
+                            notification.success({
+                                message: "Added new brightness"
+                            });
+                            this.setState({...this.state, modalVisible: false, loading: false});
+                            this.props.onChange();
+                        })
+                        .catch(reason => {
+                            // :(
+                        });
+                }
+            });
+        };
+
+        render() {
+            return (
+                <div style={{marginTop: "0.5rem"}}>
+                    <Modal
+                        visible={this.state.modalVisible}
+                        title="Add new brightness"
+                        okText="Add"
+                        onCancel={() => this.setState({...this.state, modalVisible: false})}
+                        onOk={this.handleAddSubmit}
+                        confirmLoading={this.state.loading}
+                    >
+                        <ObservationsConsumer>
+                            {({filters, loading}) => (
+                                <Form layout="vertical">
+                                    <IdNameSelectFormItem loading={loading} form={this.props.form}
+                                                          label="Filter"
+                                                          field="filterId"
+                                                          options={filters} required={true}/>
+                                    <NumberFormItem form={this.props.form} label="Min S"
+                                                    field="minS"/>
+                                    <NumberFormItem form={this.props.form} label="Min P"
+                                                    field="minP"/>
+                                    <NumberFormItem form={this.props.form} label="Max P"
+                                                    field="maxP"/>
+                                </Form>
+                            )}
+                        </ObservationsConsumer>
+                    </Modal>
+                    <h3>Brightness <Button size="small" type="primary"
+                                           onClick={this.handleAdd}>Add</Button></h3>
+                    {this.props.brightness.map(b => (
+                        <StarBrightnessItem onChange={this.props.onChange} brightness={b} key={b.id}/>))}
+                </div>
+            )
+        }
+    });
 
 const StarMinimaInfoTableComponent = Form.create()(
     class extends Component {
@@ -322,7 +460,7 @@ const StarElementItem = Form.create()(
                     </div>
                     <Modal
                         visible={this.state.modalVisible}
-                        title="Edit star"
+                        title="Edit star element"
                         okText="Submit"
                         onCancel={() => this.setState({...this.state, modalVisible: false})}
                         onOk={this.handleEditSubmit}
@@ -348,17 +486,78 @@ const StarElementItem = Form.create()(
         }
     });
 
-class StarElementsInfoComponent extends Component {
-    render() {
-        return (
-            <div style={{marginTop: "0.5rem"}}>
-                <h3>Elements</h3>
-                {this.props.elements.map(e => (
-                    <StarElementItem onChange={this.props.onChange} element={e} key={e.id}/>))}
-            </div>
-        )
-    }
-}
+// TODO: add star element
+const StarElementsInfoComponent = Form.create()(
+    class extends Component {
+
+        constructor(props) {
+            super(props);
+            this.state = {
+                modalVisible: false,
+                loading: false
+            }
+        }
+
+        handleAdd = () => {
+            this.setState({
+                modalVisible: true
+            })
+        };
+
+        handleAddSubmit = () => {
+            this.props.form.validateFieldsAndScroll((err, values) => {
+                if (!err) {
+                    values["publicationIds"] = [];
+                    this.setState({...this.state, loading: true});
+                    axios.post(BASE_URL + `/ocgate/stars/${this.props.star.id}/elements`, values)
+                        .then(result => {
+                            notification.success({
+                                message: "Added new element"
+                            });
+                            this.setState({...this.state, modalVisible: false, loading: false});
+                            this.props.onChange();
+                        })
+                        .catch(reason => {
+                            // :(
+                        });
+                }
+            });
+        };
+
+        render() {
+            return (
+                <div style={{marginTop: "0.5rem"}}>
+                    <Modal
+                        visible={this.state.modalVisible}
+                        title="Add new element"
+                        okText="Add"
+                        onCancel={() => this.setState({...this.state, modalVisible: false})}
+                        onOk={this.handleAddSubmit}
+                        confirmLoading={this.state.loading}
+                    >
+                        <ObservationsConsumer>
+                            {({kinds, loading}) => (
+                                <Form layout="vertical">
+                                    <IdNameSelectFormItem loading={loading} form={this.props.form}
+                                                          label="Kind"
+                                                          field="kindId"
+                                                          options={kinds} required={true}/>
+                                    <NumberFormItem form={this.props.form} label="M0"
+                                                    field="minimum"/>
+                                    <NumberFormItem form={this.props.form} label="Period"
+                                                    field="period"/>
+                                </Form>
+                            )}
+                        </ObservationsConsumer>
+                    </Modal>
+                    <h3>Elements <Button size="small" type="primary"
+                                         onClick={this.handleAdd}>Add</Button></h3>
+                    {this.props.elements.map(e => (
+                        <StarElementItem onChange={this.props.onChange} element={e} key={e.id}/>))}
+                </div>
+            )
+        }
+    });
 
 const StarGenericInfoComponent = Form.create()(
     class extends Component {
@@ -500,9 +699,9 @@ export class OcGateAdminStarDetailPage extends Component {
                     {this.state.star && (
                         <Fragment>
                             <StarGenericInfoComponent star={this.state.star} onChange={this.componentDidMount}/>
-                            <StarBrightnessInfoComponent brightness={this.state.star.brightness}
+                            <StarBrightnessInfoComponent star={this.state.star} brightness={this.state.star.brightness}
                                                          onChange={this.componentDidMount}/>
-                            <StarElementsInfoComponent onChange={this.componentDidMount}
+                            <StarElementsInfoComponent star={this.state.star} onChange={this.componentDidMount}
                                                        elements={this.state.star.elements}/>
                             <StarMinimaInfoComponent elements={this.state.star.elements}
                                                      minimas={this.state.minimas}
