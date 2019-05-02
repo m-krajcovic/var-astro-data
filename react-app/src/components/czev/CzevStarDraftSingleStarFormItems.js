@@ -42,7 +42,6 @@ export class CzevStarDraftSingleStarFormItems extends Component {
                     placeholder="Select a filter band"
                     form={this.props.form}
                     options={this.props.entities.filterBands}
-                    optionName={(fb) => fb.name}
                     loading={this.props.entities.loading}/>
                 <NumberFormItem form={this.props.form} label="Epoch" field="epoch" min={2400000}/>
                 <NumberFormItem form={this.props.form} label="Period" field="period"/>

@@ -1,8 +1,8 @@
 import React, {Component} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../../api-endpoint";
-import {NavLink} from "react-router-dom";
-import {Card, Spin, Table, Layout} from "antd";
+import {Link, NavLink} from "react-router-dom";
+import {Card, Spin, Table, Layout, Button} from "antd";
 
 export class OcGateAdminStarsListPage extends Component {
 
@@ -29,6 +29,10 @@ export class OcGateAdminStarsListPage extends Component {
             <Layout.Content style={{margin: "24px 24px 0"}}>
                 <Card>
                     <Spin spinning={this.state.loading}>
+                        <div style={{marginBottom: "0.5rem", textAlign: "right"}}>
+                            <Button type="primary"><Link
+                                to="/admin/ocgate/stars/new">Add new star</Link></Button>
+                        </div>
                         <Table
                             scroll={{x: 800}}
                             columns={OcGateAdminStarsListPage.columns}

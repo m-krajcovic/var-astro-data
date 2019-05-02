@@ -84,8 +84,8 @@ class CzevStarEditComponent extends Component {
                         values.crossIds.forEach(id => {
                             formData.append('crossIdentifications', id);
                         });
-                        formData.append('rightAscension', values.coordinatesRa);
-                        formData.append('declination', values.coordinatesDec);
+                        formData.append('rightAscension', values.coordinates.ra);
+                        formData.append('declination', values.coordinates.dec);
                         formData.append('publicNote', values.note ? values.note : "");
                         formData.append('privateNote', "");
                         formData.append('year', values.year);
@@ -141,10 +141,10 @@ class CzevStarEditComponent extends Component {
     handleCoordsBlur = () => {
         const {form: {validateFields}} = this.props;
         validateFields(["coordinatesRa", "coordinatesDec"], (err, values) => {
-            if (!err && values && values.coordinatesRa && values.coordinatesDec) {
+            if (!err && values && values.coordinates.ra && values.coordinates.dec) {
                 this.props.cds.loadByCoordinates({
-                    ra: values.coordinatesRa,
-                    dec: values.coordinatesDec
+                    ra: values.coordinates.ra,
+                    dec: values.coordinates.dec
                 });
             }
         });

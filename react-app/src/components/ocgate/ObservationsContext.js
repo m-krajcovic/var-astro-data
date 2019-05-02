@@ -12,7 +12,7 @@ class ObservationsProvider extends React.Component {
             filters: [],
             methods: [],
             kinds: [],
-            loaded: false
+            loading: true
         };
     }
 
@@ -27,7 +27,7 @@ class ObservationsProvider extends React.Component {
         Promise.all([filtersPromise, methodsPromise, kindsPromise])
             .then(result => {
                 this.setState({
-                    loaded: true,
+                    loading: false,
                     filters: result[0].data,
                     methods: result[1].data,
                     kinds: result[2].data
@@ -42,10 +42,10 @@ class ObservationsProvider extends React.Component {
         return (
             <ObservationsContext.Provider
                 value={{
-                    isAuth: this.state.isAuth,
-                    isAdmin: this.state.isAdmin,
-                    login: this.login,
-                    logout: this.logout
+                    filters: this.state.filters,
+                    methods: this.state.methods,
+                    kinds: this.state.kinds,
+                    loading: this.state.loading
                 }}
             >
                 {this.props.children}
