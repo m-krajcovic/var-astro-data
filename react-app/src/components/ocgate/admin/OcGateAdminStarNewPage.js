@@ -10,6 +10,7 @@ import axios from "axios";
 import {BASE_URL} from "../../../api-endpoint";
 import {ObservationsConsumer} from "../ObservationsContext";
 import {Redirect} from "react-router-dom";
+import {EntitiesConsumer} from "../../common/EntitiesContext";
 
 class BrightnessSubFormComponent extends Component {
 
@@ -145,25 +146,8 @@ class StarNewComponent extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            constellationsLoading: true,
-            constellations: [],
             finished: false
         }
-    }
-
-    componentDidMount() {
-        this.setState({...this.state, constellationsLoading: true});
-        axios.get(BASE_URL + "/ocgate/constellations")
-            .then(result => {
-                this.setState({
-                    ...this.state,
-                    constellationsLoading: false,
-                    constellations: result.data
-                })
-            })
-            .catch(reason => {
-                // :(
-            })
     }
 
     handleSubmit = (e) => {
@@ -200,6 +184,8 @@ class StarNewComponent extends Component {
         return (
             <Row gutter={8}>
                 <Col span={24} sm={{span: 16}}>
+                    <EntitiesConsumer>
+                        {({constellations, types, loading}) => (
                     <Form onSubmit={this.handleSubmit}>
                         <h3>Star Information</h3>
                         <CoordinatesFormItem form={this.props.form} required={true}/>
@@ -209,13 +195,12 @@ class StarNewComponent extends Component {
                             field="constellationId"
                             label="Constellation"
                             placeholder="Select a constellation"
-                            loading={this.state.constellationsLoading}
+                            loading={loading}
                             required={true}
-                            options={this.state.constellations}
+                            options={constellations}
                             optionName={(cons) => `${cons.abbreviation} (${cons.name})`}/>
                         <InputFormItem form={this.props.form} label="Comp" field="comp"/>
-                        {/* TODO: load types */}
-                        <TypeFormItem form={this.props.form} types={new Set()}/>
+                        <TypeFormItem form={this.props.form} types={types} loading={loading}/>
 
                         <BrightnessSubFormComponent form={this.props.form}/>
 
@@ -230,6 +215,8 @@ class StarNewComponent extends Component {
                             <Button type="primary" htmlType="submit">Submit</Button>
                         </Form.Item>
                     </Form>
+                        )}
+                    </EntitiesConsumer>
                 </Col>
             </Row>
         );
