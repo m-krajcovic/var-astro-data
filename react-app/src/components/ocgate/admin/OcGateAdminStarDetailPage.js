@@ -13,6 +13,7 @@ import {ObservationsConsumer} from "../ObservationsContext";
 import AnimateHeight from "react-animate-height";
 import {EditDeleteAnchorButtons} from "../../common/EditDeleteAnchorButtons";
 import {Redirect} from "react-router-dom";
+import {EntitiesConsumer} from "../../common/EntitiesContext";
 
 const StarBrightnessItem = Form.create()(
     class extends Component {
@@ -80,6 +81,7 @@ const StarBrightnessItem = Form.create()(
                         visible={this.state.modalVisible}
                         title="Edit star brightness"
                         okText="Submit"
+                        destroyOnClose={true}
                         onCancel={() => this.setState({...this.state, modalVisible: false})}
                         onOk={this.handleEditSubmit}
                         confirmLoading={this.state.loading}
@@ -154,6 +156,7 @@ const StarBrightnessInfoComponent = Form.create()(
                         visible={this.state.modalVisible}
                         title="Add new brightness"
                         okText="Add"
+                        destroyOnClose={true}
                         onCancel={() => this.setState({...this.state, modalVisible: false})}
                         onOk={this.handleAddSubmit}
                         confirmLoading={this.state.loading}
@@ -350,6 +353,7 @@ const StarMinimaInfoComponent = Form.create()(
                         visible={this.state.visible}
                         title="Add new observed minima"
                         okText="Add"
+                        destroyOnClose={true}
                         onCancel={() => this.setState({...this.state, visible: false})}
                         onOk={this.handleAddMinimaSubmit}
                         confirmLoading={this.state.loading}
@@ -361,10 +365,10 @@ const StarMinimaInfoComponent = Form.create()(
                                                     required={true}/>
                                     <IdNameSelectFormItem
                                         form={this.props.form}
-                                        label="Element kind"
+                                        label="Star element"
                                         field="starElementId"
                                         options={this.props.elements}
-                                        optionName={e => e.kind.name}
+                                        optionName={e => `${e.kind.name} (M0: ${e.minimum}, P: ${e.period})`}
                                         required={true}
                                         loading={false}
                                     />
@@ -462,6 +466,7 @@ const StarElementItem = Form.create()(
                         visible={this.state.modalVisible}
                         title="Edit star element"
                         okText="Submit"
+                        destroyOnClose={true}
                         onCancel={() => this.setState({...this.state, modalVisible: false})}
                         onOk={this.handleEditSubmit}
                         confirmLoading={this.state.loading}
@@ -486,7 +491,6 @@ const StarElementItem = Form.create()(
         }
     });
 
-// TODO: add star element
 const StarElementsInfoComponent = Form.create()(
     class extends Component {
 
@@ -531,6 +535,7 @@ const StarElementsInfoComponent = Form.create()(
                         visible={this.state.modalVisible}
                         title="Add new element"
                         okText="Add"
+                        destroyOnClose={true}
                         onCancel={() => this.setState({...this.state, modalVisible: false})}
                         onOk={this.handleAddSubmit}
                         confirmLoading={this.state.loading}
@@ -632,30 +637,36 @@ const StarGenericInfoComponent = Form.create()(
                         visible={this.state.modalVisible}
                         title="Edit star"
                         okText="Submit"
+                        destroyOnClose={true}
                         onCancel={() => this.setState({...this.state, modalVisible: false})}
                         onOk={this.handleEditSubmit}
                         confirmLoading={this.state.loading}
                     >
-                        <Form layout="vertical">
-                            <CoordinatesFormItem form={this.props.form} required={true}
-                                                 initialValue={this.props.star.coordinates}/>
-                            <InputFormItem form={this.props.form} label="Name" field="name" required={true}
-                                           initialValue={this.props.star.name}/>
-                            {/* TODO: load constellations via context? */}
-                            <IdNameSelectFormItem
-                                form={this.props.form}
-                                field="constellationId"
-                                label="Constellation"
-                                placeholder="Select a constellation"
-                                required={true}
-                                options={[]}
-                                initialValue={this.props.star.constellation.id}
-                                optionName={(cons) => `${cons.abbreviation} (${cons.name})`}/>
-                            <InputFormItem form={this.props.form} label="Comp" field="comp"
-                                           initialValue={this.props.star.comp}/>
-                            {/* TODO: load types */}
-                            <TypeFormItem form={this.props.form} types={new Set()} initialValue={this.props.star.type}/>
-                        </Form>
+                        <EntitiesConsumer>
+                            {({constellations, types, loading}) => (
+                                <Form layout="vertical">
+                                    <CoordinatesFormItem form={this.props.form} required={true}
+                                                         initialValue={this.props.star.coordinates}/>
+                                    <InputFormItem form={this.props.form} label="Name" field="name" required={true}
+                                                   initialValue={this.props.star.name}/>
+                                    <IdNameSelectFormItem
+                                        form={this.props.form}
+                                        field="constellationId"
+                                        label="Constellation"
+                                        placeholder="Select a constellation"
+                                        required={true}
+                                        loading={loading}
+                                        options={constellations}
+                                        initialValue={this.props.star.constellation.id}
+                                        optionName={(cons) => `${cons.abbreviation} (${cons.name})`}/>
+
+                                    <InputFormItem form={this.props.form} label="Comp" field="comp"
+                                                   initialValue={this.props.star.comp}/>
+                                    <TypeFormItem form={this.props.form} types={types} loading={loading}
+                                                  initialValue={this.props.star.type}/>
+                                </Form>
+                            )}
+                        </EntitiesConsumer>
                     </Modal>
                 </div>
             );
