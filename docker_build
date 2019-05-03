@@ -1,2 +1,3 @@
+gradlew stage
 docker build -t mkrajcovic/var-astro-webapp .
 docker push mkrajcovic/var-astro-webapp:latest
