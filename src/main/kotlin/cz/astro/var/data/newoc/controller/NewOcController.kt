@@ -49,7 +49,7 @@ class NewOcController(
     fun getAllConstellations(): List<ConstellationModel> = constellationsService.getAll()
 
     @GetMapping("publications")
-    fun getAllPublications(): List<PublicationModel> = publicationsService.getAll()
+    fun getAllPublications(): List<MinimaPublicationModel> = publicationsService.getAll()
 
     @GetMapping("observations/methods")
     fun getAllObservationMethods(): List<IdNameModel> = observationsService.getAllMethods()
@@ -74,9 +74,12 @@ class NewOcController(
     @PutMapping("stars/elements/{id}")
     fun updateStarElement(@PathVariable id: Long, @Valid @RequestBody element: StarElementNewModel) = starsService.updateStarElement(id, element)
 
+    @PutMapping("publications/{id}")
+    fun updatePublication(@PathVariable id: Long, @Valid @RequestBody model: MinimaPublicationUpdateModel) = publicationsService.update(id, model)
+
 
     @PostMapping("publications")
-    fun insertPublication(@Valid @RequestBody publication: PublicationNewModel) = publicationsService.insert(publication)
+    fun insertPublication(@Valid @RequestBody publication: MinimaPublicationNewModel) = publicationsService.insert(publication)
 
     @PostMapping("stars")
     fun insertStar(@Valid @RequestBody star: StarNewModel): StarListModel = starsService.insert(star)
@@ -107,4 +110,7 @@ class NewOcController(
 
     @DeleteMapping("stars/{id}")
     fun deleteStar(@PathVariable id: Long) = starsService.deleteStar(id)
+
+    @DeleteMapping("publications/{id}")
+    fun deletePublication(@PathVariable id: Long) = publicationsService.delete(id)
 }

@@ -120,10 +120,10 @@ class CzevStarDraft(
         var jmagnitude: Double? = null,
         var vmagnitude: Double? = null,
         var kmagnitude: Double? = null
-) : CzevEntity()
+) : IdEntity()
 
 @Entity
-@Table(name = "czev_Constellation")
+@Table(name = "common_Constellation")
 @Audited
 class Constellation(
         @NaturalId
@@ -132,7 +132,7 @@ class Constellation(
         @NaturalId
         @Column(nullable = false, unique = true)
         var abbreviation: String
-) : CzevEntity() {
+) : IdEntity() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -150,12 +150,12 @@ class Constellation(
 }
 
 @Entity
-@Table(name = "czev_StarType")
+@Table(name = "common_StarType")
 class StarType(
         @NaturalId
         @Column(nullable = false, unique = true)
         var name: String
-) : CzevEntity() {
+) : IdEntity() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -173,13 +173,13 @@ class StarType(
 }
 
 @Entity
-@Table(name = "czev_FilterBand")
+@Table(name = "common_FilterBand")
 @Audited
 class FilterBand(
         @NaturalId
         @Column(nullable = false, unique = true)
         var name: String
-) : CzevEntity() {
+) : IdEntity() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -210,7 +210,7 @@ class StarObserver(
         @OneToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "user_id")
         var user: User? = null
-) : CzevEntity() {
+) : IdEntity() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -235,7 +235,7 @@ class StarObserver(
 }
 
 @Entity
-@Table(name = "czev_User")
+@Table(name = "common_User")
 @Audited
 class User(
         @NaturalId
@@ -245,7 +245,7 @@ class User(
         var password: String = "",
         @ManyToMany
         var roles: MutableSet<Role> = HashSet()
-) : CzevEntity() {
+) : IdEntity() {
 
     constructor(id: Long) : this() {
         super.id = id
@@ -266,13 +266,13 @@ class User(
 }
 
 @Entity
-@Table(name = "czev_Role")
+@Table(name = "common_Role")
 @Audited
 class Role(
         @NaturalId
         @Column(nullable = false, unique = true)
         val name: String
-) : CzevEntity()
+) : IdEntity()
 
 @Entity
 @Table(name = "czev_StarComment")
@@ -282,7 +282,7 @@ class StarComment(
         @ManyToOne(fetch = FetchType.LAZY)
         var star: CzevStar,
         @Column(columnDefinition = "text") var text: String
-) : CzevEntity()
+) : IdEntity()
 
 @Entity
 @Table(name = "czev_StarIdentification")
@@ -353,28 +353,28 @@ class StarAdditionalFile(
 }
 
 @Entity
-@Table(name = "czev_CdsFormat")
+@Table(name = "common_CdsFormat")
 class CdsFormat(
         @NaturalId
         @Column(nullable = false, unique = true)
         var name: String,
         @ElementCollection
-        @CollectionTable(name = "czev_CdsFormat_Patterns", joinColumns = [JoinColumn(name = "format_id")])
+        @CollectionTable(name = "common_CdsFormat_Patterns", joinColumns = [JoinColumn(name = "format_id")])
         @Column(name = "pattern")
         var patterns: MutableSet<String>
-) : CzevEntity()
+) : IdEntity()
 
 @Entity
-@Table(name = "czev_Publication")
+@Table(name = "common_Publication")
 @Audited
 class Publication(
         @NaturalId
         @Column(nullable = false, unique = true)
         var title: String
-) : CzevEntity()
+) : IdEntity()
 
 @MappedSuperclass
-abstract class CzevEntity(
+abstract class IdEntity(
         @Id
         @GeneratedValue
         var id: Long = -1,
@@ -393,13 +393,3 @@ class CosmicCoordinates(
 ) {
     constructor(raString: String, decString: String) : this(raStringToDegrees(raString), decStringToDegrees(decString))
 }
-
-//@Entity
-//@Table(name = "predpovedi")
-//class Predpovedi(
-//        @Id
-//        val id: Int,
-//        val starName: String,
-//        val cons: String,
-//        @Column(name = "BODY_zanedbanost") val body: Int
-//)

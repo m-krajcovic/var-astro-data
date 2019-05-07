@@ -36,7 +36,7 @@ class BrightnessSubFormComponent extends Component {
     render() {
         const {getFieldDecorator, getFieldValue} = this.props.form;
 
-        getFieldDecorator('brightnessKeys', {initialValue: []});
+        getFieldDecorator('brightnessKeys', {initialValue: [0]});
         const brightnessKeys = getFieldValue('brightnessKeys');
 
         return (
@@ -60,10 +60,12 @@ class BrightnessSubFormComponent extends Component {
                                                             field={`brightness[${k}].minP`}/>
                                             <NumberFormItem form={this.props.form} label="Max P"
                                                             field={`brightness[${k}].maxP`}/>
-                                            <Form.Item {...formItemLayoutWithOutLabel}>
-                                                <Button onClick={() => this.removeBrightness(k)}
-                                                        type="danger">Remove</Button>
-                                            </Form.Item>
+                                            {brightnessKeys.length > 1 && (
+                                                <Form.Item {...formItemLayoutWithOutLabel}>
+                                                    <Button onClick={() => this.removeBrightness(k)}
+                                                            type="danger">Remove</Button>
+                                                </Form.Item>
+                                            )}
                                         </div>
                                     )
                                 });
@@ -101,7 +103,7 @@ class ElementsSubFormComponent extends Component {
     render() {
         const {getFieldDecorator, getFieldValue} = this.props.form;
 
-        getFieldDecorator('elementKeys', {initialValue: []});
+        getFieldDecorator('elementKeys', {initialValue: [0]});
         const elementKeys = getFieldValue('elementKeys');
 
         return (
@@ -123,10 +125,13 @@ class ElementsSubFormComponent extends Component {
                                                             field={`elements[${k}].minimum`}/>
                                             <NumberFormItem form={this.props.form} label="Period"
                                                             field={`elements[${k}].period`}/>
-                                            <Form.Item {...formItemLayoutWithOutLabel}>
-                                                <Button onClick={() => this.removeElement(k)}
-                                                        type="danger">Remove</Button>
-                                            </Form.Item>
+                                            {elementKeys.length > 1 &&
+                                            (
+                                                <Form.Item {...formItemLayoutWithOutLabel}>
+                                                    <Button onClick={() => this.removeElement(k)}
+                                                            type="danger">Remove</Button>
+                                                </Form.Item>
+                                            )}
 
                                         </div>
                                     )
@@ -156,12 +161,9 @@ class StarNewComponent extends Component {
             if (!err) {
                 delete values["brightnessKeys"];
                 delete values["elementKeys"];
-                if (!values.elements) {
-                    values["elements"] = [];
-                }
-                if (!values.brightness) {
-                    values["brightness"] = [];
-                }
+                // if (!values.type) {
+                //     values.type = "";
+                // }
                 return axios.post(BASE_URL + "/ocgate/stars", values).then(result => {
                     notification.success({
                         message: (<span>Star added to the database</span>)
@@ -186,35 +188,35 @@ class StarNewComponent extends Component {
                 <Col span={24} sm={{span: 16}}>
                     <EntitiesConsumer>
                         {({constellations, types, loading}) => (
-                    <Form onSubmit={this.handleSubmit}>
-                        <h3>Star Information</h3>
-                        <CoordinatesFormItem form={this.props.form} required={true}/>
-                        <InputFormItem form={this.props.form} label="Name" field="name" required={true}/>
-                        <IdNameSelectFormItem
-                            form={this.props.form}
-                            field="constellationId"
-                            label="Constellation"
-                            placeholder="Select a constellation"
-                            loading={loading}
-                            required={true}
-                            options={constellations}
-                            optionName={(cons) => `${cons.abbreviation} (${cons.name})`}/>
-                        <InputFormItem form={this.props.form} label="Comp" field="comp"/>
-                        <TypeFormItem form={this.props.form} types={types} loading={loading}/>
+                            <Form onSubmit={this.handleSubmit}>
+                                <h3>Star Information</h3>
+                                <CoordinatesFormItem form={this.props.form} required={true}/>
+                                <InputFormItem form={this.props.form} label="Name" field="name" required={true}/>
+                                <IdNameSelectFormItem
+                                    form={this.props.form}
+                                    field="constellationId"
+                                    label="Constellation"
+                                    placeholder="Select a constellation"
+                                    loading={loading}
+                                    required={true}
+                                    options={constellations}
+                                    optionName={(cons) => `${cons.abbreviation} (${cons.name})`}/>
+                                <InputFormItem form={this.props.form} label="Comp" field="comp"/>
+                                <TypeFormItem form={this.props.form} types={types} initialValue={""} loading={loading}/>
 
-                        <BrightnessSubFormComponent form={this.props.form}/>
+                                <BrightnessSubFormComponent form={this.props.form}/>
 
-                        <ElementsSubFormComponent form={this.props.form}/>
+                                <ElementsSubFormComponent form={this.props.form}/>
 
-                        <Form.Item
-                            wrapperCol={{
-                                xs: {span: 24, offset: 0},
-                                sm: {span: 18, offset: 6},
-                            }}
-                        >
-                            <Button type="primary" htmlType="submit">Submit</Button>
-                        </Form.Item>
-                    </Form>
+                                <Form.Item
+                                    wrapperCol={{
+                                        xs: {span: 24, offset: 0},
+                                        sm: {span: 18, offset: 6},
+                                    }}
+                                >
+                                    <Button type="primary" htmlType="submit">Submit</Button>
+                                </Form.Item>
+                            </Form>
                         )}
                     </EntitiesConsumer>
                 </Col>
