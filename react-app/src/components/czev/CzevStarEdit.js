@@ -36,8 +36,8 @@ class CzevStarEditComponent extends Component {
                     amplitude: star.amplitude,
                     filterBand: star.filterBand ? "" + star.filterBand.id : null,
                     crossIds: star.crossIdentifications,
-                    coordinatesRa: star.coordinates.ra,
-                    coordinatesDec: star.coordinates.dec,
+                    "coordinates.ra": star.coordinates.ra,
+                    "coordinates.dec": star.coordinates.dec,
                     note: star.publicNote,
                     epoch: star.m0,
                     period: star.period,
@@ -140,7 +140,7 @@ class CzevStarEditComponent extends Component {
 
     handleCoordsBlur = () => {
         const {form: {validateFields}} = this.props;
-        validateFields(["coordinatesRa", "coordinatesDec"], (err, values) => {
+        validateFields(["coordinates.ra", "coordinates.dec"], (err, values) => {
             if (!err && values && values.coordinates.ra && values.coordinates.dec) {
                 this.props.cds.loadByCoordinates({
                     ra: values.coordinates.ra,
@@ -167,8 +167,8 @@ class CzevStarEditComponent extends Component {
         const {form} = this.props;
         const {J, K, V} = model.magnitudes;
         let valuesFromUcac = {
-            coordinatesRa: model.coordinates.ra,
-            coordinatesDec: model.coordinates.dec,
+            "coordinates.ra": model.coordinates.ra,
+            "coordinates.dec": model.coordinates.dec,
             "crossIds[0]": `UCAC4 ${model.identifier}`,
             vmagnitude: V,
             jmagnitude: J,

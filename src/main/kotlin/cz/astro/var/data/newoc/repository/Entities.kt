@@ -1,9 +1,6 @@
 package cz.astro.`var`.data.newoc.repository
 
-import cz.astro.`var`.data.czev.repository.Constellation
-import cz.astro.`var`.data.czev.repository.CosmicCoordinates
-import cz.astro.`var`.data.czev.repository.CzevEntity
-import cz.astro.`var`.data.czev.repository.User
+import cz.astro.`var`.data.czev.repository.*
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import javax.persistence.*
@@ -26,14 +23,17 @@ class Star(
         var brightness: MutableSet<StarBrightness>,
         @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL], orphanRemoval = true)
         var elements: MutableSet<StarElement>
-) : CzevEntity()
+) : IdEntity()
 
 @Entity
-@Table(name = "oc_StarPublication")
-class StarPublication(
+@Table(name = "oc_MinimaPublication")
+class MinimaPublication(
         var name: String,
-        var link: String
-) : CzevEntity() {
+        var year: Int?,
+        var volume: String?,
+        var page: String?,
+        var link: String?
+) : IdEntity() {
     @ManyToMany
     var minimas: MutableSet<StarMinima> = mutableSetOf()
 }
@@ -47,11 +47,19 @@ class StarMinima(
         @ManyToOne
         var method: ObservationMethod,
         @ManyToMany
-        var publications: MutableSet<StarPublication>
-) : CzevEntity() {
+        var publications: MutableSet<MinimaPublication>,
+        @ManyToOne
+        var observer: MinimaObserver? = null
+) : IdEntity() {
     @ManyToOne
     var element: StarElement? = null
 }
+
+@Entity
+@Table(name = "oc_MinimaObserver")
+class MinimaObserver(
+        name: String
+): IdNameEntity(name)
 
 @Entity
 @Table(name = "oc_StarBrightness")
@@ -60,8 +68,8 @@ class StarBrightness(
         var maxP: Double,
         var minP: Double,
         @ManyToOne
-        var filter: ObservationFilter
-) : CzevEntity() {
+        var filter: FilterBand
+) : IdEntity() {
     @ManyToOne
     var star: Star? = null
 }
@@ -75,7 +83,7 @@ class StarElement(
         var kind: ObservationKind,
         @OneToMany(mappedBy = "element", cascade = [CascadeType.ALL], orphanRemoval = true)
         var minimas: MutableSet<StarMinima>
-) : CzevEntity() {
+) : IdEntity() {
     @ManyToOne
     var star: Star? = null
 }
@@ -86,7 +94,7 @@ class MinimaImportBatch(
         var createdOn: LocalDateTime,
         @ManyToOne
         var createdBy: User
-) : CzevEntity() {
+) : IdEntity() {
     @OneToMany(mappedBy = "batch", cascade = [CascadeType.ALL], orphanRemoval = true)
     var minimas: MutableSet<StarMinima> = mutableSetOf()
 }
@@ -99,11 +107,7 @@ class ObservationKind(name: String) : IdNameEntity(name)
 @Table(name = "oc_ObservationMethod")
 class ObservationMethod(name: String) : IdNameEntity(name)
 
-@Entity
-@Table(name = "oc_ObservationFilter")
-class ObservationFilter(name: String) : IdNameEntity(name)
-
 @MappedSuperclass
 class IdNameEntity(
         var name: String
-) : CzevEntity()
+) : IdEntity()

@@ -79,7 +79,7 @@ class StarDraftSingleNewStarComponent extends Component {
 
     handleCoordsBlur = () => {
         const {form: {validateFields}} = this.props;
-        validateFields(["coordinatesRa", "coordinatesDec"], (err, values) => {
+        validateFields(["coordinates.ra", "coordinates.dec"], (err, values) => {
             if (!err && values && values.coordinates.ra && values.coordinates.dec) {
                 this.props.cds.loadByCoordinates({
                     ra: values.coordinates.ra,

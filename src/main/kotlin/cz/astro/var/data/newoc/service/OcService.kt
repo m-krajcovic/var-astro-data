@@ -1,8 +1,6 @@
 package cz.astro.`var`.data.newoc.service
 
-import cz.astro.`var`.data.czev.repository.ConstellationRepository
-import cz.astro.`var`.data.czev.repository.User
-import cz.astro.`var`.data.czev.repository.UserRepository
+import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.czev.service.*
 import cz.astro.`var`.data.newoc.repository.*
 import cz.astro.`var`.data.security.SecurityService
@@ -44,11 +42,11 @@ interface StarsService {
 }
 
 interface PublicationsService {
-    fun getAll(): List<PublicationModel>
-    fun getById(id: Long): Optional<PublicationModel>
+    fun getAll(): List<MinimaPublicationModel>
+    fun getById(id: Long): Optional<MinimaPublicationModel>
     fun delete(id: Long)
-    fun insert(publication: PublicationNewModel)
-    fun update(id: Long, model: PublicationUpdateModel)
+    fun insert(publication: MinimaPublicationNewModel)
+    fun update(id: Long, model: MinimaPublicationUpdateModel)
 }
 
 interface ObservationsService {
@@ -102,20 +100,29 @@ class StarDetailsModel(
 
 
 // TODO check publications how they should be modelled
-class PublicationModel(
+class MinimaPublicationModel(
         val id: Long,
-        val name: String,
-        val link: String
+        var name: String,
+        var year: Int?,
+        var volume: String?,
+        var page: String?,
+        var link: String?
 )
 
-class PublicationNewModel(
-        val name: String,
-        val link: String
+class MinimaPublicationNewModel(
+        var name: String,
+        var year: Int?,
+        var volume: String?,
+        var page: String?,
+        var link: String?
 )
 
-class PublicationUpdateModel(
-        val name: String,
-        val link: String
+class MinimaPublicationUpdateModel(
+        var name: String,
+        var year: Int?,
+        var volume: String?,
+        var page: String?,
+        var link: String?
 )
 
 class StarMinimaModel(
@@ -123,7 +130,7 @@ class StarMinimaModel(
         val batchId: Long,
         val julianDate: BigDecimal,
         val method: IdNameModel,
-        val publications: List<PublicationModel>
+        val publications: List<MinimaPublicationModel>
 )
 
 class StarMinimaNewModel(
@@ -191,19 +198,19 @@ fun Star.toDetailsModel(): StarDetailsModel {
 }
 
 fun StarMinima.toModel(): StarMinimaModel {
-    return StarMinimaModel(id, batch.id, julianDate, method.toModel(), publications.map(StarPublication::toModel))
+    return StarMinimaModel(id, batch.id, julianDate, method.toModel(), publications.map(MinimaPublication::toModel))
 }
 
 fun StarBrightness.toModel(): StarBrightnessModel {
-    return StarBrightnessModel(id, minS, minP, maxP, filter.toModel())
+    return StarBrightnessModel(id, minS, minP, maxP, filter.toIdNameModel())
 }
 
 fun StarElement.toModel(): StarElementModel {
     return StarElementModel(id, period, minimum, kind.toModel(), minimas.map(StarMinima::toModel))
 }
 
-fun StarPublication.toModel(): PublicationModel {
-    return PublicationModel(id, name, link)
+fun MinimaPublication.toModel(): MinimaPublicationModel {
+    return MinimaPublicationModel(id, name, year, volume, page, link)
 }
 
 /*
@@ -215,11 +222,11 @@ fun StarPublication.toModel(): PublicationModel {
 class StarsServiceImpl(
         private val starsRepository: StarsRepository,
         private val constellationRepository: ConstellationRepository,
-        private val observationFilterRepository: ObservationFilterRepository,
         private val observationKindRepository: ObservationKindRepository,
         private val observationMethodRepository: ObservationMethodRepository,
         private val starElementRepository: StarElementRepository,
         private val userRepository: UserRepository,
+        private val filterBandRepository: FilterBandRepository,
         private val publicationsRepository: PublicationsRepository,
         private val minimaRepository: MinimaRepository,
         private val minimaBatchRepository: MinimaBatchRepository,
@@ -233,7 +240,7 @@ class StarsServiceImpl(
             maxP = model.maxP
             minP = model.minP
             if (filter.id != model.filterId) {
-                filter = observationFilterRepository.findById(model.filterId).orElseThrow { ServiceException("Observations filter doesn't exist") }
+                filter = filterBandRepository.findById(model.filterId).orElseThrow { ServiceException("Observations filter doesn't exist") }
             }
         }
     }
@@ -283,7 +290,7 @@ class StarsServiceImpl(
 
     override fun insertStarBrightness(starId: Long, brightness: StarBrightnessNewModel) {
         val star = starsRepository.findById(starId).orElseThrow { ServiceException("Star doesn't exist") }
-        val filter = observationFilterRepository.findById(brightness.filterId).orElseThrow { ServiceException("Observations filter doesn't exist") }
+        val filter = filterBandRepository.findById(brightness.filterId).orElseThrow { ServiceException("Observations filter doesn't exist") }
         val bright = StarBrightness(brightness.minS, brightness.maxP, brightness.minP, filter)
         bright.star = star
         starBrightnessRepository.save(bright)
@@ -334,7 +341,7 @@ class StarsServiceImpl(
     override fun insert(star: StarNewModel): StarListModel {
         val constellation = constellationRepository.findById(star.constellationId).orElseThrow { ServiceException("Constellation doesn't exist") }
         val brightness = star.brightness.map {
-            val filter = observationFilterRepository.findById(it.filterId).orElseThrow { ServiceException("Observation filter doesn't exist") }
+            val filter = filterBandRepository.findById(it.filterId).orElseThrow { ServiceException("Observation filter doesn't exist") }
             StarBrightness(it.minS, it.maxP, it.minP, filter)
         }.toMutableSet()
         val elements = star.elements.map {
@@ -359,27 +366,32 @@ class StarsServiceImpl(
 @Service
 @Transactional
 class PublicationsServiceImpl(private val publicationsRepository: PublicationsRepository) : PublicationsService {
-    override fun insert(publication: PublicationNewModel) {
-        publicationsRepository.save(StarPublication(publication.name, publication.link))
+    override fun insert(publication: MinimaPublicationNewModel) {
+        publication.apply {
+            publicationsRepository.save(MinimaPublication(name, year, volume, page, link))
+        }
     }
 
     override fun delete(id: Long) {
         publicationsRepository.delete(publicationsRepository.findById(id).orElseThrow { ServiceException("Publication not found") })
     }
 
-    override fun getAll(): List<PublicationModel> {
-        return publicationsRepository.findAll().map(StarPublication::toModel)
+    override fun getAll(): List<MinimaPublicationModel> {
+        return publicationsRepository.findAll().map(MinimaPublication::toModel)
     }
 
-    override fun getById(id: Long): Optional<PublicationModel> {
-        return publicationsRepository.findById(id).map(StarPublication::toModel)
+    override fun getById(id: Long): Optional<MinimaPublicationModel> {
+        return publicationsRepository.findById(id).map(MinimaPublication::toModel)
     }
 
-    override fun update(id: Long, model: PublicationUpdateModel) {
+    override fun update(id: Long, model: MinimaPublicationUpdateModel) {
         val publication = publicationsRepository.findById(id).orElseThrow { ServiceException("Publication not found") }
         publication.apply {
             name = model.name
             link = model.link
+            year = model.year
+            volume = model.volume
+            page = model.page
         }
     }
 }
@@ -389,7 +401,7 @@ class PublicationsServiceImpl(private val publicationsRepository: PublicationsRe
 class ObservationsServiceImpl(
         private val observationMethodRepository: ObservationMethodRepository,
         private val observationKindRepository: ObservationKindRepository,
-        private val observationFilterRepository: ObservationFilterRepository
+        private val filterBandRepository: FilterBandRepository
 ) : ObservationsService {
 
     override fun getAllMethods(): List<IdNameModel> {
@@ -401,6 +413,6 @@ class ObservationsServiceImpl(
     }
 
     override fun getAllFilters(): List<IdNameModel> {
-        return observationFilterRepository.findAll().map(IdNameEntity::toModel)
+        return filterBandRepository.findAll().map(FilterBand::toIdNameModel)
     }
 }

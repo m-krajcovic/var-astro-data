@@ -7,6 +7,7 @@ import cz.astro.`var`.data.czev.conversion.CosmicCoordinatesDeserializer
 import cz.astro.`var`.data.czev.repository.*
 import cz.astro.`var`.data.czev.validation.Declination
 import cz.astro.`var`.data.czev.validation.RightAscension
+import cz.astro.`var`.data.newoc.service.IdNameModel
 import cz.astro.`var`.data.security.UserPrincipal
 import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
@@ -338,6 +339,10 @@ fun CzevStar.toExportModel(): CzevStarExportModel {
             discoverers.toModels(),
             year
     )
+}
+
+fun FilterBand.toIdNameModel(): IdNameModel {
+    return IdNameModel(id, name)
 }
 
 fun FilterBand?.toModel(): FilterBandModel? {

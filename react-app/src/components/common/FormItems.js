@@ -319,12 +319,27 @@ export class NumberFormItem extends Component {
 }
 
 export class IdNameSelectFormItem extends Component {
-    defaultOptionName = (o) => o.name;
+    static defaultProps = {
+        optionName: (o) => o.name
+    };
+
+    getInitialValue = () => {
+        if (this.props.mode === "multiple") {
+            if (this.props.initialValue != null) {
+                return this.props.initialValue.map(v => "" + v);
+            }
+            return [];
+        } else {
+            if (this.props.initialValue != null) {
+                return "" + this.props.initialValue;
+            }
+            return null;
+        }
+    };
 
     render() {
         const {getFieldDecorator} = this.props.form;
-
-        let optionName = this.props.optionName || this.defaultOptionName;
+        const initialValue = this.getInitialValue();
 
         return (
             <Form.Item {...formItemLayout} label={this.props.label}>
@@ -332,7 +347,7 @@ export class IdNameSelectFormItem extends Component {
                     {getFieldDecorator(this.props.field, {
                         rules: [
                             {required: this.props.required, message: "Please select something"}
-                        ], initialValue: this.props.initialValue != null ? "" + this.props.initialValue : []
+                        ], initialValue: initialValue
                     })(
                         <Select
                             mode={this.props.mode || "single"}
@@ -343,7 +358,7 @@ export class IdNameSelectFormItem extends Component {
                         >
                             {this.props.options.map(o => {
                                 return (
-                                    <Select.Option key={o.id}>{optionName(o)}</Select.Option>
+                                    <Select.Option key={o.id}>{this.props.optionName(o)}</Select.Option>
                                 )
                             })}
                         </Select>
