@@ -6,7 +6,7 @@
 package cz.astro.var.data;
 
 import cz.astro.var.data.czev.repository.CzevInit;
-import cz.astro.var.data.newoc.repository.NewOCGateInit;
+import cz.astro.var.data.newoc.repository.OcMigrator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -24,7 +24,7 @@ public class App implements CommandLineRunner {
     private CzevInit czevInit;
 
     @Autowired
-    private NewOCGateInit ocGateInit;
+    private OcMigrator ocGateMigrator;
 
     @Value("${czev.hibernate.hbm2ddl.auto}")
     private String czevhbm2ddl;
@@ -33,8 +33,8 @@ public class App implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if (czevhbm2ddl.startsWith("create")) {
             czevInit.initialize();
-            ocGateInit.init();
+            ocGateMigrator.migrate();
         }
-//        czevInit.test();
+        czevInit.test();
     }
 }

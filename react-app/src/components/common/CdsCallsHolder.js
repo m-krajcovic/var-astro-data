@@ -40,16 +40,18 @@ export class CdsCallsHolder extends Component {
                 this.setState(state => {
                     return {...state, coordsInfoParams: coords, coordsInfoLoading: true};
                 });
-                axios.get(BASE_URL + "/czev/cds/all", {
+                return axios.get(BASE_URL + "/czev/cds/all", {
                     params: {
                         ra: coords.ra,
                         dec: coords.dec
                     }
                 }).then(result => {
                     this.setState({...this.state, coordsInfoResult: result.data, coordsInfoLoading: false})
+                    return result.data
                 })
             }
         }
+        return Promise.reject()
     };
 
     render() {

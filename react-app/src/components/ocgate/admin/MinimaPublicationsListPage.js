@@ -1,4 +1,4 @@
-import React, {Component} from "react";
+import React, {Component, Fragment} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../../api-endpoint";
 import {Link, NavLink} from "react-router-dom";
@@ -6,8 +6,131 @@ import {Card, Spin, Table, Layout, Button, notification, Form} from "antd";
 import {AnchorButton} from "../../common/AnchorButton";
 import {EditDeleteAnchorButtons} from "../../common/EditDeleteAnchorButtons";
 import {PromiseFormModal} from "../../common/PromiseFormModal";
-import {IdNameSelectFormItem, InputFormItem, NumberFormItem} from "../../common/FormItems";
+import {IdNameSelectFormItem, InputFormItem, MyForm, NumberFormItem} from "../../common/FormItems";
 import {MinimaPublicationsConsumer, MinimaPublicationProvider} from "../../common/MinimaPublicationsContext";
+
+class MinimaPublicationVolumeTable extends Component {
+    static defaultProps = {
+        volumes: [],
+        onChange: () => {
+        }
+    };
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            selectedVolume: null,
+            addModalVisible: false
+        }
+    }
+
+    handleChange = () => {
+        this.handleCancel();
+        this.props.onChange();
+    };
+
+    handleAdd = () => {
+        this.setState({...this.state, addModalVisible: true})
+    };
+
+    handleEdit = (row) => {
+        this.setState({...this.state, selectedVolume: row});
+    };
+
+    handleCancel = () => {
+        this.setState({...this.state, selectedVolume: null, addModalVisible: false});
+    };
+
+    handleDelete = (row) => {
+        axios.delete(BASE_URL + "/ocgate/publications/volumes/" + row.id)
+            .then(result => {
+                notification.success({
+                    message: "Deleted"
+                });
+                this.props.onChange();
+            })
+            .catch(reason => {
+
+            });
+    };
+
+    render() {
+        return (
+            <Fragment>
+                <PromiseFormModal
+                    visible={this.state.addModalVisible}
+                    promise={axios.post}
+                    title="Add new volume"
+                    url={BASE_URL + `/ocgate/publications/${this.props.publication.id}/volumes`}
+                    onCancel={this.handleCancel}
+                    onOk={this.handleChange}
+                    successMessage="New volume added"
+                    render={form => (
+                        <MyForm layout="vertical" form={form}>
+                            <InputFormItem label="Name" field="name" required={true}/>
+                            <NumberFormItem label="Year" field="year" required={true}/>
+                            <InputFormItem label="Link" field="link"/>
+                        </MyForm>
+                    )}
+                />
+                {this.state.selectedVolume != null && (
+                    <PromiseFormModal
+                        visible={true}
+                        promise={axios.put}
+                        title="Edit volume"
+                        url={() => BASE_URL + "/ocgate/publications/volumes/" + this.state.selectedVolume.id}
+                        onCancel={this.handleCancel}
+                        onOk={this.handleChange}
+                        successMessage="Volume edited"
+                        render={form => (
+                            <MyForm layout="vertical" form={form}>
+                                <InputFormItem initialValue={this.state.selectedVolume.name}
+                                               label="Name" field="name" required={true}/>
+                                <NumberFormItem initialValue={this.state.selectedVolume.year}
+                                                label="Year" field="year"/>
+                                <InputFormItem initialValue={this.state.selectedVolume.link}
+                                               label="Link" field="link"/>
+                            </MyForm>
+                        )}
+                    />
+                )}
+                <Table
+                    dataSource={this.props.publication.volumes}
+                    rowKey="id"
+                    // size="small"
+                    footer={() => (
+                        <Button onClick={this.handleAdd} type="primary">Add volume</Button>
+                    )}
+                    pagination={false}
+                >
+                    <Table.Column
+                        title="Volume"
+                        dataIndex="name"
+                        width={150}
+                    />
+                    <Table.Column
+                        title="Year"
+                        dataIndex="year"
+                        width={80}
+                    />
+                    <Table.Column
+                        title="Link"
+                        dataIndex="link"
+                        width={150}
+                    />
+                    <Table.Column
+                        title="Actions"
+                        key="actions"
+                        render={(row) => (
+                            <EditDeleteAnchorButtons onEdit={() => this.handleEdit(row)}
+                                                     onDelete={() => this.handleDelete(row)}/>
+                        )}
+                    />
+                </Table>
+            </Fragment>
+        );
+    }
+}
 
 export class MinimaPublicationsListPage extends Component {
 
@@ -55,19 +178,22 @@ export class MinimaPublicationsListPage extends Component {
                             <PromiseFormModal
                                 visible={this.state.addModalVisible}
                                 promise={axios.post}
+                                valuesFix={values => {
+                                    if (!values.volumes) {
+                                        values.volumes = [];
+                                    }
+                                    return values
+                                }}
                                 title="Add new minima publication"
                                 url={BASE_URL + "/ocgate/publications"}
                                 onCancel={this.handleCancel}
                                 onOk={() => this.refresh(reload)}
                                 successMessage="New minima publication added"
                                 render={form => (
-                                    <Form layout="vertical">
-                                        <InputFormItem form={form} label="Name" field="name" required={true}/>
-                                        <NumberFormItem form={form} label="Year" field="year"/>
-                                        <InputFormItem form={form} label="Volume" field="volume"/>
-                                        <InputFormItem form={form} label="Page" field="page"/>
-                                        <InputFormItem form={form} label="Link" field="link"/>
-                                    </Form>
+                                    <MyForm layout="vertical" form={form}>
+                                        <InputFormItem label="Name" field="name" required={true}/>
+                                        <InputFormItem label="Link" field="link"/>
+                                    </MyForm>
                                 )}
                             />
                             {this.state.selectedMinima != null && (
@@ -80,22 +206,17 @@ export class MinimaPublicationsListPage extends Component {
                                     onOk={() => this.refresh(reload)}
                                     successMessage="Minima publication edited"
                                     render={form => (
-                                        <Form layout="vertical">
-                                            <InputFormItem initialValue={this.state.selectedMinima.name} form={form}
+                                        <MyForm layout="vertical" form={form}>
+                                            <InputFormItem initialValue={this.state.selectedMinima.name}
                                                            label="Name" field="name" required={true}/>
-                                            <NumberFormItem initialValue={this.state.selectedMinima.year} form={form}
-                                                            label="Year" field="year"/>
-                                            <InputFormItem initialValue={this.state.selectedMinima.volume} form={form}
-                                                           label="Volume" field="volume"/>
-                                            <InputFormItem initialValue={this.state.selectedMinima.page} form={form}
-                                                           label="Page" field="page"/>
-                                            <InputFormItem initialValue={this.state.selectedMinima.link} form={form}
+                                            <InputFormItem initialValue={this.state.selectedMinima.link}
                                                            label="Link" field="link"/>
-                                        </Form>
+                                        </MyForm>
                                     )}
                                 />
                             )}
-                            <div style={{marginBottom: "0.5rem", textAlign: "right"}}>
+                            <div style={{marginBottom: "0.5rem", display: "flex", justifyContent: "space-between"}}>
+                                <h2>Minima Publications</h2>
                                 <Button onClick={this.handleAdd} type="primary">Add new publication</Button>
                             </div>
                             <Table
@@ -103,40 +224,30 @@ export class MinimaPublicationsListPage extends Component {
                                 dataSource={publications}
                                 loading={loading}
                                 rowKey="id"
-                                size="small"
+                                // size="small"
+                                expandedRowRender={(record) => (
+                                    <MinimaPublicationVolumeTable onChange={() => this.refresh(reload)}
+                                                                  publication={record}/>)}
+                                expandRowByClick={true}
                             >
                                 <Table.Column
                                     title="Name"
                                     dataIndex="name"
-                                    width={80}
-                                />
-                                <Table.Column
-                                    title="Year"
-                                    dataIndex="year"
-                                    width={80}
-                                />
-                                <Table.Column
-                                    title="Volume"
-                                    dataIndex="volume"
-                                    width={80}
-                                />
-                                <Table.Column
-                                    title="Page"
-                                    dataIndex="page"
-                                    width={80}
+                                    width={100}
                                 />
                                 <Table.Column
                                     title="Link"
                                     dataIndex="link"
-                                    width={80}
+                                    width={150}
                                 />
                                 <Table.Column
                                     title="Actions"
                                     key="actions"
-                                    width={130}
                                     render={(row) => (
-                                        <EditDeleteAnchorButtons onEdit={() => this.handleEdit(row)}
-                                                                 onDelete={() => this.handleDelete(row, reload)}/>
+                                        <EditDeleteAnchorButtons onEdit={(e) => {
+                                            e.stopPropagation();
+                                            this.handleEdit(row)
+                                        }} onDelete={() => this.handleDelete(row, reload)}/>
                                     )}
                                 />
                             </Table>

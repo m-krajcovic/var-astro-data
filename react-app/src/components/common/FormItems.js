@@ -1,5 +1,19 @@
 import React, {Component, Fragment} from "react";
-import {AutoComplete, Checkbox, Col, Input, Spin, Form, Select, Tooltip, Icon, Button, InputNumber} from "antd";
+import {
+    AutoComplete,
+    Checkbox,
+    Col,
+    Input,
+    Spin,
+    Form,
+    Select,
+    Tooltip,
+    Icon,
+    Button,
+    InputNumber,
+    Cascader, Row
+} from "antd";
+import {MinimaPublicationsConsumer} from "./MinimaPublicationsContext";
 
 export const formItemLayout = {
     labelCol: {
@@ -18,6 +32,35 @@ export const formItemLayoutWithOutLabel = {
         sm: {span: 18, offset: 6},
     },
 };
+
+class FormItem extends Component {
+    render() {
+        const layout = this.props.label == null ? formItemLayoutWithOutLabel : formItemLayout;
+        return (
+            <Form.Item {...layout} label={this.props.label} required={this.props.required}>
+                {this.props.children}
+            </Form.Item>
+        );
+    }
+}
+
+export class MyForm extends Component {
+    render() {
+        let {children} = this.props;
+        const childrenWithProps = React.Children.map(children, child =>
+            React.cloneElement(child, {
+                form: this.props.form,
+                layout: this.props.layout
+            })
+        );
+
+        return (
+            <Form layout={this.props.layout} onSubmit={this.props.onSubmit}>
+                {childrenWithProps}
+            </Form>
+        );
+    }
+}
 
 export class TypeFormItem extends Component {
     constructor(props) {
@@ -158,7 +201,7 @@ export class CoordinatesFormItem extends Component {
         const {getFieldDecorator} = this.props.form;
 
         return (
-            <Form.Item {...formItemLayout} label="Coordinates" required={this.props.required}>
+            <FormItem label="Coordinates" required={this.props.required}>
                 <Col span={12}>
                     <Form.Item>
                         {getFieldDecorator('coordinates.ra', {
@@ -172,7 +215,7 @@ export class CoordinatesFormItem extends Component {
                             }],
                             initialValue: this.props.initialValue ? this.props.initialValue.ra : null
                         })(
-                            <Input placeholder="Right ascension" onBlur={this.props.onCoordsBlur}
+                            <Input placeholder="Right ascension" onBlur={this.props.onBlur}
                                    style={{
                                        borderTopRightRadius: 0,
                                        borderBottomRightRadius: 0
@@ -193,12 +236,12 @@ export class CoordinatesFormItem extends Component {
                             }],
                             initialValue: this.props.initialValue ? this.props.initialValue.dec : null
                         })(
-                            <Input placeholder="Declination" onBlur={this.props.onCoordsBlur}
+                            <Input placeholder="Declination" onBlur={this.props.onBlur}
                                    style={{borderBottomLeftRadius: 0, borderTopLeftRadius: 0}}/>
                         )}
                     </Form.Item>
                 </Col>
-            </Form.Item>
+            </FormItem>
         );
     }
 }
@@ -244,8 +287,7 @@ export class CrossIdsFormItem extends Component {
 
         const crossIdFormItems = crossIds.map((k, index) => {
             return (
-                <Form.Item
-                    {...(index === 0 ? formItemLayout : formItemLayoutWithOutLabel)}
+                <FormItem
                     label={index === 0 ? 'Cross identifications' : ''}
                     required={true}
                     key={k}
@@ -262,7 +304,7 @@ export class CrossIdsFormItem extends Component {
                     })(
                         <Input onBlur={() => {
                             if (k === 0) {
-                                this.props.onCrossIdBlur()
+                                this.props.onBlur()
                             }
                         }} placeholder="Cross id" style={{width: "90%", marginRight: 8}}
                                suffix={(
@@ -277,17 +319,17 @@ export class CrossIdsFormItem extends Component {
                             onClick={() => this.removeCrossId(k)}
                         />
                     ) : null}
-                </Form.Item>
+                </FormItem>
             )
         });
         return (
             <Fragment>
                 {crossIdFormItems}
-                <Form.Item {...formItemLayoutWithOutLabel}>
+                <FormItem>
                     <Button type="dashed" onClick={this.addCrossId} style={{width: "90%"}}>
                         <Icon type="plus"/> Add Cross id
                     </Button>
-                </Form.Item>
+                </FormItem>
             </Fragment>
         );
     }
@@ -304,7 +346,7 @@ export class NumberFormItem extends Component {
             inputNumberAttrs["max"] = this.props.max;
         }
         return (
-            <Form.Item {...formItemLayout} label={this.props.label} required={this.props.required}>
+            <FormItem label={this.props.label} required={this.props.required}>
                 {getFieldDecorator(this.props.field, {
                     rules: [{
                         type: "number", message: "The input is not a valid number"
@@ -313,7 +355,7 @@ export class NumberFormItem extends Component {
                 })(
                     <InputNumber {...inputNumberAttrs}/>
                 )}
-            </Form.Item>
+            </FormItem>
         );
     }
 }
@@ -342,7 +384,7 @@ export class IdNameSelectFormItem extends Component {
         const initialValue = this.getInitialValue();
 
         return (
-            <Form.Item {...formItemLayout} label={this.props.label}>
+            <FormItem label={this.props.label} required={this.props.required}>
                 <Spin spinning={this.props.loading}>
                     {getFieldDecorator(this.props.field, {
                         rules: [
@@ -364,7 +406,7 @@ export class IdNameSelectFormItem extends Component {
                         </Select>
                     )}
                 </Spin>
-            </Form.Item>
+            </FormItem>
         );
     }
 }
@@ -374,13 +416,13 @@ export class TextAreaFormItem extends Component {
         const {getFieldDecorator} = this.props.form;
 
         return (
-            <Form.Item {...formItemLayout} label={this.props.label}>
+            <FormItem label={this.props.label} required={this.props.required}>
                 {getFieldDecorator(this.props.field, {
                     initialValue: this.props.initialValue
                 })(
                     <Input.TextArea/>
                 )}
-            </Form.Item>
+            </FormItem>
         );
     }
 }
@@ -390,13 +432,119 @@ export class InputFormItem extends Component {
         const {getFieldDecorator} = this.props.form;
 
         return (
-            <Form.Item {...formItemLayout} label={this.props.label} required={this.props.required}>
+            <FormItem label={this.props.label} required={this.props.required}>
                 {getFieldDecorator(this.props.field, {
                     initialValue: this.props.initialValue
                 })(
                     <Input/>
                 )}
-            </Form.Item>
+            </FormItem>
         )
+    }
+}
+
+export class CascaderFormItem extends Component {
+    render() {
+        const {getFieldDecorator} = this.props.form;
+
+        return (
+            <FormItem label={this.props.label} required={this.props.required}>
+                {getFieldDecorator(this.props.field, {
+                    initialValue: this.props.initialValue
+                })(
+                    <Cascader options={this.props.options} fieldNames={this.props.fieldNames}/>
+                )}
+            </FormItem>
+        );
+    }
+}
+
+export class PublicationEntryFormItem extends Component {
+    render() {
+        return (
+            <div>
+                <CascaderFormItem
+                    form={this.props.form}
+                    options={this.props.publications}
+                    fieldNames={{children: 'volumes', value: 'id', label: 'name'}}
+                    field={`publicationEntries[${this.props.itemKey}].volumeId`}
+                    label={"Publication"} required={true}
+                    initialValue={this.props.initialValue ? [this.props.initialValue.publication.id, this.props.initialValue.volume.id] : null}/>
+                <InputFormItem form={this.props.form} label="Page"
+                               field={`publicationEntries[${this.props.itemKey}].page`}
+                               initialValue={this.props.initialValue ? this.props.initialValue.page : null}
+                />
+                <Button style={{marginBottom: 24}} type="danger" size={"small"}
+                        onClick={this.props.onRemove}>Remove</Button>
+            </div>
+        );
+    }
+}
+
+
+export class PublicationEntriesFormItem extends Component {
+    static defaultProps = {
+        initialValue: []
+    };
+
+    constructor(props) {
+        super(props);
+        this.state = this.getDerivedState(props.initialValue)
+    }
+
+    getDerivedState = (initialValue) => {
+        const keys = [];
+        const initialValues = {};
+        initialValue.forEach((value, i) => {
+            keys.push(i);
+            initialValues[i] = value;
+        });
+        return {keys, initialValues}
+    };
+
+    // componentWillReceiveProps(nextProps, nextContext) {
+    //     if (nextProps.initialValue) {
+    //         this.setState(s => {
+    //             return {...s, ...this.getDerivedState(nextProps.initialValue)}
+    //         });
+    //     }
+    // }
+
+    addKey = () => {
+        const {keys} = this.state;
+        const nextKeys = keys.length === 0 ? [0] : keys.concat(keys[keys.length - 1] + 1);
+        this.setState({
+            ...this.state,
+            keys: nextKeys
+        });
+    };
+
+    removeKey = (k) => {
+        const {keys, initialValues} = this.state;
+        delete initialValues[k];
+        this.setState({
+            initialValues: initialValues,
+            keys: keys.filter(key => key !== k)
+        });
+    };
+
+    render() {
+        const {keys, initialValues} = this.state;
+        console.log(this.state);
+        return (
+            <div>
+                <h3>Publication entries <Button onClick={this.addKey} size="small" type="primary">Add</Button></h3>
+                <MinimaPublicationsConsumer>
+                    {({publications, loading: publicationsLoading}) =>
+                        keys.map(key =>
+                            (
+                                <PublicationEntryFormItem form={this.props.form} key={key} itemKey={key} publications={publications}
+                                                          onRemove={() => this.removeKey(key)} initialValue={initialValues[key]}/>
+                            )
+                        )
+                    }
+                </MinimaPublicationsConsumer>
+            </div>
+        );
     }
 }

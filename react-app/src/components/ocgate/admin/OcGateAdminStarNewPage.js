@@ -3,7 +3,7 @@ import {Card, Layout, Form, Row, Col, Button, notification} from "antd";
 import {
     CoordinatesFormItem, formItemLayoutWithOutLabel,
     IdNameSelectFormItem,
-    InputFormItem, NumberFormItem,
+    InputFormItem, MyForm, NumberFormItem,
     TypeFormItem
 } from "../../common/FormItems";
 import axios from "axios";
@@ -188,12 +188,12 @@ class StarNewComponent extends Component {
                 <Col span={24} sm={{span: 16}}>
                     <EntitiesConsumer>
                         {({constellations, types, loading}) => (
-                            <Form onSubmit={this.handleSubmit}>
+                            <MyForm onSubmit={this.handleSubmit} form={this.props.form}>
                                 <h3>Star Information</h3>
-                                <CoordinatesFormItem form={this.props.form} required={true}/>
-                                <InputFormItem form={this.props.form} label="Name" field="name" required={true}/>
+                                <CoordinatesFormItem required={true}/>
+                                <InputFormItem label="Name" field="name" required={true}/>
                                 <IdNameSelectFormItem
-                                    form={this.props.form}
+
                                     field="constellationId"
                                     label="Constellation"
                                     placeholder="Select a constellation"
@@ -201,12 +201,13 @@ class StarNewComponent extends Component {
                                     required={true}
                                     options={constellations}
                                     optionName={(cons) => `${cons.abbreviation} (${cons.name})`}/>
-                                <InputFormItem form={this.props.form} label="Comp" field="comp"/>
-                                <TypeFormItem form={this.props.form} types={types} initialValue={""} loading={loading}/>
+                                <InputFormItem label="Comp" field="comp"/>
+                                <TypeFormItem types={types} initialValue={""} loading={loading}/>
+                                <NumberFormItem label="Minima duration" field="minimaDuration"/>
 
-                                <BrightnessSubFormComponent form={this.props.form}/>
+                                <BrightnessSubFormComponent/>
 
-                                <ElementsSubFormComponent form={this.props.form}/>
+                                <ElementsSubFormComponent/>
 
                                 <Form.Item
                                     wrapperCol={{
@@ -216,7 +217,7 @@ class StarNewComponent extends Component {
                                 >
                                     <Button type="primary" htmlType="submit">Submit</Button>
                                 </Form.Item>
-                            </Form>
+                            </MyForm>
                         )}
                     </EntitiesConsumer>
                 </Col>

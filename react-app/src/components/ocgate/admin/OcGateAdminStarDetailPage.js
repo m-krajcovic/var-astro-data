@@ -1,12 +1,13 @@
 import React, {Component, Fragment} from "react";
 import axios from "axios";
 import {BASE_URL} from "../../../api-endpoint";
-import {Table, Layout, Card, Button, Modal, Form, notification, Spin} from "antd";
+import {Table, Layout, Card, Button, Modal, Form, notification, Spin, TreeSelect, Cascader} from "antd";
 import {AnchorButton} from "../../common/AnchorButton";
 import {
+    CascaderFormItem,
     CoordinatesFormItem, IdNameSelectFormItem,
-    InputFormItem,
-    NumberFormItem,
+    InputFormItem, MyForm,
+    NumberFormItem, PublicationEntriesFormItem, TextAreaFormItem,
     TypeFormItem
 } from "../../common/FormItems";
 import {ObservationsConsumer} from "../ObservationsContext";
@@ -16,6 +17,17 @@ import {Redirect} from "react-router-dom";
 import {EntitiesConsumer} from "../../common/EntitiesContext";
 import {PromiseFormModal} from "../../common/PromiseFormModal";
 import {MinimaPublicationsConsumer} from "../../common/MinimaPublicationsContext";
+
+// For new minima component
+// Publication Entry Component
+// publicationEntries
+// Use nested dropdown?/whatever to choose publication -> volume /// volumeId
+// another input for page /// page
+// save
+
+// UPDATE? ako?
+// update/delete po jednom?
+// add po jednom?
 
 class EditDeletePart extends Component {
     static defaultProps = {
@@ -144,7 +156,7 @@ class StarBrightnessItem extends Component {
                 render={btns => {
                     const spanStyle = {
                         display: "inline-block",
-                        width: 80,
+                        width: 100,
                         marginRight: "0.5rem"
                     };
                     return (
@@ -160,22 +172,22 @@ class StarBrightnessItem extends Component {
                 modalFormRender={form => (
                     <ObservationsConsumer>
                         {({loading, filters}) => (
-                            <Form layout="vertical">
-                                <IdNameSelectFormItem loading={loading} form={form}
+                            <MyForm layout="vertical" form={form}>
+                                <IdNameSelectFormItem loading={loading}
                                                       label="Filter"
                                                       field="filterId"
                                                       initialValue={this.props.brightness.filter.id}
                                                       options={filters} required={true}/>
-                                <NumberFormItem form={form} label="Min S"
+                                <NumberFormItem label="Min S"
                                                 initialValue={this.props.brightness.minS}
                                                 field="minS"/>
-                                <NumberFormItem form={form} label="Min P"
+                                <NumberFormItem label="Min P"
                                                 initialValue={this.props.brightness.minP}
                                                 field="minP"/>
-                                <NumberFormItem form={form} label="Max P"
+                                <NumberFormItem label="Max P"
                                                 initialValue={this.props.brightness.maxP}
                                                 field="maxP"/>
-                            </Form>
+                            </MyForm>
                         )}
                     </ObservationsConsumer>
                 )}
@@ -199,18 +211,18 @@ class StarBrightnessInfoComponent extends Component {
                 modalFormRender={form => (
                     <ObservationsConsumer>
                         {({filters, loading}) => (
-                            <Form layout="vertical">
-                                <IdNameSelectFormItem loading={loading} form={form}
+                            <MyForm layout="vertical" form={form}>
+                                <IdNameSelectFormItem loading={loading}
                                                       label="Filter"
                                                       field="filterId"
                                                       options={filters} required={true}/>
-                                <NumberFormItem form={form} label="Min S"
+                                <NumberFormItem label="Min S"
                                                 field="minS"/>
-                                <NumberFormItem form={form} label="Min P"
+                                <NumberFormItem label="Min P"
                                                 field="minP"/>
-                                <NumberFormItem form={form} label="Max P"
+                                <NumberFormItem label="Max P"
                                                 field="maxP"/>
-                            </Form>
+                            </MyForm>
                         )}
                     </ObservationsConsumer>
                 )}
@@ -249,8 +261,12 @@ const StarMinimaInfoTableComponent = Form.create()(
         handleEditMinimaSubmit = () => {
             this.props.form.validateFieldsAndScroll((err, values) => {
                 if (!err) {
-                    if (!values.publicationIds) {
-                        values["publicationIds"] = [];
+                    if (!values.publicationEntries) {
+                        values.publicationEntries = []
+                    } else {
+                        values.publicationEntries.forEach(entry => {
+                            entry.volumeId = entry.volumeId[1];
+                        });
                     }
                     this.setState({...this.state, loading: true});
                     axios.put(BASE_URL + "/ocgate/minima/" + this.state.minima.id, values)
@@ -283,34 +299,24 @@ const StarMinimaInfoTableComponent = Form.create()(
                         destroyOnClose={true}
                     >
                         <MinimaPublicationsConsumer>
-                            {({publications, loading}) => (
+                            {({publications, loading: publicationsLoading}) => (
                                 <ObservationsConsumer>
                                     {({methods, loading}) => (
-                                        <Form layout="vertical">
-                                            <NumberFormItem form={this.props.form} field="julianDate"
+                                        <MyForm layout="vertical" form={this.props.form}>
+                                            <NumberFormItem field="julianDate"
                                                             label="Julian Date"
                                                             required={true}
                                                             initialValue={this.state.minima.julianDate}/>
                                             <IdNameSelectFormItem
                                                 initialValue={this.state.minima.method.id}
-                                                form={this.props.form}
                                                 label="Method"
                                                 field="methodId"
                                                 options={methods}
                                                 required={true}
                                                 loading={loading}
                                             />
-                                            <IdNameSelectFormItem
-                                                initialValue={this.state.minima.publications.map(p => p.id)}
-                                                form={this.props.form}
-                                                label="Publications"
-                                                field="publicationIds"
-                                                options={publications}
-                                                required={true}
-                                                loading={loading}
-                                                mode="multiple"
-                                            />
-                                        </Form>
+                                            <PublicationEntriesFormItem initialValue={this.state.minima.publicationEntries}/>
+                                        </MyForm>
                                     )}
                                 </ObservationsConsumer>
                             )}
@@ -358,9 +364,15 @@ class StarMinimaInfoComponent extends Component {
         return (
             <AddPart
                 valuesFix={(values) => {
-                    if (!values.publicationIds) {
-                        values["publicationIds"] = [];
+                    if (!values.publicationEntries) {
+                        values.publicationEntries = []
+                    } else {
+                        values.publicationEntries.forEach(entry => {
+                            entry.volumeId = entry.volumeId[1];
+                        });
                     }
+                    // TODO validate maybe more?
+                    values.julianDates = values.julianDates.split(/\r\n|\r|\n|\s|,/g).filter(v => v);
                     return values;
                 }}
                 url={BASE_URL + "/ocgate/minima"}
@@ -375,14 +387,14 @@ class StarMinimaInfoComponent extends Component {
                 )}
                 modalFormRender={form => (
                     <MinimaPublicationsConsumer>
-                        {({publications, loading}) => (
+                        {({publications, loading: publicationsLoading}) => (
                     <ObservationsConsumer>
                         {({methods, loading}) => (
-                            <Form layout="vertical">
-                                <NumberFormItem form={form} field="julianDate" label="Julian Date"
-                                                required={true}/>
+                            <MyForm layout="vertical" form={form}>
+                                <TextAreaFormItem
+                                    field="julianDates" label="Julian Dates"
+                                    required={true}/>
                                 <IdNameSelectFormItem
-                                    form={form}
                                     label="Star element"
                                     field="starElementId"
                                     options={this.props.elements}
@@ -391,23 +403,14 @@ class StarMinimaInfoComponent extends Component {
                                     loading={false}
                                 />
                                 <IdNameSelectFormItem
-                                    form={form}
                                     label="Method"
                                     field="methodId"
                                     options={methods}
                                     required={true}
                                     loading={loading}
                                 />
-                                <IdNameSelectFormItem
-                                    form={form}
-                                    label="Publications"
-                                    field="publicationIds"
-                                    options={publications}
-                                    required={true}
-                                    loading={loading}
-                                    mode="multiple"
-                                />
-                            </Form>
+                                <PublicationEntriesFormItem/>
+                            </MyForm>
                         )}
                     </ObservationsConsumer>
                         )}
@@ -465,16 +468,16 @@ class StarElementItem extends Component {
                 modalFormRender={form => (
                     <ObservationsConsumer>
                         {({loading, kinds}) => (
-                            <Form layout="vertical">
-                                <IdNameSelectFormItem loading={loading} form={form}
+                            <MyForm layout="vertical" form={form}>
+                                <IdNameSelectFormItem loading={loading}
                                                       label="Kind"
                                                       field="kindId" initialValue={this.props.element.kind.id}
                                                       options={kinds} required={true}/>
-                                <NumberFormItem form={form} label="M0"
+                                <NumberFormItem label="M0"
                                                 field="minimum" initialValue={this.props.element.minimum}/>
-                                <NumberFormItem form={form} label="Period"
+                                <NumberFormItem label="Period"
                                                 field="period" initialValue={this.props.element.period}/>
-                            </Form>
+                            </MyForm>
                         )}
                     </ObservationsConsumer>)}
             />
@@ -499,16 +502,16 @@ class StarElementsInfoComponent extends Component {
                 modalFormRender={form => (
                     <ObservationsConsumer>
                         {({kinds, loading}) => (
-                            <Form layout="vertical">
-                                <IdNameSelectFormItem loading={loading} form={form}
+                            <MyForm layout="vertical" form={form}>
+                                <IdNameSelectFormItem loading={loading}
                                                       label="Kind"
                                                       field="kindId"
                                                       options={kinds} required={true}/>
-                                <NumberFormItem form={form} label="M0"
+                                <NumberFormItem label="M0"
                                                 field="minimum"/>
-                                <NumberFormItem form={form} label="Period"
+                                <NumberFormItem label="Period"
                                                 field="period"/>
-                            </Form>
+                            </MyForm>
                         )}
                     </ObservationsConsumer>
                 )}
@@ -555,19 +558,19 @@ class StarGenericInfoComponent extends Component {
                                 <b>Coordinates: </b> {this.props.star.coordinates.raString} {this.props.star.coordinates.decString}
                             </div>
                             <div><b>Type: </b> {this.props.star.type}</div>
+                            <div><b>Minima duration: </b> {this.props.star.minimaDuration}</div>
                         </Fragment>
                     );
                 }}
                 modalFormRender={form => (
                     <EntitiesConsumer>
                         {({constellations, types, loading}) => (
-                            <Form layout="vertical">
-                                <CoordinatesFormItem form={form} required={true}
+                            <MyForm layout="vertical" form={form}>
+                                <CoordinatesFormItem required={true}
                                                      initialValue={this.props.star.coordinates}/>
-                                <InputFormItem form={form} label="Name" field="name" required={true}
+                                <InputFormItem label="Name" field="name" required={true}
                                                initialValue={this.props.star.name}/>
                                 <IdNameSelectFormItem
-                                    form={form}
                                     field="constellationId"
                                     label="Constellation"
                                     placeholder="Select a constellation"
@@ -577,11 +580,12 @@ class StarGenericInfoComponent extends Component {
                                     initialValue={this.props.star.constellation.id}
                                     optionName={(cons) => `${cons.abbreviation} (${cons.name})`}/>
 
-                                <InputFormItem form={form} label="Comp" field="comp"
+                                <InputFormItem label="Comp" field="comp"
                                                initialValue={this.props.star.comp}/>
-                                <TypeFormItem form={form} types={types} loading={loading}
+                                <TypeFormItem types={types} loading={loading}
                                               initialValue={this.props.star.type}/>
-                            </Form>
+                                <NumberFormItem label="Minima duration" field="minimaDuration" initialValue={this.props.star.minimaDuration}/>
+                            </MyForm>
                         )}
                     </EntitiesConsumer>)}
             />
@@ -607,7 +611,7 @@ export class OcGateAdminStarDetailPage extends Component {
                             julianDate: m.julianDate,
                             method: m.method,
                             kind: e.kind,
-                            publications: m.publications
+                            publicationEntries: m.publicationEntries
                         });
                     });
                 });

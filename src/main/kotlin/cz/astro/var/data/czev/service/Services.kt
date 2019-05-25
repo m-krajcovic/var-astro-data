@@ -1,9 +1,13 @@
 package cz.astro.`var`.data.czev.service
 
 import cz.astro.`var`.data.czev.repository.*
+import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.Polygon
 import org.springframework.data.domain.Sort
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 
 
 /**
@@ -17,6 +21,7 @@ import org.springframework.stereotype.Service
  */
 interface ConstellationService {
     fun getAll(): List<ConstellationModel>
+    fun getConstellation(point: CosmicCoordinatesModel): ConstellationModel?
 }
 
 /**
@@ -49,8 +54,31 @@ interface StarAdditionalFileService {
 class ConstellationServiceImpl(
         private val constellationRepository: ConstellationRepository
 ) : ConstellationService {
+
+    private var constPolygons: List<Pair<Polygon, Constellation>>? = null
+
+    @Transactional
+    override fun getConstellation(point: CosmicCoordinatesModel): ConstellationModel? {
+        val geometryFactory = GeometryFactory()
+        val geoPoint = geometryFactory.createPoint(Coordinate(point.ra.toDouble(), point.dec.toDouble()))
+        return getConstellationPolygons().firstOrNull { geoPoint.within(it.first) }?.second?.toModel()
+    }
+
     override fun getAll(): List<ConstellationModel> {
         return constellationRepository.findAll(Sort.by(Constellation::name.name)).map { it.toModel() }
+    }
+
+    private fun getConstellationPolygons(): List<Pair<Polygon, Constellation>> {
+        if (constPolygons == null) {
+            val allConsts = constellationRepository.findAllWithBounds()
+            val geometryFactory = GeometryFactory()
+            constPolygons = allConsts.asSequence().filter { it.bounds.size > 0 }.map {
+                val coordinates = it.bounds.sortedBy { b -> b.orderNumber }.toMutableList().map { b -> Coordinate(b.coordinates.rightAscension.toDouble(), b.coordinates.declination.toDouble()) }.toMutableList()
+                coordinates.add(Coordinate(coordinates[0]))
+                Pair(geometryFactory.createPolygon((coordinates.toTypedArray())), it)
+            }.toList()
+        }
+        return constPolygons!!
     }
 }
 
