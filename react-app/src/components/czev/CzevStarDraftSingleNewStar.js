@@ -84,6 +84,12 @@ class StarDraftSingleNewStarComponent extends Component {
                 this.props.cds.loadByCoordinates({
                     ra: values.coordinates.ra,
                     dec: values.coordinates.dec
+                }).then(result => {
+                    if (result.constellation) {
+                        this.props.form.setFieldsValue({
+                            constellation: "" + result.constellation.id
+                        });
+                    }
                 });
             }
         });

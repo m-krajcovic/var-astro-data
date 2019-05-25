@@ -11,8 +11,8 @@ export class CzevStarDraftSingleStarFormItems extends Component {
         const currentYear = new Date().getFullYear();
         return (
             <Fragment>
-                <CoordinatesFormItem form={this.props.form} required={true}/>
-                <CrossIdsFormItem form={this.props.form} onCrossIdBlur={this.props.onCrossIdBlur}
+                <CoordinatesFormItem form={this.props.form} required={true} onBlur={this.props.onCoordsBlur}/>
+                <CrossIdsFormItem form={this.props.form} onBlur={this.props.onCrossIdBlur}
                                   onCrossIdSearch={this.props.onCrossIdSearch}/>
                 <IdNameSelectFormItem
                     form={this.props.form}

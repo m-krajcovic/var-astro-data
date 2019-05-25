@@ -185,7 +185,8 @@ class CzevController(
             StarInformationByCoordsResponse(
                     ucac4Result.get(),
                     vsxResult.get(),
-                    czevResult
+                    czevResult,
+                    constellationService.getConstellation(coordinates)
             )
         }
         // TODO get constellation?
@@ -242,7 +243,8 @@ data class StarInformationByNameResponse(
 data class StarInformationByCoordsResponse(
         val ucac4: List<DistanceModel<StarInformationModel>>,
         val vsx: List<DistanceModel<VariableStarInformationModel>>,
-        val czev: List<DistanceModel<CzevStarListModel>>
+        val czev: List<DistanceModel<CzevStarListModel>>,
+        val constellation: ConstellationModel? = null
 )
 
 fun <T> T.toOk(): ResponseEntity<T> {

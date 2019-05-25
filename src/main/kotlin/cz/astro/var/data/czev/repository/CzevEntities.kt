@@ -122,6 +122,8 @@ class CzevStarDraft(
         var kmagnitude: Double? = null
 ) : IdEntity()
 
+
+// TODO: add center coordinates
 @Entity
 @Table(name = "common_Constellation")
 @Audited
@@ -133,6 +135,11 @@ class Constellation(
         @Column(nullable = false, unique = true)
         var abbreviation: String
 ) : IdEntity() {
+
+    @NotAudited
+    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "constellation")
+    var bounds: MutableSet<ConstellationBoundaryPoint> = mutableSetOf()
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -147,6 +154,16 @@ class Constellation(
     override fun hashCode(): Int {
         return name.hashCode()
     }
+}
+
+@Entity
+@Table(name = "common_ConstellationBoundaryPoint")
+class ConstellationBoundaryPoint(
+        val orderNumber: Int,
+        val coordinates: CosmicCoordinates
+): IdEntity() {
+    @ManyToOne
+    var constellation: Constellation? = null
 }
 
 @Entity
@@ -376,7 +393,8 @@ class Publication(
 @MappedSuperclass
 abstract class IdEntity(
         @Id
-        @GeneratedValue
+        @SequenceGenerator(name = "ID_SEQ", sequenceName = "ID_SEQ", allocationSize = 1000)
+        @GeneratedValue(generator = "ID_SEQ", strategy = GenerationType.SEQUENCE)
         var id: Long = -1,
         @Version
         var lastChange: LocalDateTime = LocalDateTime.now()
@@ -392,4 +410,22 @@ class CosmicCoordinates(
         @Column(precision = 10, scale = 7) var declination: BigDecimal
 ) {
     constructor(raString: String, decString: String) : this(raStringToDegrees(raString), decStringToDegrees(decString))
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is CosmicCoordinates) return false
+
+        if (rightAscension != other.rightAscension) return false
+        if (declination != other.declination) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = rightAscension.hashCode()
+        result = 31 * result + declination.hashCode()
+        return result
+    }
+
+
 }

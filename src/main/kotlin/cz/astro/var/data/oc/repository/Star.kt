@@ -47,17 +47,17 @@ class Star(
                 JoinColumn(updatable=false, insertable=false, name = "NCONS", referencedColumnName = "NCONS"),
                 JoinColumn(updatable=false, insertable=false, name = "NSTAR", referencedColumnName = "NSTAR")
         )
-        var elements: MutableSet<StarElement>,
+        var elements: MutableSet<StarElement> = HashSet(),
         @OneToMany
         @JoinColumns(
                 JoinColumn(updatable=false, insertable=false, name = "NCONS", referencedColumnName = "NCONS"),
                 JoinColumn(updatable=false, insertable=false, name = "NSTAR", referencedColumnName = "NSTAR")
         )
-        var brightness: MutableSet<StarBrightness>,
+        var brightness: MutableSet<StarBrightness> = HashSet(),
         @OneToMany
         @JoinColumns(
                 JoinColumn(updatable=false, insertable=false, name = "NCONS", referencedColumnName = "NCONS"),
                 JoinColumn(updatable=false, insertable=false, name = "NSTAR", referencedColumnName = "NSTAR")
         )
-        var minima: MutableSet<StarMinima>
+        var minima: MutableSet<StarMinima> = HashSet()
 ) : Serializable

@@ -1,9 +1,16 @@
 package cz.astro.`var`.data.czev.repository
 
+import cz.astro.`var`.data.czev.service.ConstellationServiceImpl
+import cz.astro.`var`.data.czev.service.CosmicCoordinatesModel
 import cz.astro.`var`.data.czev.service.StarTypeValidator
 import cz.astro.`var`.data.czev.service.StarTypeValidatorImpl
+import org.apache.commons.csv.CSVFormat
+import org.apache.commons.csv.CSVParser
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.io.File
+import java.io.FileReader
+import java.math.BigDecimal
 import java.util.*
 
 @Service
@@ -13,7 +20,10 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
                val userRepository: UserRepository,
                val observerRepository: StarObserverRepository,
                val constellationRepository: ConstellationRepository,
-               val roleRepository: RoleRepository) {
+               val roleRepository: RoleRepository,
+
+               val constellationService: ConstellationServiceImpl
+               ) {
 
     private lateinit var constellationsMap: Map<String, Constellation>
     private lateinit var observersMap: Map<String, StarObserver>
@@ -56,15 +66,19 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
 
     @Transactional
     fun test() {
-        var one = czevStarRepository.findAll().first()
+//        var one = czevStarRepository.findAll().first()
+//
+//        one.privateNote = "ahoj"
+//        one.publicNote = "ahoj"
+//
+//        czevStarRepository.saveAndFlush(one)
+//
+//        one.publicNote = "fedor!"
+//        czevStarRepository.saveAndFlush(one)
 
-        one.privateNote = "ahoj"
-        one.publicNote = "ahoj"
 
-        czevStarRepository.saveAndFlush(one)
 
-        one.publicNote = "fedor!"
-        czevStarRepository.saveAndFlush(one)
+
     }
 
     fun getStars(): List<CzevStar> {
@@ -444,7 +458,7 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         output.add(StarType("SN IIn"))
         output.add(StarType("EXOR"))
         output.add(StarType("PN"))
-        return output;
+        return output
     }
 
     fun getConstellations(): List<Constellation> {
@@ -537,6 +551,16 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         output.add(Constellation("Virgo", "Vir"))
         output.add(Constellation("Volans", "Vol"))
         output.add(Constellation("Vulpecula", "Vul"))
+
+        val constsByName = output.toMap { it.abbreviation.toUpperCase() }
+        CzevInitData().getConstBoundaries().forEach {
+            constsByName[it.first]?.let { cnst ->
+                val bound = ConstellationBoundaryPoint(cnst.bounds.size, it.second)
+                bound.constellation = cnst
+                cnst.bounds.add(bound)
+            }
+        }
+
         return output
     }
 }
@@ -547,4 +571,16 @@ fun <T> List<T>.toMap(keyMapper: (T) -> String): Map<String, T> {
         output[keyMapper(it)] = it
     }
     return output
+}
+
+class CzevInitData {
+    fun getConstBoundaries(): List<Pair<String, CosmicCoordinates>> {
+        val result = ArrayList<Pair<String, CosmicCoordinates>>()
+        CSVParser(FileReader(File("constellation_boundaries.csv")), CSVFormat.DEFAULT).use {
+            for (csvRecord in it) {
+                result.add(Pair(csvRecord[2], CosmicCoordinates(BigDecimal(csvRecord[0]) * BigDecimal("15"), BigDecimal(csvRecord[1]))))
+            }
+        }
+        return result
+    }
 }

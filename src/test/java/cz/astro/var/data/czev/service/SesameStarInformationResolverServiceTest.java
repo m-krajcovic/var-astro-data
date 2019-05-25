@@ -1,6 +1,5 @@
 package cz.astro.var.data.czev.service;
 
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -15,12 +14,19 @@ import static cz.astro.var.data.czev.HelperKt.getSunCoordinates;
 public class SesameStarInformationResolverServiceTest {
 
 //    @Autowired
+//    private ConstellationService constellationService = new ConstellationServiceImpl();
+//    @Autowired
 //    private SesameStarInformationNameResolverService sesameService;
 //
 //    @Test
 //    public void findByName() {
 //        Optional<VariableStarInformationModel> sesameResult = sesameService.findByName("RW Com");
 //        assertThat(sesameResult).isNotEmpty();
+//    }
+
+//    @Test
+//    public void constTest() {
+//        constellationService.getConstellation(new CosmicCoordinatesModel(new BigDecimal(60), new BigDecimal(60)));
 //    }
 
     @Test

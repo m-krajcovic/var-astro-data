@@ -61,7 +61,6 @@ class NewOcController(
     fun getAllObservationFilters(): List<IdNameModel> = observationsService.getAllFilters()
 
 
-
     @PutMapping("stars/{id}")
     fun updateStar(@PathVariable id: Long, @Valid @RequestBody star: StarUpdateModel) = starsService.updateStar(id, star)
 
@@ -75,11 +74,17 @@ class NewOcController(
     fun updateStarElement(@PathVariable id: Long, @Valid @RequestBody element: StarElementNewModel) = starsService.updateStarElement(id, element)
 
     @PutMapping("publications/{id}")
-    fun updatePublication(@PathVariable id: Long, @Valid @RequestBody model: MinimaPublicationUpdateModel) = publicationsService.update(id, model)
+    fun updatePublication(@PathVariable id: Long, @Valid @RequestBody model: MinimaPublicationUpdateModel) = publicationsService.updatePublication(id, model)
+
+    @PutMapping("publications/volumes/{id}")
+    fun updatePublicationVolume(@PathVariable id: Long, @Valid @RequestBody model: MinimaPublicationVolumeUpdateModel) = publicationsService.updateVolume(id, model)
 
 
     @PostMapping("publications")
-    fun insertPublication(@Valid @RequestBody publication: MinimaPublicationNewModel) = publicationsService.insert(publication)
+    fun insertPublication(@Valid @RequestBody publication: MinimaPublicationNewModel) = publicationsService.insertPublication(publication)
+
+    @PostMapping("publications/{id}/volumes")
+    fun insertPublicationVolume(@PathVariable id: Long, @Valid @RequestBody publication: MinimaPublicationVolumeNewModel) = publicationsService.insertVolume(id, publication)
 
     @PostMapping("stars")
     fun insertStar(@Valid @RequestBody star: StarNewModel): StarListModel = starsService.insert(star)
@@ -99,6 +104,7 @@ class NewOcController(
 
     @DeleteMapping("stars/brightness/{id}")
     fun deleteStarBrightness(@PathVariable id: Long) = starsService.deleteStarBrightness(id)
+
     @DeleteMapping("stars/elements/{id}")
     fun deleteStarElement(@PathVariable id: Long) = starsService.deleteStarElement(id)
 
@@ -112,5 +118,8 @@ class NewOcController(
     fun deleteStar(@PathVariable id: Long) = starsService.deleteStar(id)
 
     @DeleteMapping("publications/{id}")
-    fun deletePublication(@PathVariable id: Long) = publicationsService.delete(id)
+    fun deletePublication(@PathVariable id: Long) = publicationsService.deletePublication(id)
+
+    @DeleteMapping("publications/volumes/{id}")
+    fun deletePublicationVolume(@PathVariable id: Long) = publicationsService.deleteVolume(id)
 }

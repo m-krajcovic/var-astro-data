@@ -60,7 +60,10 @@ interface StarIdentificationRepository: JpaRepository<StarIdentification, Long> 
     fun existsByNameIn(@Param("names") names: Collection<String>): Boolean
 }
 
-interface ConstellationRepository : JpaRepository<Constellation, Long>
+interface ConstellationRepository : JpaRepository<Constellation, Long> {
+    @Query("SELECT DISTINCT c FROM Constellation c LEFT JOIN FETCH c.bounds")
+    fun findAllWithBounds(): List<Constellation>
+}
 interface StarTypeRepository: JpaRepository<StarType, Long>
 interface FilterBandRepository: JpaRepository<FilterBand, Long>
 interface StarAdditionalFileRepository: JpaRepository<StarAdditionalFile, String>
