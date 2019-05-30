@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import {Card, Layout, Form, Row, Col, Button, notification} from "antd";
 import {
-    CoordinatesFormItem, formItemLayoutWithOutLabel,
+    CoordinatesFormItem, FormItem, formItemLayoutWithOutLabel,
     IdNameSelectFormItem,
     InputFormItem, MyForm, NumberFormItem,
     TypeFormItem
@@ -61,10 +61,10 @@ class BrightnessSubFormComponent extends Component {
                                             <NumberFormItem form={this.props.form} label="Max P"
                                                             field={`brightness[${k}].maxP`}/>
                                             {brightnessKeys.length > 1 && (
-                                                <Form.Item {...formItemLayoutWithOutLabel}>
+                                                <FormItem {...formItemLayoutWithOutLabel}>
                                                     <Button onClick={() => this.removeBrightness(k)}
                                                             type="danger">Remove</Button>
-                                                </Form.Item>
+                                                </FormItem>
                                             )}
                                         </div>
                                     )
@@ -127,10 +127,10 @@ class ElementsSubFormComponent extends Component {
                                                             field={`elements[${k}].period`}/>
                                             {elementKeys.length > 1 &&
                                             (
-                                                <Form.Item {...formItemLayoutWithOutLabel}>
+                                                <FormItem {...formItemLayoutWithOutLabel}>
                                                     <Button onClick={() => this.removeElement(k)}
                                                             type="danger">Remove</Button>
-                                                </Form.Item>
+                                                </FormItem>
                                             )}
 
                                         </div>
@@ -209,14 +209,14 @@ class StarNewComponent extends Component {
 
                                 <ElementsSubFormComponent/>
 
-                                <Form.Item
+                                <FormItem
                                     wrapperCol={{
                                         xs: {span: 24, offset: 0},
                                         sm: {span: 18, offset: 6},
                                     }}
                                 >
                                     <Button type="primary" htmlType="submit">Submit</Button>
-                                </Form.Item>
+                                </FormItem>
                             </MyForm>
                         )}
                     </EntitiesConsumer>

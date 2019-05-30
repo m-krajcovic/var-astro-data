@@ -35,6 +35,6 @@ public class App implements CommandLineRunner {
             czevInit.initialize();
             ocGateMigrator.migrate();
         }
-        czevInit.test();
+//        czevInit.test();
     }
 }

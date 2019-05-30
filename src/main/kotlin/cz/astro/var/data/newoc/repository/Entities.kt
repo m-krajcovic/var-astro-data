@@ -2,6 +2,7 @@ package cz.astro.`var`.data.newoc.repository
 
 import cz.astro.`var`.data.czev.repository.*
 import org.hibernate.annotations.NaturalId
+import java.io.Serializable
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import javax.persistence.*
@@ -99,17 +100,18 @@ class MinimaPublicationVolume(
         result = 31 * result + (publication?.hashCode() ?: 0)
         return result
     }
-
-
 }
 
 @Entity
 @Table(name = "oc_MinimaPublicationEntry")
 class MinimaPublicationEntry(
         @ManyToOne
+        @Id
         var volume: MinimaPublicationVolume,
+        @Id
         var page: String?
-) : IdEntity() {
+): Serializable {
+    @Id
     @ManyToOne
     var minima: StarMinima? = null
 
@@ -142,8 +144,7 @@ class StarMinima(
         var method: ObservationMethod,
         @OneToMany(mappedBy = "minima", cascade = [CascadeType.ALL], orphanRemoval = true)
         var publicationEntries: MutableSet<MinimaPublicationEntry>,
-        @ManyToOne
-        var observer: MinimaObserver? = null
+        var observer: String = ""
 ) : IdEntity() {
     @ManyToOne
     var element: StarElement? = null

@@ -30,6 +30,7 @@ interface StarsService {
     fun deleteMinima(minimaId: Long)
     fun deleteMinimaBatch(batchId: Long)
     fun updateMinima(minimaId: Long, minima: StarMinimaUpdateModel)
+    fun updateMinimaBulk(minimaIds: List<Long>, model: StarMinimaBulkUpdateModel)
     fun updateStar(starId: Long, star: StarUpdateModel)
     fun updateStarBrightness(brightnessId: Long, model: StarBrightnessNewModel)
     fun updateStarElement(elementId: Long, model: StarElementNewModel)
@@ -37,6 +38,7 @@ interface StarsService {
     fun insertStarElement(starId: Long, element: StarElementNewModel)
     fun deleteStarBrightness(brightnessId: Long)
     fun deleteStarElement(elementId: Long)
+
 
     // TODO: need get/updatePublication/deletePublication based on filter
 }
@@ -150,7 +152,6 @@ class MinimaPublicationVolumeUpdateModel(
 )
 
 class MinimaPublicationEntryModel(
-        var id: Long,
         var publication: MinimaPublicationSimpleModel,
         var volume: MinimaPublicationVolumeModel,
         var page: String?
@@ -170,21 +171,31 @@ class StarMinimaModel(
         val batchId: Long,
         val julianDate: BigDecimal,
         val method: IdNameModel,
-        val publicationEntries: List<MinimaPublicationEntryModel>
+        val publicationEntries: List<MinimaPublicationEntryModel>,
+        val observer: String
 )
 
 class StarMinimaNewModel(
         val starElementId: Long,
         val julianDates: List<BigDecimal>,
         val methodId: Long,
-        val publicationEntries: List<MinimaPublicationEntryNewModel>
+        val publicationEntries: List<MinimaPublicationEntryNewModel>,
+        val observer: String
 )
 
 class StarMinimaUpdateModel(
         val julianDate: BigDecimal,
         val methodId: Long,
-        val publicationEntries: List<MinimaPublicationEntryNewModel>
-//        val deletedPublicationEntryIds: List<Long>
+        val publicationEntries: List<MinimaPublicationEntryNewModel>,
+        val observer: String
+)
+
+class StarMinimaBulkUpdateModel(
+        val julianDate: BigDecimal?,
+        val methodId: Long?,
+        val publicationEntries: List<MinimaPublicationEntryNewModel>?,
+        val observer: String?,
+        val starElementId: Long?
 )
 
 class StarBrightnessModel(
@@ -239,7 +250,7 @@ fun Star.toDetailsModel(): StarDetailsModel {
 }
 
 fun StarMinima.toModel(): StarMinimaModel {
-    return StarMinimaModel(id, batch.id, julianDate, method.toModel(), publicationEntries.map(MinimaPublicationEntry::toModel))
+    return StarMinimaModel(id, batch.id, julianDate, method.toModel(), publicationEntries.map(MinimaPublicationEntry::toModel), observer)
 }
 
 fun StarBrightness.toModel(): StarBrightnessModel {
@@ -263,7 +274,7 @@ fun MinimaPublicationVolume.toModel(): MinimaPublicationVolumeModel {
 }
 
 fun MinimaPublicationEntry.toModel(): MinimaPublicationEntryModel {
-    return MinimaPublicationEntryModel(id, volume.publication!!.toSimpleModel(), volume.toModel(), page)
+    return MinimaPublicationEntryModel(volume.publication!!.toSimpleModel(), volume.toModel(), page)
 }
 
 /*
@@ -325,6 +336,7 @@ class StarsServiceImpl(
             if (method.id != minima.methodId) {
                 method = observationMethodRepository.findById(minima.methodId).orElseThrow { ServiceException("Observation method doesn't exist") }
             }
+            observer = minima.observer
             publicationEntries.clear()
             publicationEntries.addAll(minima.publicationEntries.map {
                 MinimaPublicationEntry(volumeRepository.findById(it.volumeId).orElseThrow { ServiceException("Volume doesn't exist") }, it.page)
@@ -334,6 +346,42 @@ class StarsServiceImpl(
             }
         }
     }
+
+    override fun updateMinimaBulk(minimaIds: List<Long>, model: StarMinimaBulkUpdateModel) {
+        val entities = minimaRepository.findAllById(minimaIds)
+        entities.forEach { entity ->
+            entity.apply {
+                model.julianDate?.let {
+                    julianDate = it
+                }
+
+                model.methodId?.let {
+                    if (method.id != it) {
+                        method = observationMethodRepository.findById(it).orElseThrow { ServiceException("Observation method doesn't exist") }
+                    }
+                }
+
+                model.observer?.let {
+                    observer = it
+                }
+
+                model.publicationEntries?.let {
+                    publicationEntries.clear()
+                    publicationEntries.addAll(it.map { e ->
+                        MinimaPublicationEntry(volumeRepository.findById(e.volumeId).orElseThrow { ServiceException("Volume doesn't exist") }, e.page)
+                    })
+                    publicationEntries.forEach { e ->
+                        e.minima = this
+                    }
+                }
+
+                model.starElementId?.let {
+                    element = starElementRepository.findById(it).orElseThrow { ServiceException("Element does not exist") }
+                }
+            }
+        }
+    }
+
 
     override fun updateStar(starId: Long, star: StarUpdateModel) {
         val entity = starsRepository.findById(starId).orElseThrow { ServiceException("Star doesn't exist") }
@@ -388,7 +436,8 @@ class StarsServiceImpl(
                         importBatch,
                         julianDate,
                         obsMethod,
-                        minima.publicationEntries.map { MinimaPublicationEntry(volumeRepository.findById(it.volumeId).orElseThrow { ServiceException("Volume doesn't exist") }, it.page) }.toMutableSet()
+                        minima.publicationEntries.map { MinimaPublicationEntry(volumeRepository.findById(it.volumeId).orElseThrow { ServiceException("Volume doesn't exist") }, it.page) }.toMutableSet(),
+                        minima.observer
                 )
                 newMinima.publicationEntries.forEach {
                     it.minima = newMinima

@@ -10,6 +10,7 @@ import AnimateHeight from "react-animate-height";
 import {CdsCallsHolder} from "../common/CdsCallsHolder";
 import StarMap from "../common/StarMap";
 import {AdditionalFilesUpload} from "./AdditionalFilesUpload";
+import {FormItem} from "../common/FormItems";
 
 class StarDraftSingleNewStarComponent extends Component {
     constructor(props) {
@@ -147,14 +148,14 @@ class StarDraftSingleNewStarComponent extends Component {
                             entities={this.props.entities}
                         />
                         <AdditionalFilesUpload onChange={(files) => this.setState({...this.state, files})}/>
-                        <Form.Item
+                        <FormItem
                             wrapperCol={{
                                 xs: {span: 24, offset: 0},
                                 sm: {span: 18, offset: 6},
                             }}
                         >
                             <Button type="primary" htmlType="submit">Submit for approval</Button>
-                        </Form.Item>
+                        </FormItem>
                     </Form>
                 </Col>
                 <Col span={24} sm={{span: 8}}>

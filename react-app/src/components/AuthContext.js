@@ -23,7 +23,7 @@ class AuthProvider extends React.Component {
         const decoded = decode(token);
         if (Date.now() / 1000 > decoded.exp) {
             this.logout();
-            return;
+            return {isAuth: false, isAdmin: false};
         }
         return {
             isAuth: decoded.authorities.indexOf('ROLE_USER') !== -1,

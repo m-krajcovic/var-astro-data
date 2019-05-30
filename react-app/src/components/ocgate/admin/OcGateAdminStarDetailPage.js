@@ -17,6 +17,7 @@ import {Redirect} from "react-router-dom";
 import {EntitiesConsumer} from "../../common/EntitiesContext";
 import {PromiseFormModal} from "../../common/PromiseFormModal";
 import {MinimaPublicationsConsumer} from "../../common/MinimaPublicationsContext";
+import {TableInputRangeFilter} from "../../../App";
 
 // For new minima component
 // Publication Entry Component
@@ -231,11 +232,100 @@ class StarBrightnessInfoComponent extends Component {
     }
 }
 
+const MinimaBulkEdit = Form.create()(
+    class extends Component {
+        static defaultProps = {
+            ids: []
+        };
+
+        constructor(props) {
+            super(props);
+            this.state = {visible: false, loading: false}
+        }
+
+        handleEdit = () => {
+            this.setState({...this.state, visible: true});
+        };
+
+        handleCancel = () => {
+            this.setState({...this.state, visible: false});
+        };
+
+        handleEditMinimaSubmit = () => {
+            this.props.form.validateFieldsAndScroll((err, values) => {
+                if (!err) {
+                    if (values.publicationEntries) {
+                        values.publicationEntries.forEach(entry => {
+                            entry.volumeId = entry.volumeId[1];
+                        });
+                    }
+                    this.setState({...this.state, loading: true});
+                    axios.put(BASE_URL + "/ocgate/minima/" + this.props.ids.join(","), values)
+                        .then(result => {
+                            notification.success({
+                                message: "Edited minimas"
+                            });
+                            this.setState({...this.state, loading: false, visible: false});
+                            if (this.props.onChange) {
+                                this.props.onChange();
+                            }
+                        })
+                        .catch(reason => {
+                            // :(
+                        });
+                }
+            });
+        };
+
+        render() {
+            return (
+                <Fragment>
+                    <Modal
+                        visible={this.state.visible}
+                        title="Edit minima bulk"
+                        okText="Submit"
+                        onCancel={this.handleCancel}
+                        onOk={this.handleEditMinimaSubmit}
+                        confirmLoading={this.state.loading}
+                        destroyOnClose={true}
+                    >
+                        <ObservationsConsumer>
+                            {({methods, loading}) => (
+                                <MyForm layout="vertical" form={this.props.form}>
+                                    <NumberFormItem field="julianDate"
+                                                    label="Julian Date"/>
+                                    <IdNameSelectFormItem
+                                        label="Star element"
+                                        field="starElementId"
+                                        options={this.props.elements}
+                                        optionName={e => `${e.kind.name} (M0: ${e.minimum}, P: ${e.period})`}
+                                        loading={false}
+                                    />
+                                    <IdNameSelectFormItem
+                                        label="Method"
+                                        field="methodId"
+                                        options={methods}
+                                        loading={loading}
+                                    />
+                                    <PublicationEntriesFormItem/>
+                                    <InputFormItem field="observer" label="Observer"/>
+                                </MyForm>
+                            )}
+                        </ObservationsConsumer>
+                    </Modal>
+                    <Button icon="edit" style={{marginBottom: "0.5rem"}} size="small" onClick={this.handleEdit}
+                            disabled={this.props.ids.length === 0}>Edit bulk</Button>
+                </Fragment>
+            );
+        }
+    }
+);
+
 const StarMinimaInfoTableComponent = Form.create()(
     class extends Component {
         constructor(props) {
             super(props);
-            this.state = {loading: false, minima: null};
+            this.state = {loading: false, minima: null, selectedRowKeys: []};
         }
 
         componentDidMount() {
@@ -258,12 +348,14 @@ const StarMinimaInfoTableComponent = Form.create()(
             this.setState({...this.state, minima: minima});
         };
 
+        onSelectChange = selectedRowKeys => {
+            this.setState({...this.state, selectedRowKeys});
+        };
+
         handleEditMinimaSubmit = () => {
             this.props.form.validateFieldsAndScroll((err, values) => {
                 if (!err) {
-                    if (!values.publicationEntries) {
-                        values.publicationEntries = []
-                    } else {
+                    if (values.publicationEntries) {
                         values.publicationEntries.forEach(entry => {
                             entry.volumeId = entry.volumeId[1];
                         });
@@ -288,7 +380,7 @@ const StarMinimaInfoTableComponent = Form.create()(
 
         render() {
             return (
-                <Fragment>
+                <div style={{position: "relative"}}>
                     <Modal
                         visible={this.state.minima != null}
                         title="Edit minima"
@@ -298,63 +390,100 @@ const StarMinimaInfoTableComponent = Form.create()(
                         confirmLoading={this.state.loading}
                         destroyOnClose={true}
                     >
-                        <MinimaPublicationsConsumer>
-                            {({publications, loading: publicationsLoading}) => (
-                                <ObservationsConsumer>
-                                    {({methods, loading}) => (
-                                        <MyForm layout="vertical" form={this.props.form}>
-                                            <NumberFormItem field="julianDate"
-                                                            label="Julian Date"
-                                                            required={true}
-                                                            initialValue={this.state.minima.julianDate}/>
-                                            <IdNameSelectFormItem
-                                                initialValue={this.state.minima.method.id}
-                                                label="Method"
-                                                field="methodId"
-                                                options={methods}
-                                                required={true}
-                                                loading={loading}
-                                            />
-                                            <PublicationEntriesFormItem initialValue={this.state.minima.publicationEntries}/>
-                                        </MyForm>
-                                    )}
-                                </ObservationsConsumer>
+                        <ObservationsConsumer>
+                            {({methods, loading}) => (
+                                <MyForm layout="vertical" form={this.props.form}>
+                                    <NumberFormItem field="julianDate"
+                                                    label="Julian Date"
+                                                    required={true}
+                                                    initialValue={this.state.minima.julianDate}/>
+                                    <IdNameSelectFormItem
+                                        initialValue={this.state.minima.method.id}
+                                        label="Method"
+                                        field="methodId"
+                                        options={methods}
+                                        required={true}
+                                        loading={loading}
+                                    />
+                                    <PublicationEntriesFormItem
+                                        initialValue={this.state.minima.publicationEntries}/>
+                                </MyForm>
                             )}
-                        </MinimaPublicationsConsumer>
+                        </ObservationsConsumer>
                     </Modal>
-                    <Table
-                        dataSource={this.props.minimas}
-                        size="small"
-                        rowKey="id"
-                        scroll={{x: 500}}
-                    >
-                        <Table.Column
-                            title="JD"
-                            dataIndex="julianDate"
-                        />
-                        {
-                            this.props.showKind && (
+                    <MinimaBulkEdit onChange={this.props.onChange} ids={this.state.selectedRowKeys} elements={this.props.elements}/>
+                    <ObservationsConsumer>
+                        {({methods, kinds}) => (
+                            <Table
+                                rowSelection={{
+                                    selectedRowKeys: this.state.selectedRowKeys,
+                                    onChange: this.onSelectChange
+                                }}
+                                dataSource={this.props.minimas}
+                                size="small"
+                                rowKey="id"
+                                scroll={{x: 500}}
+                            >
                                 <Table.Column
-                                    title="Kind"
-                                    dataIndex="kind.name"/>
-                            )
-                        }
-                        <Table.Column
-                            title="Method"
-                            dataIndex="method.name"
-                        />
-                        <Table.Column
-                            title="Actions"
-                            key="actions"
-                            render={(row) => (
-                                <span>
+                                    title="JD"
+                                    dataIndex="julianDate"
+                                    filterDropdown={(actions) => (
+                                        <TableInputRangeFilter actions={actions}/>
+                                    )}
+                                    onFilter={(value, record) => {
+                                        console.log({value, record});
+                                        return record.julianDate >= value.min && record.julianDate <= value.max;
+                                    }}
+                                />
+                                {
+                                    this.props.showKind && (
+                                        <Table.Column
+                                            title="Kind"
+                                            dataIndex="kind.name"
+                                            filters={kinds.map(k => {
+                                                return {
+                                                    text: k.name,
+                                                    value: k.id
+                                                };
+                                            })}
+                                            onFilter={(value, record) => record.kind.id + "" === value}
+                                        />
+                                    )
+                                }
+                                <Table.Column
+                                    title="Method"
+                                    dataIndex="method.name"
+                                    filters={methods.map(m => {
+                                        return {
+                                            text: m.name,
+                                            value: m.id
+                                        };
+                                    })}
+                                    onFilter={(value, record) => record.method.id + "" === value}
+                                />
+                                <Table.Column
+                                    title="Publications"
+                                    key="publications"
+                                    render={(row) => (
+                                        <span>
+                                    {row.publicationEntries.map(entry => `${entry.publication.name}/${entry.volume.name}`).join(", ")}
+                                </span>
+                                    )}
+                                />
+                                <Table.Column
+                                    title="Actions"
+                                    key="actions"
+                                    render={(row) => (
+                                        <span>
                             <EditDeleteAnchorButtons container={false} onEdit={() => this.handleEditMinima(row)}
                                                      onDelete={() => this.handleDeleteMinima(row)}/>
                         </span>
-                            )}
-                        />
-                    </Table>
-                </Fragment>
+                                    )}
+                                />
+                            </Table>
+                        )}
+                    </ObservationsConsumer>
+                </div>
             )
         }
     });
@@ -381,38 +510,42 @@ class StarMinimaInfoComponent extends Component {
                     <Fragment>
                         <h3>Minimas ({this.props.minimas.length}) {btn}</h3>
                         <StarMinimaInfoTableComponent onChange={this.props.onChange} showKind={true}
-                                                      minimas={this.props.minimas}/>
+                                                      minimas={this.props.minimas} elements={this.props.elements}/>
 
                     </Fragment>
                 )}
                 modalFormRender={form => (
                     <MinimaPublicationsConsumer>
                         {({publications, loading: publicationsLoading}) => (
-                    <ObservationsConsumer>
-                        {({methods, loading}) => (
-                            <MyForm layout="vertical" form={form}>
-                                <TextAreaFormItem
-                                    field="julianDates" label="Julian Dates"
-                                    required={true}/>
-                                <IdNameSelectFormItem
-                                    label="Star element"
-                                    field="starElementId"
-                                    options={this.props.elements}
-                                    optionName={e => `${e.kind.name} (M0: ${e.minimum}, P: ${e.period})`}
-                                    required={true}
-                                    loading={false}
-                                />
-                                <IdNameSelectFormItem
-                                    label="Method"
-                                    field="methodId"
-                                    options={methods}
-                                    required={true}
-                                    loading={loading}
-                                />
-                                <PublicationEntriesFormItem/>
-                            </MyForm>
-                        )}
-                    </ObservationsConsumer>
+                            <ObservationsConsumer>
+                                {({methods, loading}) => (
+                                    <MyForm layout="vertical" form={form}>
+                                        <TextAreaFormItem
+                                            field="julianDates" label="Julian Dates"
+                                            required={true}/>
+                                        <IdNameSelectFormItem
+                                            label="Star element"
+                                            field="starElementId"
+                                            options={this.props.elements}
+                                            optionName={e => `${e.kind.name} (M0: ${e.minimum}, P: ${e.period})`}
+                                            required={true}
+                                            loading={false}
+                                        />
+                                        <IdNameSelectFormItem
+                                            label="Method"
+                                            field="methodId"
+                                            options={methods}
+                                            required={true}
+                                            loading={loading}
+                                        />
+                                        <InputFormItem
+                                            label="Observer"
+                                            field="observer"
+                                        />
+                                        <PublicationEntriesFormItem/>
+                                    </MyForm>
+                                )}
+                            </ObservationsConsumer>
                         )}
                     </MinimaPublicationsConsumer>
                 )}
@@ -451,17 +584,7 @@ class StarElementItem extends Component {
                             </div>
                             <div><span style={spanStyle}>M0:</span> {this.props.element.minimum}</div>
                             <div><span style={spanStyle}>Period:</span> {this.props.element.period}</div>
-                            <div>
-                                <div style={this.state.minimaShow ? {marginBottom: "0.5rem"} : {}}>
-                                    Minimas: {this.props.element.minimas.length} <AnchorButton size="small"
-                                                                                               disabled={!this.props.element.minimas.length}
-                                                                                               onClick={() => this.setState({minimaShow: !this.state.minimaShow})}>{this.state.minimaShow ? 'Hide' : 'Show'}</AnchorButton>
-                                </div>
-                                <AnimateHeight height={this.state.minimaShow ? "auto" : 0}>
-                                    <StarMinimaInfoTableComponent onChange={this.props.onChange}
-                                                                  minimas={this.props.element.minimas}/>
-                                </AnimateHeight>
-                            </div>
+                            <div>Minimas: {this.props.element.minimas.length}</div>
                         </Fragment>
                     );
                 }}
@@ -584,7 +707,8 @@ class StarGenericInfoComponent extends Component {
                                                initialValue={this.props.star.comp}/>
                                 <TypeFormItem types={types} loading={loading}
                                               initialValue={this.props.star.type}/>
-                                <NumberFormItem label="Minima duration" field="minimaDuration" initialValue={this.props.star.minimaDuration}/>
+                                <NumberFormItem label="Minima duration" field="minimaDuration"
+                                                initialValue={this.props.star.minimaDuration}/>
                             </MyForm>
                         )}
                     </EntitiesConsumer>)}

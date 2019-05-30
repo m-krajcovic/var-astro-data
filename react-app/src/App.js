@@ -34,6 +34,7 @@ import AdminPage from "./components/admin/AdminPage";
 import {ObservationsProvider} from "./components/ocgate/ObservationsContext";
 import {AnchorButton} from "./components/common/AnchorButton";
 import {MinimaPublicationsProvider} from "./components/common/MinimaPublicationsContext";
+import {FormItem} from "./components/common/FormItems";
 
 const {Header, Content, Sider} = Layout;
 
@@ -199,17 +200,17 @@ class RegisterComponent extends Component {
                 <Card>
                     <Col offset={9} span={6}>
                         <Form onSubmit={this.handleSubmit}>
-                            <Form.Item label="First name">
+                            <FormItem label="First name">
                                 {getFieldDecorator('firstName', {})(
                                     <Input/>
                                 )}
-                            </Form.Item>
-                            <Form.Item label="Last name">
+                            </FormItem>
+                            <FormItem label="Last name">
                                 {getFieldDecorator('lastName', {})(
                                     <Input/>
                                 )}
-                            </Form.Item>
-                            <Form.Item label="E-mail">
+                            </FormItem>
+                            <FormItem label="E-mail">
                                 {getFieldDecorator('email', {
                                     rules: [{
                                         type: "email", message: "The input is not a valid email"
@@ -217,18 +218,18 @@ class RegisterComponent extends Component {
                                 })(
                                     <Input/>
                                 )}
-                            </Form.Item>
-                            <Form.Item label="Password">
+                            </FormItem>
+                            <FormItem label="Password">
                                 {getFieldDecorator('password', {
                                     rules: [],
                                 })(
                                     <Input type="password"/>
                                 )}
-                            </Form.Item>
+                            </FormItem>
 
-                            <Form.Item>
+                            <FormItem>
                                 <Button type="primary" htmlType="submit">Register</Button>
-                            </Form.Item>
+                            </FormItem>
                         </Form>
                     </Col>
                 </Card>
@@ -250,14 +251,14 @@ class Login extends Component {
             <Content style={{margin: "24px 24px 0"}}>
                 <Card>
                     <Col offset={9} span={6}>
-                        <Form.Item label="E-mail">
+                        <FormItem label="E-mail">
                             <Input type="text" value={this.state.username}
                                    onChange={(e) => this.setState({...this.state, username: e.target.value})}/>
-                        </Form.Item>
-                        <Form.Item label="Password">
+                        </FormItem>
+                        <FormItem label="Password">
                             <Input type="password" value={this.state.password}
                                    onChange={(e) => this.setState({...this.state, password: e.target.value})}/>
-                        </Form.Item>
+                        </FormItem>
                         <AuthConsumer>
                             {({login}) => (
                                 <Button type="primary" onClick={() => {

@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {BASE_URL} from "../../api-endpoint";
 import {Avatar, Form, List} from "antd";
 import {IconText} from "../common/IconText";
+import {FormItem} from "../common/FormItems";
 
 const WillBeRemovedSpan = () => {
     return (
@@ -28,9 +29,9 @@ export class UploadedFilesListFormItem extends Component {
             },
         };
         return (
-            <Form.Item {...formItemLayout} label="Uploaded files">
+            <FormItem {...formItemLayout} label="Uploaded files">
                 <UploadedFilesList onChange={this.props.onChange} files={this.props.files} disableActions={this.props.disableActions}/>
-            </Form.Item>
+            </FormItem>
         )
     }
 }
