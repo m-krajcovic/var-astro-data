@@ -9,6 +9,7 @@ import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "../CzevStarDraft
 import {CdsCallsHolder} from "../../common/CdsCallsHolder";
 import {AdditionalFilesUpload} from "../AdditionalFilesUpload";
 import {UploadedFilesListFormItem} from "../UploadedFilesList";
+import {FormItem} from "../../common/FormItems";
 
 export default class CzevUser extends Component {
     render() {
@@ -317,14 +318,14 @@ class CzevUserDraftDetailComponent extends Component {
                                 />
                                 {originalDraft && <UploadedFilesListFormItem onChange={(deletedFiles) => this.setState({...this.state, deletedFiles})} files={originalDraft.files}/>}
                                 <AdditionalFilesUpload onChange={(newFiles) => this.setState({...this.state, newFiles})}/>
-                                <Form.Item
+                                <FormItem
                                     wrapperCol={{
                                         xs: {span: 24, offset: 0},
                                         sm: {span: 18, offset: 6},
                                     }}
                                 >
                                     <Button type="primary" htmlType="submit">Update</Button>
-                                </Form.Item>
+                                </FormItem>
                             </Form>
                         </Col>
                         <Col span={24} sm={{span: 8}}>

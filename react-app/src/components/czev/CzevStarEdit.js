@@ -8,6 +8,7 @@ import {CzevStarDraftSingleStarFormItems} from "./CzevStarDraftSingleStarFormIte
 import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "./CzevStarDraftSingleNewStar";
 import {UploadedFilesListFormItem} from "./UploadedFilesList";
 import {AdditionalFilesUpload} from "./AdditionalFilesUpload";
+import {FormItem} from "../common/FormItems";
 
 class CzevStarEditComponent extends Component {
     constructor(props) {
@@ -203,14 +204,14 @@ class CzevStarEditComponent extends Component {
                                 />
                                 {originalStar && <UploadedFilesListFormItem onChange={(deletedFiles) => this.setState({...this.state, deletedFiles})} files={originalStar.files}/>}
                                 <AdditionalFilesUpload onChange={(newFiles) => this.setState({...this.state, newFiles})}/>
-                                <Form.Item
+                                <FormItem
                                     wrapperCol={{
                                         xs: {span: 24, offset: 0},
                                         sm: {span: 18, offset: 6},
                                     }}
                                 >
                                     <Button type="primary" htmlType="submit">Update</Button>
-                                </Form.Item>
+                                </FormItem>
                             </Form>
                         </Col>
                         <Col span={24} sm={{span: 8}}>

@@ -3,6 +3,7 @@ import {Button, Col, Input, Row, Slider, Spin} from "antd";
 import {ToggleTagHeight} from "../common/ToggleTagHeight";
 import {Form} from "antd";
 import {Select} from "antd";
+import {FormItem} from "../common/FormItems";
 
 class CzevCatalogueAdvancedSearchComponent extends Component {
     static defaultProps = {
@@ -71,7 +72,7 @@ class CzevCatalogueAdvancedSearchComponent extends Component {
                               onSubmit={this.handleSubmit}>
                             <Row gutter={24}>
                                 <Col span={24} md={{span: 8}}>
-                                    <Form.Item label="RA">
+                                    <FormItem label="RA">
                                         {getFieldDecorator('ra', {
                                             rules: [{
                                                 pattern: this.coordinatesRaRegexp,
@@ -80,10 +81,10 @@ class CzevCatalogueAdvancedSearchComponent extends Component {
                                         })(
                                             <Input/>
                                         )}
-                                    </Form.Item>
+                                    </FormItem>
                                 </Col>
                                 <Col span={24} md={{span: 8}}>
-                                    <Form.Item label="DEC">
+                                    <FormItem label="DEC">
                                         {getFieldDecorator('dec', {
                                             rules: [{
                                                 pattern: this.coordinatesDecRegexp,
@@ -92,21 +93,21 @@ class CzevCatalogueAdvancedSearchComponent extends Component {
                                         })(
                                             <Input/>
                                         )}
-                                    </Form.Item>
+                                    </FormItem>
                                 </Col>
                                 <Col span={24} md={{span: 8}}>
-                                    <Form.Item label="Radius">
+                                    <FormItem label="Radius">
                                         {getFieldDecorator('radius', {
                                             initialValue: 0.01
                                         })(
                                             <Input style={{width: "100%"}} addonAfter="deg"/>
                                         )}
-                                    </Form.Item>
+                                    </FormItem>
                                 </Col>
                             </Row>
                             <Row gutter={24}>
                                 <Col span={24} md={{span: 8}}>
-                                    <Form.Item label="Constellation">
+                                    <FormItem label="Constellation">
                                         {getFieldDecorator('constellation', {})(
                                             <Select
                                                 showSearch
@@ -120,10 +121,10 @@ class CzevCatalogueAdvancedSearchComponent extends Component {
                                                 })}
                                             </Select>
                                         )}
-                                    </Form.Item>
+                                    </FormItem>
                                 </Col>
                                 <Col span={24} md={{span: 8}}>
-                                    <Form.Item label="Discoverer">
+                                    <FormItem label="Discoverer">
                                         {getFieldDecorator('discoverer', {})(
                                             <Select
                                                 showSearch
@@ -137,10 +138,10 @@ class CzevCatalogueAdvancedSearchComponent extends Component {
                                                 })}
                                             </Select>
                                         )}
-                                    </Form.Item>
+                                    </FormItem>
                                 </Col>
                                 <Col span={24} md={{span: 8}}>
-                                    <Form.Item label="Filter Band">
+                                    <FormItem label="Filter Band">
                                         {getFieldDecorator('filterBand', {})(
                                             <Select
                                                 showSearch
@@ -154,36 +155,36 @@ class CzevCatalogueAdvancedSearchComponent extends Component {
                                                 })}
                                             </Select>
                                         )}
-                                    </Form.Item>
+                                    </FormItem>
                                 </Col>
                             </Row>
                             <Row gutter={24}>
                                 <Col span={24} md={{span: 8}}>
-                                    <Form.Item label="Type">
+                                    <FormItem label="Type">
                                         {getFieldDecorator('type', {})(
                                             <Input/>
                                         )}
-                                    </Form.Item>
+                                    </FormItem>
                                 </Col>
                                 <Col span={24} md={{span: 8}}>
-                                    <Form.Item label="Amplitude">
+                                    <FormItem label="Amplitude">
                                         {getFieldDecorator('amplitude', {
                                             initialValue: this.amplitudeDefaults
                                         })(
                                             <Slider step={0.01} min={this.amplitudeDefaults[0]}
                                                     max={this.amplitudeDefaults[1]} range marks={this.amplitudeMarks}/>
                                         )}
-                                    </Form.Item>
+                                    </FormItem>
                                 </Col>
                                 <Col span={24} md={{span: 8}}>
-                                    <Form.Item label="Year">
+                                    <FormItem label="Year">
                                         {getFieldDecorator('year', {
                                             initialValue: [1990, 2018]
                                         })(
                                             <Slider min={this.yearsDefaults[0]} max={this.yearsDefaults[1]} range
                                                     marks={this.yearMarks}/>
                                         )}
-                                    </Form.Item>
+                                    </FormItem>
                                 </Col>
                             </Row>
                             <Row>

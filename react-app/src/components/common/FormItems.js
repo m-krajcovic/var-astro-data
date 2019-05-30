@@ -33,13 +33,24 @@ export const formItemLayoutWithOutLabel = {
     },
 };
 
-class FormItem extends Component {
+export class FormItem extends Component {
+    render() {
+        const {children, ...acyclicProps} = this.props;
+        return (
+            <Form.Item style={{marginBottom: 12}} {...acyclicProps}>
+                {children}
+            </Form.Item>
+        );
+    }
+}
+
+class MyFormItem extends Component {
     render() {
         const layout = this.props.label == null ? formItemLayoutWithOutLabel : formItemLayout;
         return (
-            <Form.Item {...layout} label={this.props.label} required={this.props.required}>
+            <FormItem style={{marginBottom: 12}} {...layout} label={this.props.label} required={this.props.required}>
                 {this.props.children}
-            </Form.Item>
+            </FormItem>
         );
     }
 }
@@ -201,7 +212,7 @@ export class CoordinatesFormItem extends Component {
         const {getFieldDecorator} = this.props.form;
 
         return (
-            <FormItem label="Coordinates" required={this.props.required}>
+            <MyFormItem label="Coordinates" required={this.props.required}>
                 <Col span={12}>
                     <Form.Item>
                         {getFieldDecorator('coordinates.ra', {
@@ -241,7 +252,7 @@ export class CoordinatesFormItem extends Component {
                         )}
                     </Form.Item>
                 </Col>
-            </FormItem>
+            </MyFormItem>
         );
     }
 }
@@ -287,7 +298,7 @@ export class CrossIdsFormItem extends Component {
 
         const crossIdFormItems = crossIds.map((k, index) => {
             return (
-                <FormItem
+                <MyFormItem
                     label={index === 0 ? 'Cross identifications' : ''}
                     required={true}
                     key={k}
@@ -319,17 +330,17 @@ export class CrossIdsFormItem extends Component {
                             onClick={() => this.removeCrossId(k)}
                         />
                     ) : null}
-                </FormItem>
+                </MyFormItem>
             )
         });
         return (
             <Fragment>
                 {crossIdFormItems}
-                <FormItem>
+                <MyFormItem>
                     <Button type="dashed" onClick={this.addCrossId} style={{width: "90%"}}>
                         <Icon type="plus"/> Add Cross id
                     </Button>
-                </FormItem>
+                </MyFormItem>
             </Fragment>
         );
     }
@@ -346,7 +357,7 @@ export class NumberFormItem extends Component {
             inputNumberAttrs["max"] = this.props.max;
         }
         return (
-            <FormItem label={this.props.label} required={this.props.required}>
+            <MyFormItem label={this.props.label} required={this.props.required}>
                 {getFieldDecorator(this.props.field, {
                     rules: [{
                         type: "number", message: "The input is not a valid number"
@@ -355,7 +366,7 @@ export class NumberFormItem extends Component {
                 })(
                     <InputNumber {...inputNumberAttrs}/>
                 )}
-            </FormItem>
+            </MyFormItem>
         );
     }
 }
@@ -384,7 +395,7 @@ export class IdNameSelectFormItem extends Component {
         const initialValue = this.getInitialValue();
 
         return (
-            <FormItem label={this.props.label} required={this.props.required}>
+            <MyFormItem label={this.props.label} required={this.props.required}>
                 <Spin spinning={this.props.loading}>
                     {getFieldDecorator(this.props.field, {
                         rules: [
@@ -406,7 +417,7 @@ export class IdNameSelectFormItem extends Component {
                         </Select>
                     )}
                 </Spin>
-            </FormItem>
+            </MyFormItem>
         );
     }
 }
@@ -416,13 +427,16 @@ export class TextAreaFormItem extends Component {
         const {getFieldDecorator} = this.props.form;
 
         return (
-            <FormItem label={this.props.label} required={this.props.required}>
+            <MyFormItem label={this.props.label} required={this.props.required}>
                 {getFieldDecorator(this.props.field, {
-                    initialValue: this.props.initialValue
+                    initialValue: this.props.initialValue,
+                    rules: [
+                        {required: this.props.required, message: "This field is required"}
+                    ]
                 })(
                     <Input.TextArea/>
                 )}
-            </FormItem>
+            </MyFormItem>
         );
     }
 }
@@ -432,13 +446,16 @@ export class InputFormItem extends Component {
         const {getFieldDecorator} = this.props.form;
 
         return (
-            <FormItem label={this.props.label} required={this.props.required}>
+            <MyFormItem label={this.props.label} required={this.props.required}>
                 {getFieldDecorator(this.props.field, {
-                    initialValue: this.props.initialValue
+                    initialValue: this.props.initialValue,
+                    rules: [
+                        {required: this.props.required, message: "This field is required"}
+                    ]
                 })(
                     <Input/>
                 )}
-            </FormItem>
+            </MyFormItem>
         )
     }
 }
@@ -448,35 +465,52 @@ export class CascaderFormItem extends Component {
         const {getFieldDecorator} = this.props.form;
 
         return (
-            <FormItem label={this.props.label} required={this.props.required}>
+            <MyFormItem label={this.props.label} required={this.props.required}>
                 {getFieldDecorator(this.props.field, {
-                    initialValue: this.props.initialValue
+                    initialValue: this.props.initialValue,
+                    rules: [
+                        {required: this.props.required, message: "This field is required"}
+                    ]
                 })(
                     <Cascader options={this.props.options} fieldNames={this.props.fieldNames}/>
                 )}
-            </FormItem>
+            </MyFormItem>
         );
     }
 }
 
 export class PublicationEntryFormItem extends Component {
     render() {
+        const {getFieldDecorator} = this.props.form;
         return (
-            <div>
-                <CascaderFormItem
-                    form={this.props.form}
-                    options={this.props.publications}
-                    fieldNames={{children: 'volumes', value: 'id', label: 'name'}}
-                    field={`publicationEntries[${this.props.itemKey}].volumeId`}
-                    label={"Publication"} required={true}
-                    initialValue={this.props.initialValue ? [this.props.initialValue.publication.id, this.props.initialValue.volume.id] : null}/>
-                <InputFormItem form={this.props.form} label="Page"
-                               field={`publicationEntries[${this.props.itemKey}].page`}
-                               initialValue={this.props.initialValue ? this.props.initialValue.page : null}
-                />
-                <Button style={{marginBottom: 24}} type="danger" size={"small"}
-                        onClick={this.props.onRemove}>Remove</Button>
-            </div>
+            <Row gutter={12}>
+                <Col span={10}>
+                    <Form.Item style={{marginBottom: 0}} required={true}>
+                        {getFieldDecorator(`publicationEntries[${this.props.itemKey}].volumeId`, {
+                            initialValue: this.props.initialValue ? [this.props.initialValue.publication.id, this.props.initialValue.volume.id] : null,
+                            rules: [
+                                {required: true, message: "This field is required"}
+                            ]
+                        })(
+                            <Cascader options={this.props.publications}
+                                      fieldNames={{children: 'volumes', value: 'id', label: 'name'}}/>
+                        )}
+                    </Form.Item>
+                </Col>
+                <Col span={10}>
+                    <Form.Item style={{marginBottom: 0}}>
+                        {getFieldDecorator(`publicationEntries[${this.props.itemKey}].page`, {
+                            initialValue: this.props.initialValue ? this.props.initialValue.page : null
+                        })(
+                            <Input/>
+                        )}
+                    </Form.Item>
+                </Col>
+                <Col span={4}>
+                    <Button style={{marginBottom: 0}} type="danger"
+                            onClick={this.props.onRemove}>Remove</Button>
+                </Col>
+            </Row>
         );
     }
 }
@@ -502,14 +536,6 @@ export class PublicationEntriesFormItem extends Component {
         return {keys, initialValues}
     };
 
-    // componentWillReceiveProps(nextProps, nextContext) {
-    //     if (nextProps.initialValue) {
-    //         this.setState(s => {
-    //             return {...s, ...this.getDerivedState(nextProps.initialValue)}
-    //         });
-    //     }
-    // }
-
     addKey = () => {
         const {keys} = this.state;
         const nextKeys = keys.length === 0 ? [0] : keys.concat(keys[keys.length - 1] + 1);
@@ -530,16 +556,26 @@ export class PublicationEntriesFormItem extends Component {
 
     render() {
         const {keys, initialValues} = this.state;
-        console.log(this.state);
         return (
             <div>
-                <h3>Publication entries <Button onClick={this.addKey} size="small" type="primary">Add</Button></h3>
+                <h3 style={{marginBottom: "1em"}}>Publication entries <Button onClick={this.addKey} size="small"
+                                                                              type="primary">Add</Button></h3>
+                <Row gutter={12}>
+                    <Col span={10}>
+                        Publication
+                    </Col>
+                    <Col span={10}>
+                        Page
+                    </Col>
+                </Row>
                 <MinimaPublicationsConsumer>
                     {({publications, loading: publicationsLoading}) =>
                         keys.map(key =>
                             (
-                                <PublicationEntryFormItem form={this.props.form} key={key} itemKey={key} publications={publications}
-                                                          onRemove={() => this.removeKey(key)} initialValue={initialValues[key]}/>
+                                <PublicationEntryFormItem form={this.props.form} key={key} itemKey={key}
+                                                          publications={publications}
+                                                          onRemove={() => this.removeKey(key)}
+                                                          initialValue={initialValues[key]}/>
                             )
                         )
                     }

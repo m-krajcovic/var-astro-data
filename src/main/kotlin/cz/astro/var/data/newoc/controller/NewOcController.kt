@@ -64,8 +64,13 @@ class NewOcController(
     @PutMapping("stars/{id}")
     fun updateStar(@PathVariable id: Long, @Valid @RequestBody star: StarUpdateModel) = starsService.updateStar(id, star)
 
-    @PutMapping("minima/{id}")
-    fun updateStarMinima(@PathVariable id: Long, @Valid @RequestBody minima: StarMinimaUpdateModel) = starsService.updateMinima(id, minima)
+//    @PutMapping("minima/{id}")
+//    fun updateStarMinima(@PathVariable id: Long, @Valid @RequestBody minima: StarMinimaUpdateModel) = starsService.updateMinima(id, minima)
+
+    @PutMapping("minima/{ids}")
+    fun updateStarMinimaBulk(@PathVariable ids: String, @Valid @RequestBody model: StarMinimaBulkUpdateModel) {
+        starsService.updateMinimaBulk(ids.split(',').map { it.toLong() }, model)
+    }
 
     @PutMapping("stars/brightness/{id}")
     fun updateStarBrightness(@PathVariable id: Long, @Valid @RequestBody brightness: StarBrightnessNewModel) = starsService.updateStarBrightness(id, brightness)

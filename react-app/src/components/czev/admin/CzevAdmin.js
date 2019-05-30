@@ -22,6 +22,7 @@ import {CoordsInfoResultsWrapper, NameInfoResultsWrapper} from "../CzevStarDraft
 import {CdsCallsHolder} from "../../common/CdsCallsHolder";
 import {UploadedFilesListFormItem} from "../UploadedFilesList";
 import {AdditionalFilesUpload} from "../AdditionalFilesUpload";
+import {FormItem} from "../../common/FormItems";
 
 
 export default class CzevAdmin extends Component {
@@ -328,7 +329,7 @@ class CzevAdminDraftDetailComponent extends Component {
                                 />
                                 {originalDraft && <UploadedFilesListFormItem onChange={(deletedFiles) => this.setState({...this.state, deletedFiles})} files={originalDraft.files}/>}
                                 <AdditionalFilesUpload onChange={(newFiles) => this.setState({...this.state, newFiles})}/>
-                                <Form.Item
+                                <FormItem
                                     wrapperCol={{
                                         xs: {span: 24, offset: 0},
                                         sm: {span: 18, offset: 6},
@@ -344,7 +345,7 @@ class CzevAdminDraftDetailComponent extends Component {
                                                     })}
                                                     visible={this.state.rejectionVisible}/>
                                     <Button type="primary" htmlType="submit">Update &amp; Approve</Button>
-                                </Form.Item>
+                                </FormItem>
                             </Form>
                         </Col>
                         <Col span={24} sm={{span: 8}}>

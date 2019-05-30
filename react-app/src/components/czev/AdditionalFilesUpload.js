@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import {Form, Icon, message, Upload} from "antd";
+import {FormItem} from "../common/FormItems";
 
 export class AdditionalFilesUpload extends Component {
     constructor(props) {
@@ -49,7 +50,7 @@ export class AdditionalFilesUpload extends Component {
         };
 
         return (
-            <Form.Item
+            <FormItem
                 wrapperCol={{
                     xs: {span: 24},
                     sm: {span: 18},
@@ -65,7 +66,7 @@ export class AdditionalFilesUpload extends Component {
                     </p>
                     <p className="ant-upload-text">Click or drag file to this area to upload</p>
                 </Upload.Dragger>
-            </Form.Item>
+            </FormItem>
         );
     }
 }
