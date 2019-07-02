@@ -1,0 +1,28 @@
+plugins {
+    id "com.moowork.node" version "1.2.0"
+}
+
+node {
+    version = '8.11.2'
+    npmVersion = '5.6.0'
+    download = true
+
+    // Set the work directory for NPM
+    npmWorkDir = file("${project.buildDir}/npm")
+
+    // Set the work directory where node_modules should be located
+    nodeModulesDir = file("${project.projectDir}")
+}
+
+task npmBuild(type: NpmTask) {
+    args = ["run", "build"]
+}
+
+task npmStart(type: NpmTask) {
+    args = ["run", "start"]
+}
+
+task moveNpmBuildToResources(type: Copy) {
+    from "${project.projectDir}/build"
+    into "${project.projectDir}/build/resources/main/static"
+}
