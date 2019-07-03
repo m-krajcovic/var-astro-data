@@ -433,7 +433,7 @@ class StarsServiceImpl(
     }
 
     override fun insertMinimas(minimas: List<StarMinimaNewModel>) {
-        var importBatch = MinimaImportBatch(LocalDateTime.now(), User(securityService.currentUser.id!!))
+        var importBatch = MinimaImportBatch(LocalDateTime.now(), User(securityService.getCurrentUser()!!.id))
         importBatch = minimaBatchRepository.save(importBatch)
         minimas.forEach { minima ->
             val starElement = starElementRepository.findById(minima.starElementId).orElseThrow { ServiceException("Star element doesn't exist") }

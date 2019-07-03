@@ -1,15 +1,11 @@
 package cz.astro.`var`.data.security
 
 import io.jsonwebtoken.*
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.GrantedAuthority
 import org.springframework.stereotype.Component
-
-import java.util.Date
-import java.util.stream.Collectors
+import java.util.*
 
 @Component
 class JwtTokenProvider {
@@ -32,7 +28,7 @@ class JwtTokenProvider {
                 .setIssuedAt(Date())
                 .setExpiration(expiryDate)
                 .claim("username", userPrincipal.email)
-                .claim("authorities", userPrincipal.authorities!!.stream().map<String>(Function<out GrantedAuthority, String> { it.getAuthority() }).collect<List<String>, Any>(Collectors.toList()))
+                .claim("authorities", userPrincipal.authorities!!.map { it.authority }.toList())
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact()
     }

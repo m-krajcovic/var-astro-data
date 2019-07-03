@@ -7,9 +7,22 @@
 // tag::plugins[]
 plugins {
     id "java"
+    id "idea"
+    id 'org.springframework.boot' version '2.0.5.RELEASE'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.0'
+    id "org.jetbrains.kotlin.plugin.spring" version "1.3.0"
+    id "org.jetbrains.kotlin.plugin.jpa" version "1.3.0"
+    id "org.jetbrains.kotlin.plugin.allopen" version "1.3.0"
+
 }
 // end::plugins[]
 
+repositories {
+    jcenter()
+//    maven {
+//        url 'https://repo.locationtech.org/content/groups/releases'
+//    }
+}
 
 //task stage(dependsOn: ['frontend.npmInstall','frontend.moveNpmBuildToResources','frontend.npmBuild','build', 'clean'])
 //npmInstall.mustRunAfter clean
@@ -17,7 +30,26 @@ plugins {
 //moveNpmBuildToResources.mustRunAfter npmBuild
 //build.mustRunAfter moveNpmBuildToResources
 
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-dependencies:2.0.5.RELEASE'
 
+    components {
+        withModule('org.springframework:spring-beans') {
+            allVariants {
+                withDependencyConstraints {
+                    // Need to patch constraints because snakeyaml is an optional dependency
+                    it.findAll { it.name == 'snakeyaml' }.each { it.version { strictly '1.19' } }
+                }
+            }
+        }
+    }
+
+    compile project(":backend")
+}
+
+bootJar {
+    mainClassName = 'cz.astro.var.data.App'
+}
 
 // TODO
 // ak to rozdelim do modulov:
@@ -26,3 +58,14 @@ plugins {
 // copy both to parent build folder
 // build parent build folder
 // -> final jar
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
