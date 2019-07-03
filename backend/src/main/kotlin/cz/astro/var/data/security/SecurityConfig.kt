@@ -24,7 +24,7 @@ class SecurityConfig : WebSecurityConfigurerAdapter() {
     internal var customUserDetailsService: CustomUserDetailsService? = null
 
     @Autowired
-    private val unauthorizedHandler: JwtAuthenticationEntryPoint? = null
+    private var unauthorizedHandler: JwtAuthenticationEntryPoint? = null
 
     @Bean
     fun jwtAuthenticationFilter(): JwtAuthenticationFilter {

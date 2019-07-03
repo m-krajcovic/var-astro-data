@@ -7,10 +7,9 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.resource.ResourceResolver
 import org.springframework.web.servlet.resource.ResourceResolverChain
-
-import javax.servlet.http.HttpServletRequest
 import java.io.IOException
-import java.util.Arrays
+import java.util.*
+import javax.servlet.http.HttpServletRequest
 
 /**
  * @author Michal
@@ -25,6 +24,18 @@ class WebConfig : WebMvcConfigurer {
         registry!!.addResourceHandler("/**")
                 .resourceChain(true)
                 .addResolver(resolver)
+    }
+
+    companion object {
+        // this is the same directory you are using
+        // in package.json "build-spring-linux",
+        // example REACT_DIR/index.html
+        private const val REACT_DIR = "/static/"
+
+        // this is directory inside REACT_DIR for react static files
+        // example REACT_DIR/REACT_STATIC_DIR/js/
+        // example REACT_DIR/REACT_STATIC_DIR/css/
+        private const val REACT_STATIC_DIR = "static"
     }
 
     inner class ReactResourceResolver : ResourceResolver {
@@ -57,19 +68,6 @@ class WebConfig : WebMvcConfigurer {
             } else
                 index
         }
-
-        companion object {
-            // this is the same directory you are using
-            // in package.json "build-spring-linux",
-            // example REACT_DIR/index.html
-            private val REACT_DIR = "/static/"
-
-            // this is directory inside REACT_DIR for react static files
-            // example REACT_DIR/REACT_STATIC_DIR/js/
-            // example REACT_DIR/REACT_STATIC_DIR/css/
-            private val REACT_STATIC_DIR = "static"
-        }
-
     }
 
 }

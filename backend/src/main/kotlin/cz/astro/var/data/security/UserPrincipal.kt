@@ -3,11 +3,11 @@ package cz.astro.`var`.data.security
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
-import java.util.Objects
+import java.util.*
 
 class UserPrincipal : UserDetails {
 
-    var id: Long? = null
+    var id: Long = -1
 
     var email: String? = null
 

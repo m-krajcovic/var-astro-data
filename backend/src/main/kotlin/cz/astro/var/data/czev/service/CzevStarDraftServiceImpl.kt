@@ -48,8 +48,8 @@ class CzevStarDraftServiceImpl(
 
                 if (constellation != null) {
                     if (!starIdentificationRepository.existsByNameIn(record.crossIds)) {
-                        val principal = securityService.currentUser
-                        val user = User(principal.id)
+                        val principal = securityService.getCurrentUser()
+                        val user = User(principal!!.id)
                         newDrafts.add(
                                 CzevStarDraft(
                                         constellation, type, filterband, record.amplitude, record.coordinates.toEntity(), record.crossIds.mapIndexed { i, id -> StarIdentification(id, null, i) }.toMutableSet(),
@@ -157,7 +157,7 @@ class CzevStarDraftServiceImpl(
     override fun reject(rejection: CzevStarDraftRejectionModel): Boolean {
         return czevStarDraftRepository.findById(rejection.id).map {
             it.rejected = true
-            it.rejectedBy = User(securityService.currentUser.id)
+            it.rejectedBy = User(securityService.getCurrentUser()!!.id)
             it.rejectedNote = rejection.rejectionNote
             it.rejectedOn = LocalDateTime.now()
 
@@ -168,7 +168,7 @@ class CzevStarDraftServiceImpl(
 
     @PreAuthorize("hasRole('USER')")
     override fun insert(draft: CzevStarDraftNewModel): CzevStarDraftModel {
-        val user = securityService.currentUser!!
+        val user = securityService.getCurrentUser()!!
         val typeValidator = StarTypeValidatorImpl(typeRepository.findAll().map { it.name }.toSet())
         val entity = draft.toEntity(User(user.id), typeValidator)
         return czevStarDraftRepository.save(entity).toModel()
@@ -176,7 +176,7 @@ class CzevStarDraftServiceImpl(
 
     @PreAuthorize("hasRole('USER')")
     override fun insertAll(drafts: List<CzevStarDraftNewModel>) {
-        val principal = securityService.currentUser!!
+        val principal = securityService.getCurrentUser()!!
         val user = User(principal.id)
         val typeValidator = StarTypeValidatorImpl(typeRepository.findAll().map { it.name }.toSet())
         val newDrafts = drafts.map { it.toEntity(user, typeValidator) }
@@ -198,7 +198,7 @@ class CzevStarDraftServiceImpl(
     @PreAuthorize("hasRole('USER')")
     @Transactional(readOnly = true)
     override fun getAllForCurrentUser(): List<CzevStarDraftListModel> {
-        val user = securityService.currentUser
+        val user = securityService.getCurrentUser()!!
         return czevStarDraftRepository.findForUserFetched(User(user.id)).map { it.toListModel() }
     }
 
