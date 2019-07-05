@@ -34,25 +34,6 @@ class StarController(private val starRepository: StarRepository,
         return predictionService.getAllPredictionsForNight(date, latitude, longitude)
     }
 
-    @Deprecated("use getAllStars in NewOcController")
-    @GetMapping("stars")
-    fun getAll(): List<StarListItemModel> =
-            starRepository.findAllStarMinimaSummary().asSequence().map { it.toListItemModel() }.toList()
-
-    @Deprecated("Use getStarById in NewOcController")
-    @GetMapping("stars/{starId}")
-    fun getById(@PathVariable starId: Int): StarModel = starRepository.findById(starId).map { it.toModel() }.orElse(null)
-
-    @Deprecated("use getConstellationsSummary in NewOcController")
-    @GetMapping("constellations")
-    fun getConstellations(): Set<ConstellationStarSummary> = starRepository.findAllConstellationStarSummary()
-
-    @Deprecated("use getStarsByConstellation in NewOcController")
-    @GetMapping("constellations/{cons}/stars")
-    fun getByConstellation(@PathVariable cons: String): List<StarListItemModel> =
-            starRepository.findStarMinimaSummaryByConstellation(cons).asSequence().map { it.toListItemModel() }.toList()
-
-
     @Deprecated("use getElement in NewOcController")
     @GetMapping("stars/{starId}/minima")
     fun getMinimaValuesOnly(@PathVariable starId: Int, @RequestParam("kind") kind: String): ResponseEntity<MinimaResultModel> {
