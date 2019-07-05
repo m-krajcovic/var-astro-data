@@ -35,8 +35,8 @@ const methodValue = function (method) {
     }
 };
 
-const cValue = function (d) {
-    return d.kind + " - " + methodValue(d.color);
+const cValue = function (element, minima) {
+    return element.kind.name + " - " + minima.method.name;
 };
 
 export const jdToDate = (jd) => {
@@ -45,9 +45,8 @@ export const jdToDate = (jd) => {
 };
 
 const ocCalc = function (element, minima) {
-    let e = Math.round((minima.julianDate - element.minimum0) / element.period);
-    let oc = minima.julianDate - (element.minimum0 + element.period * e);
-    return oc;
+    let e = Math.round((minima.julianDate - element.minimum) / element.period);
+    return {epoch: e, oc: minima.julianDate - (element.minimum + element.period * e)};
 };
 
 const regressions = {
@@ -130,9 +129,9 @@ export default class StarDetail extends Component {
         if (this.props.star) {
             let primaryElement, secondaryElement;
             this.props.star.elements.forEach(e => {
-                if (e.kind === 'p') {
+                if (e.kind.name === 'P') {
                     primaryElement = e;
-                } else if (e.kind === 's') {
+                } else if (e.kind.name === 'S') {
                     secondaryElement = e;
                 }
             });
@@ -144,9 +143,9 @@ export default class StarDetail extends Component {
     }
 
     static printKind(kind) {
-        if (kind === 'p') {
+        if (kind === 'P') {
             return 'Primary';
-        } else if (kind === 's') {
+        } else if (kind === 'S') {
             return 'Secondary';
         }
         return kind;
@@ -161,7 +160,7 @@ export default class StarDetail extends Component {
             const star = this.props.star;
             let primaryElement = this.state.customPrimaryElement;
             let secondaryElement = this.state.customSecondaryElement;
-            const customValuesError = (this.props.selectedElement === 'custom') && !((primaryElement.minimum0 && primaryElement.period) || (secondaryElement.minimum0 && secondaryElement.period));
+            const customValuesError = (this.props.selectedElement === 'custom') && !((primaryElement.minimum && primaryElement.period) || (secondaryElement.minimum && secondaryElement.period));
             if (this.props.selectedElement === 'server' || customValuesError) {
                 const elements = this.getDefaultElements();
                 primaryElement = elements.primary;
@@ -169,48 +168,50 @@ export default class StarDetail extends Component {
             }
 
             const grouppedMinima = {
-                "p - CCD / photoelectric": [],
-                "p - visual": [],
-                "p - photographic": [],
-                's - CCD / photoelectric': [],
-                "s - visual": [],
-                "s - photographic": [],
+                "P - CCD/Photoelectric": [],
+                "P - Visual": [],
+                "P - Photographic": [],
+                'S - CCD/Photoelectric': [],
+                "S - Visual": [],
+                "S - Photographic": [],
                 "user": []
             };
             const minimaList = [];
-            star.minima.forEach(minima => {
-                minima.type = cValue(minima);
-                let oc = minima.oc;
-                let epoch = null;
-                if (minima.kind === 'p' && primaryElement && primaryElement.minimum0 && primaryElement.period) {
-                    oc = ocCalc(primaryElement, minima);
-                    epoch = Math.round((minima.julianDate - primaryElement.minimum0) / primaryElement.period);
-                }
-                if (minima.kind === 's' && secondaryElement && secondaryElement.minimum0 && secondaryElement.period) {
-                    oc = ocCalc(secondaryElement, minima);
-                    epoch = Math.round((minima.julianDate - secondaryElement.minimum0) / secondaryElement.period);
-                }
-                if (minima.quality !== '?') {
-                    if (grouppedMinima[minima.type] && oc != null && epoch != null) {
-                        const date = jdToDate(minima.julianDate);
-                        grouppedMinima[minima.type].push([epoch, oc, minima.julianDate, date]);
-                        minimaList.push({epoch, oc, minima, jd: minima.julianDate, date});
+            star.elements.forEach(element => {
+                element.minimas.forEach(minima => {
+                    minima.type = cValue(element, minima);
+                    let oc = 0;
+                    let epoch = null;
+                    let calculated = null;
+                    if (element.kind.name === 'P' && primaryElement && primaryElement.minimum && primaryElement.period) {
+                        calculated = ocCalc(primaryElement, minima);
                     }
-                }
+                    if (minima.kind === 'S' && secondaryElement && secondaryElement.minimum && secondaryElement.period) {
+                        calculated = ocCalc(secondaryElement, minima);
+                    }
+                    if (calculated) {
+                        oc = calculated.oc;
+                        epoch = calculated.epoch;
+                    }
+                    // if (minima.quality !== '?') {
+                        if (grouppedMinima[minima.type] && oc != null && epoch != null) {
+                            const date = jdToDate(minima.julianDate);
+                            grouppedMinima[minima.type].push([epoch, oc, minima.julianDate, date]);
+                            minimaList.push({epoch, oc, minima, jd: minima.julianDate, date});
+                        }
+                    // }
+                });
             });
             if (this.state.customMinima.length > 0) {
                 grouppedMinima["user"] = this.state.customMinima.map(minima => {
-                    let oc = null;
-                    let epoch = null;
-                    if (minima.kind === 'p' && primaryElement && primaryElement.minimum0 && primaryElement.period) {
-                        oc = ocCalc(primaryElement, minima);
-                        epoch = Math.round((minima.julianDate - primaryElement.minimum0) / primaryElement.period);
+                    let calculated = null;
+                    if (minima.kind === 'P' && primaryElement && primaryElement.minimum && primaryElement.period) {
+                        calculated = ocCalc(primaryElement, minima);
                     }
-                    if (minima.kind === 's' && secondaryElement && secondaryElement.minimum0 && secondaryElement.period) {
-                        oc = ocCalc(secondaryElement, minima);
-                        epoch = Math.round((minima.julianDate - secondaryElement.minimum0) / secondaryElement.period);
+                    if (minima.kind === 'S' && secondaryElement && secondaryElement.minimum && secondaryElement.period) {
+                        calculated = ocCalc(secondaryElement, minima);
                     }
-                    return [epoch, oc, minima.julianDate, jdToDate(minima.julianDate)];
+                    return [calculated.epoch, calculated.oc, minima.julianDate, jdToDate(minima.julianDate)];
                 }).filter(row => row[0] != null && row[1] != null);
             }
             minimaList.sort((a, b) => a.jd - b.jd);
@@ -240,22 +241,22 @@ export default class StarDetail extends Component {
                     paddingRight: 12,
                 }}>
                     <Spin spinning={this.props.loading}>
-                        <h3 style={{flex: "0 0 auto"}}>{star.starName} {star.constellation}</h3>
+                        <h3 style={{flex: "0 0 auto"}}>{star.name} {star.constellation.abbreviation}</h3>
                         <div style={{display: 'flex', flex: "0 0 auto", marginBottom: 12}}>
                             <div className="panel star-detail">
                                 <div className="panel-header"><b>Coordinates</b></div>
                                 <div className="panel-body">
-                                    <div><b>RA: </b><CoordinateWrapper value={coordinatesToStringRa(star.coordinates)}/>
+                                    <div><b>RA: </b><CoordinateWrapper value={star.coordinates.raString}/>
                                     </div>
                                     <div><b>DEC: </b><CoordinateWrapper
-                                        value={coordinatesToStringDec(star.coordinates)}/></div>
+                                        value={star.coordinates.decString}/></div>
                                 </div>
                             </div>
                             {star.brightness.map(bright => {
                                 return (
                                     <div className="star-detail panel" key={bright.id}>
                                         <div className="panel-header">
-                                            <b>Brightness ({bright.col})</b>
+                                            <b>Brightness ({bright.filter.name})</b>
                                         </div>
                                         <div className="panel-body">
                                             <div><b>Max P: </b>{bright.maxP}</div>
@@ -278,11 +279,11 @@ export default class StarDetail extends Component {
                                     <b>From Server</b>
                                 </div>
                                 <div className="panel-body" style={{display: 'flex', flexDirection: 'row'}}>
-                                    {star.elements.filter(el => el.kind === 'p' || el.kind === 's').sort((a, b) => a.kind === 'p' ? -1 : 1).map(el => {
+                                    {star.elements.filter(el => el.kind.name === 'P' || el.kind.name === 'S').sort((a, b) => a.kind.name === 'P' ? -1 : 1).map(el => {
                                         return (
                                             <div key={el.id} style={{marginRight: 12}}>
-                                                <div>{StarDetail.printKind(el.kind)}</div>
-                                                <div className="space-out"><b>M0: </b>{el.minimum0}</div>
+                                                <div>{StarDetail.printKind(el.kind.name)}</div>
+                                                <div className="space-out"><b>M0: </b>{el.minimum}</div>
                                                 <div className="space-out"><b>Period: </b>{el.period}</div>
                                             </div>
                                         )
@@ -304,8 +305,8 @@ export default class StarDetail extends Component {
                                     <div style={{marginRight: 12}}>
                                         <div>Primary</div>
                                         <div className="space-out"><b>M0: </b><input type="text"
-                                                                                     value={this.state.customPrimaryElement.minimum0}
-                                                                                     onInput={(e) => this.handleCustomInputChange('primary', 'minimum0', e)}/>
+                                                                                     value={this.state.customPrimaryElement.minimum}
+                                                                                     onInput={(e) => this.handleCustomInputChange('primary', 'minimum', e)}/>
                                         </div>
                                         <div className="space-out"><b>Period: </b><input type="text"
                                                                                          value={this.state.customPrimaryElement.period}
@@ -315,8 +316,8 @@ export default class StarDetail extends Component {
                                     <div style={{marginRight: 12}}>
                                         <div>Secondary</div>
                                         <div className="space-out"><b>M0: </b><input type="text"
-                                                                                     value={this.state.customSecondaryElement.minimum0}
-                                                                                     onInput={(e) => this.handleCustomInputChange('secondary', 'minimum0', e)}/>
+                                                                                     value={this.state.customSecondaryElement.minimum}
+                                                                                     onInput={(e) => this.handleCustomInputChange('secondary', 'minimum', e)}/>
                                         </div>
                                         <div className="space-out"><b>Period: </b><input type="text"
                                                                                          value={this.state.customSecondaryElement.period}
@@ -358,6 +359,7 @@ export default class StarDetail extends Component {
     }
 
     handleCustomInputChange(kind, key, event) {
+        // todo fix this +, doesnt take 1.
         this.customElement[kind][key] = +event.target.value;
         this.setState({
             ...this.state,

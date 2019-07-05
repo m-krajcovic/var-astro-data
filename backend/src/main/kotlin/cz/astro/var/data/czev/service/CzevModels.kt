@@ -412,7 +412,7 @@ fun CosmicCoordinatesModel.toEntity(): CosmicCoordinates {
 }
 
 fun UserPrincipal.toModel(): UserModel {
-    return UserModel(id!!, email!!)
+    return UserModel(id, email!!)
 }
 
 fun StarAdditionalFile.toModel(): StarAdditionalFileModel {

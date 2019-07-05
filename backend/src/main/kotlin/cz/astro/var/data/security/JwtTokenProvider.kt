@@ -24,7 +24,7 @@ class JwtTokenProvider {
         val expiryDate = Date(now.time + jwtExpirationInMs)
 
         return Jwts.builder()
-                .setSubject(java.lang.Long.toString(userPrincipal.id!!))
+                .setSubject(java.lang.Long.toString(userPrincipal.id))
                 .setIssuedAt(Date())
                 .setExpiration(expiryDate)
                 .claim("username", userPrincipal.email)

@@ -101,8 +101,8 @@ fun countS(longitude: Double, jd: Double): Double {
 }
 
 fun fromJulianDate(jd: Double): LocalDateTime {
-    val jd = jd + 0.5
-    return LocalDateTime.MIN.with(JulianFields.JULIAN_DAY, Math.floor(jd).toLong()).plusSeconds((86400 * (jd % 1)).roundToLong())
+    val fjd = jd + 0.5
+    return LocalDateTime.MIN.with(JulianFields.JULIAN_DAY, Math.floor(fjd).toLong()).plusSeconds((86400 * (fjd % 1)).roundToLong())
 }
 
 data class PredictionModel(

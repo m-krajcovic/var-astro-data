@@ -44,7 +44,7 @@ class OcJPAConfig {
 
         val vendorAdapter = HibernateJpaVendorAdapter()
         em.jpaVendorAdapter = vendorAdapter
-        val properties = HashMap<String, Any>()
+        val properties = HashMap<String, Any?>()
         properties["hibernate.hbm2ddl.auto"] = env!!.getProperty("oc.hibernate.hbm2ddl.auto")
         properties["hibernate.dialect"] = env.getProperty("hibernate.dialect")
         em.jpaPropertyMap = properties

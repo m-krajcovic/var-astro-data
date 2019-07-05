@@ -1,6 +1,7 @@
 package cz.astro.`var`.data.security
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import org.bouncycastle.asn1.x500.style.RFC4519Style.o
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import java.util.*
@@ -52,10 +53,10 @@ class UserPrincipal : UserDetails {
         this.authorities = authorities
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (this === o) return true
-        if (o !is UserPrincipal) return false
-        val that = o as UserPrincipal?
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is UserPrincipal) return false
+        val that = other as UserPrincipal?
         return id == that!!.id
     }
 

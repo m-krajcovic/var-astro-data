@@ -98,7 +98,7 @@ class CustomInputMinima extends Component {
                 <div className="text-error">
                     {this.state.errorLines.length > 0 ? `Could not load values from lines: ${this.state.errorLines.join(',')}` : ''}
                 </div>
-                <div className="mono">Example line: 2451234.678 p/s</div>
+                <div className="mono">Example line: 2451234.678 P/S</div>
                 <Input.TextArea
                     value={this.state.textAreaValue}
                     onInput={(e) => this.handleTextAreaInput(e)}

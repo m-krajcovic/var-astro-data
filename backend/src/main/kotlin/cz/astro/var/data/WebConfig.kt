@@ -60,7 +60,6 @@ class WebConfig : WebMvcConfigurer {
         }
 
         private fun resolve(requestPath: String?, locations: List<Resource>): Resource? {
-            println(requestPath)
             if (requestPath == null) return null
 
             return if (rootStaticFiles.contains(requestPath) || requestPath.startsWith(REACT_STATIC_DIR)) {

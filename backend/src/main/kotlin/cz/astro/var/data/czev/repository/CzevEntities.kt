@@ -3,7 +3,9 @@ package cz.astro.`var`.data.czev.repository
 import cz.astro.`var`.data.czev.decStringToDegrees
 import cz.astro.`var`.data.czev.raStringToDegrees
 import cz.astro.`var`.data.czev.service.ServiceException
+import cz.astro.`var`.data.newoc.repository.Star
 import org.hibernate.annotations.GenericGenerator
+import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.NaturalId
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
@@ -137,6 +139,10 @@ class Constellation(
 ) : IdEntity() {
 
     @NotAudited
+    @OneToMany(mappedBy = "constellation")
+    var ocStars: MutableSet<Star> = mutableSetOf()
+
+    @NotAudited
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "constellation")
     var bounds: MutableSet<ConstellationBoundaryPoint> = mutableSetOf()
 
@@ -161,7 +167,7 @@ class Constellation(
 class ConstellationBoundaryPoint(
         val orderNumber: Int,
         val coordinates: CosmicCoordinates
-): IdEntity() {
+) : IdEntity() {
     @ManyToOne
     var constellation: Constellation? = null
 }
@@ -426,11 +432,18 @@ class CosmicCoordinates(
         result = 31 * result + declination.hashCode()
         return result
     }
-
-
 }
 
+// CREATE VIEW `oc_ConstellationSummary` AS SELECT c.id AS constellation_id, COUNT(*) as starCount FROM common_Constellation c JOIN oc_Star s on c.id = s.constellation_id GROUP BY c.id;
+@Entity
+@Immutable
+@Table(name = "oc_ConstellationSummary")
 class ConstellationSummary(
+        @Id
+        val id: Long,
+        @OneToOne
+        @JoinColumn(name = "constellation_id")
+        @MapsId
         val constellation: Constellation,
-        val starCount: Int
+        val starCount: Long
 )

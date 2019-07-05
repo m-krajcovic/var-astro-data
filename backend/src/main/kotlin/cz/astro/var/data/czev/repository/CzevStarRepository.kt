@@ -63,6 +63,10 @@ interface StarIdentificationRepository: JpaRepository<StarIdentification, Long> 
 interface ConstellationRepository : JpaRepository<Constellation, Long> {
     @Query("SELECT DISTINCT c FROM Constellation c LEFT JOIN FETCH c.bounds")
     fun findAllWithBounds(): List<Constellation>
+
+    @Query("select cs FROM ConstellationSummary cs LEFT JOIN FETCH cs.constellation")
+    fun findAllWithOcStarCounts(): List<ConstellationSummary>
+
 }
 interface StarTypeRepository: JpaRepository<StarType, Long>
 interface FilterBandRepository: JpaRepository<FilterBand, Long>
