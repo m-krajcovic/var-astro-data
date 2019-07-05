@@ -38,11 +38,10 @@ interface StarsService {
     fun insertStarElement(starId: Long, element: StarElementNewModel)
     fun deleteStarBrightness(brightnessId: Long)
     fun deleteStarElement(elementId: Long)
-    fun getStarsByConstellation(constellationId: Long) : List<StarListModel>
+    fun getStarsByConstellation(constellationId: Long): List<StarListModel>
 
     // TODO:
     // add view with minimaCounts per star?
-    // do the same for star counts per constellation?
     // TODO: need get/updatePublication/deletePublication based on filter
 }
 
@@ -248,12 +247,12 @@ fun Star.toListModel(): StarListModel {
 
 fun Star.toDetailsModel(): StarDetailsModel {
     return StarDetailsModel(id, name, constellation.toModel(), coordinates.toModel(), comp, type, minimaDuration,
-            brightness.map(StarBrightness::toModel),
-            elements.map(StarElement::toModel))
+            brightness.asSequence().map { it.toModel() }.toList(),
+            elements.asSequence().map { it.toModel() }.toList())
 }
 
 fun StarMinima.toModel(): StarMinimaModel {
-    return StarMinimaModel(id, batch.id, julianDate, method.toModel(), publicationEntries.map(MinimaPublicationEntry::toModel), observer)
+    return StarMinimaModel(id, batch.id, julianDate, method.toModel(), publicationEntries.map { it.toModel() }, observer)
 }
 
 fun StarBrightness.toModel(): StarBrightnessModel {
@@ -261,11 +260,11 @@ fun StarBrightness.toModel(): StarBrightnessModel {
 }
 
 fun StarElement.toModel(): StarElementModel {
-    return StarElementModel(id, period, minimum, kind.toModel(), minimas.map(StarMinima::toModel))
+    return StarElementModel(id, period, minimum, kind.toModel(), minimas.map { it.toModel() })
 }
 
 fun MinimaPublication.toModel(): MinimaPublicationModel {
-    return MinimaPublicationModel(id, name, link, volumes.map(MinimaPublicationVolume::toModel))
+    return MinimaPublicationModel(id, name, link, volumes.map { it.toModel() })
 }
 
 fun MinimaPublication.toSimpleModel(): MinimaPublicationSimpleModel {
@@ -301,9 +300,6 @@ class StarsServiceImpl(
         private val securityService: SecurityService,
         private val volumeRepository: MinimaPublicationVolumeRepository
 ) : StarsService {
-    override fun getStarsByConstellation(constellationId: Long) : List<StarListModel> {
-        return starsRepository.findAllByConstellationId(constellationId).map(Star::toListModel)
-    }
 
     override fun updateStarBrightness(brightnessId: Long, model: StarBrightnessNewModel) {
         val entity = starBrightnessRepository.findById(brightnessId).orElseThrow { ServiceException("Star brightness doesn't exist") }
@@ -475,12 +471,19 @@ class StarsServiceImpl(
         return starsRepository.save(entity).toListModel()
     }
 
+    @PreAuthorize("permitAll()")
     override fun getAll(): List<StarListModel> {
-        return starsRepository.findAllPartlyFetched().map(Star::toListModel)
+        return starsRepository.findAllPartlyFetched().map { it.toListModel() }
     }
 
+    @PreAuthorize("permitAll()")
     override fun getById(id: Long): Optional<StarDetailsModel> {
-        return starsRepository.findById(id).map { it.toDetailsModel() }
+        return starsRepository.findByIdFetched(id).map { it.toDetailsModel() }
+    }
+
+    @PreAuthorize("permitAll()")
+    override fun getStarsByConstellation(constellationId: Long): List<StarListModel> {
+        return starsRepository.findAllByConstellationId(constellationId).map { it.toListModel() }
     }
 }
 
@@ -523,11 +526,11 @@ class PublicationsServiceImpl(
     }
 
     override fun getAll(): List<MinimaPublicationModel> {
-        return publicationsRepository.findAll().map(MinimaPublication::toModel)
+        return publicationsRepository.findAll().map { it.toModel() }
     }
 
     override fun getById(id: Long): Optional<MinimaPublicationModel> {
-        return publicationsRepository.findById(id).map(MinimaPublication::toModel)
+        return publicationsRepository.findById(id).map { it.toModel() }
     }
 
     override fun updatePublication(id: Long, model: MinimaPublicationUpdateModel) {
@@ -548,14 +551,14 @@ class ObservationsServiceImpl(
 ) : ObservationsService {
 
     override fun getAllMethods(): List<IdNameModel> {
-        return observationMethodRepository.findAll().map(IdNameEntity::toModel)
+        return observationMethodRepository.findAll().map { it.toModel() }
     }
 
     override fun getAllKinds(): List<IdNameModel> {
-        return observationKindRepository.findAll().map(IdNameEntity::toModel)
+        return observationKindRepository.findAll().map { it.toModel() }
     }
 
     override fun getAllFilters(): List<IdNameModel> {
-        return filterBandRepository.findAll().map(FilterBand::toIdNameModel)
+        return filterBandRepository.findAll().map { it.toIdNameModel() }
     }
 }

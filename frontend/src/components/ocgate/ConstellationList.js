@@ -12,11 +12,12 @@ class ConstellationList extends Component {
         if (this.props.constellations) {
             return (
                 <ul>
-                    {this.props.constellations.map(constellation => {
+                    {this.props.constellations.map(entry => {
                         return (
-                            <ConstellationListItem key={constellation.name}
-                                                   className={this.props.selectedConstellationName === constellation.name ? "selected" : ""}
-                                                   name={constellation.name} starCount={constellation.starCount}
+                            <ConstellationListItem key={entry.constellation.id}
+                                                   className={this.props.selectedConstellationName === entry.constellation.id ? "selected" : ""}
+                                                   name={entry.constellation.abbreviation} starCount={entry.starCount}
+                                                   id={entry.constellation.id}
                                                    onClick={(name) => this.onSelected(name)}/>
                         )
                     })}
@@ -42,7 +43,7 @@ class ConstellationListItem extends Component {
     render() {
         return (
             <li style={this.props.style} className={this.props.className} onClick={() => this.onClick()}>
-                <Link to={"/oc/" + this.props.name}>{this.props.name} ({this.props.starCount})</Link></li>
+                <Link to={"/oc/" + this.props.id}>{this.props.name} ({this.props.starCount})</Link></li>
         )
     }
 

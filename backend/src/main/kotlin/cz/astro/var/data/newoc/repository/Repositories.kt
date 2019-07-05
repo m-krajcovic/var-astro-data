@@ -7,18 +7,18 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
+import java.util.*
 import javax.transaction.Transactional
 
 interface StarsRepository : JpaRepository<Star, Long> {
     @Query("select distinct s from Star s LEFT JOIN FETCH s.constellation")
     fun findAllPartlyFetched(): List<Star>
 
-    // TODO ? this is probably wrong
-    @Query("select new cz.astro.var.data.czev.repository.ConstellationSummary(s.constellation, COUNT(s)) from Star s LEFT JOIN FETCH s.constellation GROUP BY s")
-    fun findStarCountsByConstellations(): List<ConstellationSummary>
-
-    @Query("select distinct s from Star s left join fetch s.constellation where s.constellation.id = :constellationId")
+    @Query("select distinct s from Star s left join fetch s.constellation c where c.id = :constellationId")
     fun findAllByConstellationId(constellationId: Long): List<Star>
+
+    @Query("SELECT DISTINCT s FROM Star s LEFT JOIN FETCH s.constellation LEFT JOIN FETCH s.brightness b LEFT JOIN FETCH b.filter LEFT JOIN FETCH s.elements e LEFT JOIN FETCH e.kind LEFT JOIN FETCH e.minimas m LEFT JOIN FETCH m.publicationEntries LEFT JOIN FETCH m.batch LEFT JOIN FETCH m.method WHERE s.id = :id")
+    fun findByIdFetched(id: Long): Optional<Star>
 }
 
 interface StarElementRepository : JpaRepository<StarElement, Long>

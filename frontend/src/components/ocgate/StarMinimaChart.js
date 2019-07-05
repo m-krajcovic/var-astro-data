@@ -8,31 +8,31 @@ const blue = "#0038a8";
 const yellow = "#eacc5d";
 
 const datasetIndexes = {
-    "p - CCD / photoelectric": 0,
-    "p - visual": 1,
-    "p - photographic": 2,
-    's - CCD / photoelectric': 3,
-    "s - visual": 4,
-    "s - photographic": 5,
+    "P - CCD/Photoelectric": 0,
+    "P - Visual": 1,
+    "P - Photographic": 2,
+    'S - CCD/Photoelectric': 3,
+    "S - Visual": 4,
+    "S - Photographic": 5,
     "user": 6
 };
 
 const colors = {
-    "p - CCD / photoelectric": red,
-    "p - visual": blue,
-    "p - photographic": yellow,
-    's - CCD / photoelectric': "#ffffff",
-    "s - visual": "#ffffff",
-    "s - photographic": "#ffffff",
+    "P - CCD/Photoelectric": red,
+    "P - Visual": blue,
+    "P - Photographic": yellow,
+    'S - CCD/Photoelectric': "#ffffff",
+    "S - Visual": "#ffffff",
+    "S - Photographic": "#ffffff",
     "user": "#000000"
 };
 const borderColors = {
-    "p - CCD / photoelectric": red,
-    "p - visual": blue,
-    "p - photographic": yellow,
-    's - CCD / photoelectric': red,
-    "s - visual": blue,
-    "s - photographic": yellow,
+    "P - CCD/Photoelectric": red,
+    "P - Visual": blue,
+    "P - Photographic": yellow,
+    'S - CCD/Photoelectric': red,
+    "S - Visual": blue,
+    "S - Photographic": yellow,
     "user": "#000000"
 };
 
@@ -82,6 +82,7 @@ export default class StarMinimaChart extends Component {
     }
 
     render() {
+        console.log(this.props.grouppedMinima);
         if (this.props.grouppedMinima) {
             return (
                 <Fragment>
@@ -202,22 +203,22 @@ export default class StarMinimaChart extends Component {
 
         const datasets = [{
             dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-            source: grouppedMinima["p - CCD / photoelectric"]
+            source: grouppedMinima["P - CCD/Photoelectric"]
         }, {
             dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-            source: grouppedMinima["p - visual"]
+            source: grouppedMinima["P - Visual"]
         }, {
             dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-            source: grouppedMinima["p - photographic"]
+            source: grouppedMinima["P - Photographic"]
         }, {
             dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-            source: grouppedMinima['s - CCD / photoelectric']
+            source: grouppedMinima['S - CCD/Photoelectric']
         }, {
             dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-            source: grouppedMinima["s - visual"]
+            source: grouppedMinima["S - Visual"]
         }, {
             dimensions: ['epoch', 'oc', 'julianDate', 'date'],
-            source: grouppedMinima["s - photographic"]
+            source: grouppedMinima["S - Photographic"]
         }, {
             dimensions: ['epoch', 'oc', 'julianDate', 'date'],
             source: grouppedMinima['user']

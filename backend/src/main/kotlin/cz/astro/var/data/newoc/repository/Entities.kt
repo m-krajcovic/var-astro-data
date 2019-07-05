@@ -139,7 +139,7 @@ class MinimaPublicationEntry(
 class StarMinima(
         @ManyToOne
         var batch: MinimaImportBatch,
-        var julianDate: BigDecimal,
+        @Column(precision = 15, scale = 7, nullable = true) var julianDate: BigDecimal,
         @ManyToOne
         var method: ObservationMethod,
         @OneToMany(mappedBy = "minima", cascade = [CascadeType.ALL], orphanRemoval = true)
@@ -190,8 +190,8 @@ class StarBrightness(
 @Entity
 @Table(name = "oc_StarElement")
 class StarElement(
-        var period: BigDecimal,
-        var minimum: BigDecimal,
+        @Column(precision = 10, scale = 7, nullable = true) var period: BigDecimal,
+        @Column(precision = 15, scale = 7, nullable = true) var minimum: BigDecimal,
         @ManyToOne
         var kind: ObservationKind,
         @OneToMany(mappedBy = "element", cascade = [CascadeType.ALL], orphanRemoval = true)

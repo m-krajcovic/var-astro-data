@@ -13,8 +13,8 @@ class StarList extends Component {
                 <ul>
                     {this.props.stars.map(star => {
                         return (
-                            <StarListItem key={star.starName}
-                                          className={this.props.selectedStarName === star.starName ? "selected" : ""} star={star}
+                            <StarListItem key={star.id}
+                                          className={this.props.selectedStarName === star.id ? "selected" : ""} star={star}
                                           onClick={(name) => this.onSelected(name)}/>
                         )
                     })}
@@ -41,7 +41,7 @@ class StarListItem extends Component {
         return (
             <li style={this.props.style} className={this.props.className}
                 onClick={() => this.onClick()}>
-                <Link to={"/oc/" + this.props.star.constellation + "/" + this.props.star.starName}>{this.props.star.starName} ({this.props.star.minimaCount})</Link>
+                <Link to={"/oc/" + this.props.star.constellation.id + "/" + this.props.star.id}>{this.props.star.name}</Link>
             </li>
         )
     }

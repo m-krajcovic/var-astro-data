@@ -70,8 +70,9 @@ class ConstellationServiceImpl(
         return getConstellationPolygons().firstOrNull { geoPoint.within(it.first) }?.second?.toModel()
     }
 
+    @Transactional
     override fun getAllSummary(): List<ConstellationSummaryModel> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return constellationRepository.findAllWithOcStarCounts().map { ConstellationSummaryModel(it.constellation.toModel(), it.starCount) }
     }
 
     override fun getAll(): List<ConstellationModel> {

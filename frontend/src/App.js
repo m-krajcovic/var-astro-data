@@ -295,15 +295,15 @@ class OcGate extends Component {
     componentWillReceiveProps(nextProps, nextContext) {
         if (nextProps.match.params) {
             // router params changed
-            const constName = nextProps.match.params["const"];
-            const starName = nextProps.match.params["star"];
+            const constName = parseInt(nextProps.match.params["const"]);
+            const starName = parseInt(nextProps.match.params["star"]);
 
-            if (constName !== this.state.selectedConstellationName) { // if const param has changed
+            if (constName && constName !== this.state.selectedConstellationName) { // if const param has changed
                 this.onConstellationSelected(constName, starName); // load stars & star detail if needed
                 this.setState((s) => { // update selected const for future checks
                     return {...s, selectedConstellationName: constName, selectedStarName: null};
                 })
-            } else if (starName !== this.state.selectedStarName) { // only starname has changed
+            } else if (starName && starName !== this.state.selectedStarName) { // only starname has changed
                 this.onStarSelected(starName); // load details for given star
                 this.setState(s => {
                     return {...s, selectedStarName: starName};
@@ -314,7 +314,7 @@ class OcGate extends Component {
 
     componentDidMount() {
         this.setState({...this.state, constellationsLoading: true});
-        fetch(BASE_URL + "/oc/constellations").then(response => response.json())
+        fetch(BASE_URL + "/ocgate/constellations/summary").then(response => response.json())
             .then(value => this.setState({
                 constellations: value,
                 stars: [],
@@ -323,24 +323,24 @@ class OcGate extends Component {
             }));
     }
 
-    onConstellationSelected(constellation, starName) {
+    onConstellationSelected(id, starId) {
         this.setState({...this.state, starsLoading: true});
-        fetch(BASE_URL + "/oc/constellations/" + constellation + "/stars").then(response => response.json())
+        fetch(BASE_URL + "/ocgate/constellations/" + id + "/stars").then(response => response.json())
             .then(value => this.setState(state => {
                 return {...state, stars: value, starsLoading: false}
             }))
             .then(_ => {
-                if (starName) {
-                    this.onStarSelected(starName)
+                if (starId) {
+                    this.onStarSelected(starId)
                 }
             });
     }
 
-    onStarSelected(starName) {
-        const star = this.state.stars.find(s => s.starName === starName);
+    onStarSelected(id) {
+        const star = this.state.stars.find(s => s.id === id);
         if (star) {
             this.setState({...this.state, starLoading: true});
-            fetch(BASE_URL + "/oc/stars/" + star.starId).then(response => response.json()).then(value => {
+            fetch(BASE_URL + "/ocgate/stars/" + star.id).then(response => response.json()).then(value => {
                 this.setState({...this.state, selectedStar: value, starLoading: false, selectedElement: 'server'});
             });
         }
@@ -350,8 +350,8 @@ class OcGate extends Component {
         let selectedConstName = null;
         let selectedStarName = null;
         if (this.props.match.params) {
-            selectedConstName = this.props.match.params["const"];
-            selectedStarName = this.props.match.params["star"];
+            selectedConstName = parseInt(this.props.match.params["const"]);
+            selectedStarName = parseInt(this.props.match.params["star"]);
         }
         return (
             <Content>
