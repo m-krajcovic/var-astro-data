@@ -39,6 +39,8 @@ interface StarsService {
     fun deleteStarBrightness(brightnessId: Long)
     fun deleteStarElement(elementId: Long)
     fun getStarsByConstellation(constellationId: Long): List<StarListModel>
+    fun getStarMinimaJulianDates(starId: Long): List<Double>
+    fun getElementMinimaJulianDates(elementId: Long): List<Double>
 
     // TODO:
     // add view with minimaCounts per star?
@@ -300,7 +302,6 @@ class StarsServiceImpl(
         private val securityService: SecurityService,
         private val volumeRepository: MinimaPublicationVolumeRepository
 ) : StarsService {
-
     override fun updateStarBrightness(brightnessId: Long, model: StarBrightnessNewModel) {
         val entity = starBrightnessRepository.findById(brightnessId).orElseThrow { ServiceException("Star brightness doesn't exist") }
         entity.apply {
@@ -484,6 +485,22 @@ class StarsServiceImpl(
     @PreAuthorize("permitAll()")
     override fun getStarsByConstellation(constellationId: Long): List<StarListModel> {
         return starsRepository.findAllByConstellationId(constellationId).map { it.toListModel() }
+    }
+
+    @PreAuthorize("permitAll()")
+    override fun getElementMinimaJulianDates(elementId: Long): List<Double> {
+        val entity = starElementRepository.findById(elementId).orElseThrow { ServiceException("Star element doesn't exist") }
+        return entity.minimas.map { it.julianDate.toDouble() }
+    }
+
+    @PreAuthorize("permitAll()")
+    override fun getStarMinimaJulianDates(starId: Long): List<Double> {
+        val entity = starsRepository.findByIdFetched(starId).orElseThrow { ServiceException("Star doesn't exist") }
+        val result = ArrayList<Double>()
+        entity.elements.forEach { e ->
+            result.addAll(e.minimas.map { it.julianDate.toDouble() })
+        }
+        return result
     }
 }
 

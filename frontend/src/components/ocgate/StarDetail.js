@@ -186,7 +186,7 @@ export default class StarDetail extends Component {
                     if (element.kind.name === 'P' && primaryElement && primaryElement.minimum && primaryElement.period) {
                         calculated = ocCalc(primaryElement, minima);
                     }
-                    if (minima.kind === 'S' && secondaryElement && secondaryElement.minimum && secondaryElement.period) {
+                    if (element.kind.name === 'S' && secondaryElement && secondaryElement.minimum && secondaryElement.period) {
                         calculated = ocCalc(secondaryElement, minima);
                     }
                     if (calculated) {

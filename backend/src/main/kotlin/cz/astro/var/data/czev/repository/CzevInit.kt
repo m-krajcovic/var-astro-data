@@ -47,13 +47,13 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         user = userRepository.save(user)
 
         observers = observerRepository.saveAll(observers)
-        observersMap = observers.toMap { it.abbreviation }
+        observersMap = observers.associateBy { it.abbreviation }
         constellations = constellationRepository.saveAll(constellations)
-        constellationsMap = constellations.toMap { it.abbreviation }
+        constellationsMap = constellations.associateBy { it.abbreviation }
         bands = filterBandRepository.saveAll(bands)
-        bandsMap = bands.toMap { it.name }
+        bandsMap = bands.associateBy { it.name }
         types = starTypeRepository.saveAll(types)
-        typesMap = types.toMap { it.name }
+        typesMap = types.associateBy { it.name }
 
         typesValidator = StarTypeValidatorImpl(types.map { it.name }.toSet())
         var stars = getStars()
@@ -552,7 +552,7 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         output.add(Constellation("Volans", "Vol"))
         output.add(Constellation("Vulpecula", "Vul"))
 
-        val constsByName = output.toMap { it.abbreviation.toUpperCase() }
+        val constsByName = output.associateBy { it.abbreviation.toUpperCase() }
         CzevInitData().getConstBoundaries().forEach {
             constsByName[it.first]?.let { cnst ->
                 val bound = ConstellationBoundaryPoint(cnst.bounds.size, it.second)
@@ -563,14 +563,6 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
 
         return output
     }
-}
-
-fun <T> List<T>.toMap(keyMapper: (T) -> String): Map<String, T> {
-    val output = HashMap<String, T>()
-    this.forEach {
-        output[keyMapper(it)] = it
-    }
-    return output
 }
 
 class CzevInitData {

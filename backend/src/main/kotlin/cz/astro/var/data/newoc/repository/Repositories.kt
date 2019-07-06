@@ -1,13 +1,15 @@
 package cz.astro.`var`.data.newoc.repository
 
 import cz.astro.`var`.data.czev.repository.*
-import cz.astro.`var`.data.oc.controller.prepend24
 import cz.astro.`var`.data.oc.repository.StarRepository
+import jdk.nashorn.internal.ir.annotations.Immutable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*
+import javax.persistence.*
 import javax.transaction.Transactional
 
 interface StarsRepository : JpaRepository<Star, Long> {
@@ -19,9 +21,15 @@ interface StarsRepository : JpaRepository<Star, Long> {
 
     @Query("SELECT DISTINCT s FROM Star s LEFT JOIN FETCH s.constellation LEFT JOIN FETCH s.brightness b LEFT JOIN FETCH b.filter LEFT JOIN FETCH s.elements e LEFT JOIN FETCH e.kind LEFT JOIN FETCH e.minimas m LEFT JOIN FETCH m.publicationEntries LEFT JOIN FETCH m.batch LEFT JOIN FETCH m.method WHERE s.id = :id")
     fun findByIdFetched(id: Long): Optional<Star>
+
+    @Query("select distinct s from Star s LEFT JOIN FETCH s.elements e LEFT JOIN FETCH e.kind LEFT JOIN FETCH s.brightness b LEFT JOIN FETCH b.filter LEFT JOIN FETCH s.constellation")
+    fun findAllFetchedForPredictions(): List<Star>
 }
 
-interface StarElementRepository : JpaRepository<StarElement, Long>
+interface StarElementRepository : JpaRepository<StarElement, Long> {
+    @Query("select e from ElementMinimaCount e")
+    fun findAllElementMinimaCountsSince(jd: BigDecimal): List<ElementMinimaCount>
+}
 interface StarBrightnessRepository : JpaRepository<StarBrightness, Long>
 interface PublicationsRepository : JpaRepository<MinimaPublication, Long>
 interface MinimaRepository : JpaRepository<StarMinima, Long>
@@ -29,6 +37,33 @@ interface ObservationMethodRepository : JpaRepository<ObservationMethod, Long>
 interface ObservationKindRepository : JpaRepository<ObservationKind, Long>
 interface MinimaBatchRepository : JpaRepository<MinimaImportBatch, Long>
 interface MinimaPublicationVolumeRepository : JpaRepository<MinimaPublicationVolume, Long>
+
+@Entity
+@Immutable
+@Table(name = "oc_ElementMinimaCount")
+class ElementMinimaCount(
+        @Id
+        val elementId: Long,
+        val minimaCount: Long,
+        val ccdCount: Long,
+        @OneToOne
+        @JoinColumn(name = "element_id")
+        @MapsId
+        val element: StarElement
+)
+
+@Entity
+@Immutable
+@Table(name = "oc_StarMinimaCount")
+class StarMinimaCount(
+        @Id
+        val starId: Long,
+        val minimaCount: Long,
+        @OneToOne
+        @JoinColumn(name = "star_id")
+        @MapsId
+        val star: Star
+)
 
 interface OcMigrator {
     fun migrate()
@@ -61,10 +96,10 @@ class OcToNewOcMigrator(
         // 3rd stage = MIGRATE PUBLICATIONS
 
         val user = userRepository.findAll().first()
-        val constellationsByName = constellationRepository.findAll().toMap { it.abbreviation.toUpperCase() }
-        val filtersByName = filterBandRepository.findAll().toMap { it.name.toUpperCase() }.toMutableMap()
-        val kindsByName = observationKindRepository.findAll().toMap { it.name.toUpperCase() }.toMutableMap()
-        val methodsByName = observationMethodRepository.findAll().toMap { it.name.toUpperCase() }.toMutableMap()
+        val constellationsByName = constellationRepository.findAll().associateBy { it.abbreviation.toUpperCase() }
+        val filtersByName = filterBandRepository.findAll().associateBy { it.name.toUpperCase() }.toMutableMap()
+        val kindsByName = observationKindRepository.findAll().associateBy { it.name.toUpperCase() }.toMutableMap()
+        val methodsByName = observationMethodRepository.findAll().associateBy { it.name.toUpperCase() }.toMutableMap()
 
         val ogStars = starRepository.findStarsFetched()
         val newStars = mutableListOf<Star>()
@@ -143,5 +178,9 @@ class OcToNewOcMigrator(
         val filterBand = filterBandRepository.save(FilterBand(name.toUpperCase()))
         filters[name.toUpperCase()] = filterBand
         return filterBand
+    }
+
+    fun prepend24(value: BigDecimal): BigDecimal {
+        return value + BigDecimal("2400000")
     }
 }

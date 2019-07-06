@@ -5,8 +5,10 @@ import cz.astro.`var`.data.czev.service.ConstellationModel
 import cz.astro.`var`.data.czev.service.ConstellationService
 import cz.astro.`var`.data.czev.service.ConstellationSummaryModel
 import cz.astro.`var`.data.newoc.service.*
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.time.LocalDate
 import javax.validation.Valid
 
 @RestController
@@ -15,7 +17,8 @@ class NewOcController(
         private val starsService: StarsService,
         private val publicationsService: PublicationsService,
         private val constellationsService: ConstellationService,
-        private val observationsService: ObservationsService
+        private val observationsService: ObservationsService,
+        private val predictionsService: PredictionsService
 ) {
 //    GET
 //    constellations
@@ -75,6 +78,19 @@ class NewOcController(
             it.elements.firstOrNull { e -> e.id == id }
         }.toOkOrNotFound()
     }
+
+    @GetMapping("predictions")
+    fun getAllPredictions(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
+                          @RequestParam(defaultValue = "50.0") latitude: Double,
+                          @RequestParam(defaultValue = "15.0") longitude: Double): PredictionsResultModel {
+        return predictionsService.getAllPredictionsForNight(date, latitude, longitude)
+    }
+
+    @GetMapping("stars/{id}/minima/julianDates")
+    fun getStarMinimaJds(@PathVariable id: Long): List<Double> = starsService.getStarMinimaJulianDates(id)
+
+    @GetMapping("stars/elements/{id}/minima/julianDates")
+    fun getElementMinimaJds(@PathVariable id: Long): List<Double> = starsService.getElementMinimaJulianDates(id)
 
     @PutMapping("stars/{id}")
     fun updateStar(@PathVariable id: Long, @Valid @RequestBody star: StarUpdateModel) = starsService.updateStar(id, star)
