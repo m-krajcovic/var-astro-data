@@ -1,4 +1,4 @@
-package cz.astro.`var`.data.oc.service
+package cz.astro.`var`.data.newoc.service
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.LocalTime

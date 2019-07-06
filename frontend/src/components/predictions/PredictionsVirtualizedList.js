@@ -3,7 +3,7 @@ import {AutoSizer, List as VirtualizedList} from "react-virtualized";
 import {List} from "antd";
 
 export class PredictionsVirtualizedList extends Component {
-
+// TODO: changing filter doesnt update element id for graph ! so there is wrong graph for the row
     render() {
         let predictions = this.props.predictions;
         if (this.props.filters) {

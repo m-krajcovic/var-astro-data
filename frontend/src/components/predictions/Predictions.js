@@ -32,14 +32,12 @@ class PredictionsPage extends Component {
             ),
             width: 200,
             render: (record) => {
-                const nameSplit = record.name.split(" ");
                 return (<span>
                 <Link
-                    to={"/oc/" + nameSplit[1] + "/" + nameSplit[0]}>{record.name}</Link>
+                    to={"/oc/" + record.constellationId + "/" + record.starId}>{record.name}</Link>
                                             <Popover
                                                 overlayClassName="popover-minima-graph"
-                                                content={(<PredictionsMinimaGraph id={record.id}
-                                                                                  kind={record.kind}/>)}
+                                                content={(<PredictionsMinimaGraph element={record.element}/>)}
                                             >
                                                 <Icon
                                                     style={{
@@ -54,8 +52,9 @@ class PredictionsPage extends Component {
         },
         {
             title: 'P/S',
-            dataIndex: 'kind',
-            width: 40
+            dataIndex: 'element.kind.name',
+            width: 40,
+            render: record => record.element.kind.name,
         },
         {
             title: 'Time',
@@ -107,7 +106,7 @@ class PredictionsPage extends Component {
         },
         {
             title: 'D(h)',
-            dataIndex: 'minimaLength',
+            dataIndex: 'minimaDuration',
             width: 50
         },
         {
@@ -222,7 +221,7 @@ class PredictionsPage extends Component {
             this.setState(state => {
                 return {...state, loading: true}
             });
-            axios.get(BASE_URL + "/oc/predictions", {
+            axios.get(BASE_URL + "/ocgate/predictions", {
                 params: {
                     date: dateString,
                     latitude: latitude,

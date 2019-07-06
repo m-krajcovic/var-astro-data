@@ -23,15 +23,13 @@ export class PredictionsMinimaGraph extends Component {
     };
 
     componentDidMount() {
+        // stars/{id}/minima/julianDates
         this.setState({...this.state, loading: true});
-        axios.get(BASE_URL + "/oc/stars/" + this.props.id + "/minima", {
-            params: {
-                kind: this.props.kind
-            }
-        }).then(result => {
-            const data = result.data.minima.map(minima => {
-                const oc = this.ocCalc(result.data.m0, result.data.period, minima);
-                const epoch = Math.round((minima - result.data.m0) / result.data.period);
+        const {element} = this.props;
+        axios.get(BASE_URL + "/ocgate/stars/elements/" + element.id + "/minima/julianDates").then(result => {
+            const data = result.data.map(minima => {
+                const oc = this.ocCalc(element.minimum, element.period, minima);
+                const epoch = Math.round((minima - element.minimum) / element.period);
                 return [epoch, oc, minima, jdToDate(minima)];
             });
             this.setState({...this.state, loading: false, data: data});

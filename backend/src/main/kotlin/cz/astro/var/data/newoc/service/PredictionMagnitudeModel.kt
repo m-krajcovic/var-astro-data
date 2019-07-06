@@ -1,4 +1,4 @@
-package cz.astro.`var`.data.oc.service
+package cz.astro.`var`.data.newoc.service
 
 data class PredictionMagnitudeModel(
         val filter: String,
