@@ -17,6 +17,14 @@ import java.time.LocalDateTime
 import java.util.*
 import javax.persistence.*
 
+// TODO:
+// make draft subclass to star?
+// move some of the entities to generic/common module
+// split features to modules, e.g. common module, oc module, czev module
+// refactor into more files (at least Services, Models, ... per file)
+// refactor into more services?
+// add oauth2
+
 @Entity
 @Table(name = "czev_CzevStar")
 @Audited
