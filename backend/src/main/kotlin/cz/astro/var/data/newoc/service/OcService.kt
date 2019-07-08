@@ -42,8 +42,6 @@ interface StarsService {
     fun getStarMinimaJulianDates(starId: Long): List<Double>
     fun getElementMinimaJulianDates(elementId: Long): List<Double>
 
-    // TODO:
-    // add view with minimaCounts per star?
     // TODO: need get/updatePublication/deletePublication based on filter
 }
 
