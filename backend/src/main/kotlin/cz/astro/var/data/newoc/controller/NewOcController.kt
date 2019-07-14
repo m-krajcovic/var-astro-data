@@ -20,29 +20,6 @@ class NewOcController(
         private val observationsService: ObservationsService,
         private val predictionsService: PredictionsService
 ) {
-//    GET
-//    constellations
-//    stars --- ListModel
-//    stars/{id} --- DetailsModel
-//    publications
-//
-//    POST
-//    stars -- one new star
-//    stars/{id}/minima -- one new minima -- SingleImportBatch
-//    minima/batch -- multiple new minima -- MultiImportBatch?
-//    publications -- new publication
-//
-//    PUT/PATCH
-//    stars/{id} -- updates star info
-//    minima/{minimaId} -- updates single minima for a star
-//    minima/batch/{batchId} -- updates everything in a batch?
-//    publications/{pubId} -- updates a publication
-//
-//    DELETE
-//    stars/{id}
-//    minima/{id}
-//    minima/batch/{id}
-//    publications/{id}
 
     @GetMapping("stars")
     fun getAllStars(): List<StarListModel> = starsService.getAll()

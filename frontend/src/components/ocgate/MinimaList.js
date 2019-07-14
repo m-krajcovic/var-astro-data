@@ -26,22 +26,30 @@ export default class MinimaList extends Component {
 class DatabaseMinimaList extends Component {
     render() {
         return (
-            <table style={{paddingLeft: 0}}>
+            <table style={{paddingLeft: 0, borderSpacing: "20px 0", borderCollapse: "separate"}}>
                 <thead>
                 <tr>
-                    <th align="right">Julian Date</th>
-                    <th align="right">Epoch</th>
-                    <th align="right">O-C</th>
+                    <th>Julian Date</th>
+                    <th>Epoch</th>
+                    <th>O-C</th>
+                    <th>Kind</th>
+                    <th>Method</th>
+                    <th>Observer</th>
+                    <th>Publications</th>
                 </tr>
                 </thead>
                 <tbody>
                 {
                     this.props.minimaList.map(minima => {
                         return (
-                            <tr key={minima.minima.id}>
-                                <td align="right">{minima.jd.toFixed(5)}</td>
+                            <tr key={minima.type + "#" + minima.julianDate}>
+                                <td align="right">{minima.julianDate.toFixed(5)}</td>
                                 <td align="right">{minima.epoch}</td>
                                 <td align="right">{minima.oc.toFixed(5)}</td>
+                                <td align="left">{minima.element.kind.name}</td>
+                                <td align="left">{minima.method.name}</td>
+                                <td align="left">{minima.observer}</td>
+                                <td align="left">{minima.publicationEntries.map(entry => `${entry.publication.name}/${entry.volume.name}`).join(", ")}</td>
                             </tr>
                         )
                     })

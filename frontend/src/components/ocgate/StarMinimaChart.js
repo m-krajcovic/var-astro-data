@@ -82,7 +82,6 @@ export default class StarMinimaChart extends Component {
     }
 
     render() {
-        console.log(this.props.grouppedMinima);
         if (this.props.grouppedMinima) {
             return (
                 <Fragment>

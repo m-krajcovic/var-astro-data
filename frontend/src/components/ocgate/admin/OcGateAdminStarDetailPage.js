@@ -423,7 +423,6 @@ const StarMinimaInfoTableComponent = Form.create()(
                                         <TableInputRangeFilter actions={actions}/>
                                     )}
                                     onFilter={(value, record) => {
-                                        console.log({value, record});
                                         return record.julianDate >= value.min && record.julianDate <= value.max;
                                     }}
                                 />

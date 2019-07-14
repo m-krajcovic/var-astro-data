@@ -179,6 +179,7 @@ export default class StarDetail extends Component {
             const minimaList = [];
             star.elements.forEach(element => {
                 element.minimas.forEach(minima => {
+                    minima.element = element;
                     minima.type = cValue(element, minima);
                     let oc = 0;
                     let epoch = null;
@@ -192,12 +193,16 @@ export default class StarDetail extends Component {
                     if (calculated) {
                         oc = calculated.oc;
                         epoch = calculated.epoch;
+                        minima.oc = calculated.oc;
+                        minima.epoch = calculated.epoch;
                     }
+                    // todo: quality?
                     // if (minima.quality !== '?') {
                         if (grouppedMinima[minima.type] && oc != null && epoch != null) {
                             const date = jdToDate(minima.julianDate);
+                            minima.date = date;
                             grouppedMinima[minima.type].push([epoch, oc, minima.julianDate, date]);
-                            minimaList.push({epoch, oc, minima, jd: minima.julianDate, date});
+                            minimaList.push(minima);
                         }
                     // }
                 });
@@ -214,7 +219,7 @@ export default class StarDetail extends Component {
                     return [calculated.epoch, calculated.oc, minima.julianDate, jdToDate(minima.julianDate)];
                 }).filter(row => row[0] != null && row[1] != null);
             }
-            minimaList.sort((a, b) => a.jd - b.jd);
+            minimaList.sort((a, b) => a.julianDate - b.julianDate);
 
             let approximation = null;
             if (this.state.regressionFunc) {
