@@ -28,7 +28,6 @@ class CzevExportController(
         private val starService: CzevStarService,
         private val exportFormatterService: CzevStarCsvExportFormatterService
 ) {
-
     @RequestMapping("stars")
     @ResponseBody
     fun exportCzevToCsv(@RequestParam("format") format: String, filter: CzevCatalogFilter): DownloadableTextResponse {
@@ -46,8 +45,6 @@ class CzevExportController(
             }
         }
     }
-
-
 }
 
 data class CzevCatalogFilter(

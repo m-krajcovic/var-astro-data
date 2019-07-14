@@ -1,6 +1,7 @@
 package cz.astro.`var`.data.newoc.repository
 
 import cz.astro.`var`.data.czev.repository.*
+import jdk.nashorn.internal.ir.annotations.Immutable
 import org.hibernate.annotations.NaturalId
 import java.io.Serializable
 import java.math.BigDecimal
@@ -259,3 +260,32 @@ class IdNameEntity(
         return name.hashCode()
     }
 }
+
+
+// FROM VIEWS
+@Entity
+@Immutable
+@Table(name = "oc_ElementMinimaCount")
+class ElementMinimaCount(
+        @Id
+        val elementId: Long,
+        val minimaCount: Long,
+        val ccdCount: Long,
+        @OneToOne
+        @JoinColumn(name = "element_id")
+        @MapsId
+        val element: StarElement
+)
+
+@Entity
+@Immutable
+@Table(name = "oc_StarMinimaCount")
+class StarMinimaCount(
+        @Id
+        val starId: Long,
+        val minimaCount: Long,
+        @OneToOne
+        @JoinColumn(name = "star_id")
+        @MapsId
+        val star: Star
+)
