@@ -33,17 +33,6 @@ class SpringConfig {
         return HttpMessageConverters(DownloadableTextMessageConverter())
     }
 
-    //    @Bean
-    //    public Jackson2ObjectMapperBuilder objectMapperBuilder() {
-    //        return new Jackson2ObjectMapperBuilder().modulesToInstall(new KotlinModule());
-    //    }
-
-    //    @Bean
-    //    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter() {
-    //        ObjectMapper mapper = new ObjectMapper().registerModule(new KotlinModule());
-    //        return new MappingJackson2HttpMessageConverter(mapper);
-    //    }
-
     @Bean
     fun webMvcConfigurer(): WebMvcConfigurer {
         return object : WebMvcConfigurer {

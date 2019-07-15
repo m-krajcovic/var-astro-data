@@ -23,9 +23,9 @@ class Star(
         var comp: String?,
         var type: String,
         var minimaDuration: Int?,
-        @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL], orphanRemoval = true)
+        @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL])
         var brightness: MutableSet<StarBrightness>,
-        @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL], orphanRemoval = true)
+        @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL])
         var elements: MutableSet<StarElement>
 ) : IdEntity() {
     override fun equals(other: Any?): Boolean {
@@ -55,7 +55,7 @@ class MinimaPublication(
         @NaturalId
         var name: String,
         var link: String?,
-        @OneToMany(mappedBy = "publication", cascade = [CascadeType.ALL], orphanRemoval = true)
+        @OneToMany(mappedBy = "publication", cascade = [CascadeType.ALL])
         var volumes: MutableSet<MinimaPublicationVolume>
 ) : IdEntity() {
     override fun equals(other: Any?): Boolean {
@@ -76,9 +76,10 @@ class MinimaPublication(
 @Table(name = "oc_MinimaPublicationVolume")
 class MinimaPublicationVolume(
         var name: String,
-        var year: Int,
+        @Column(nullable = true)
+        var year: Int?,
         var link: String?,
-        @OneToMany(mappedBy = "volume", cascade = [CascadeType.ALL], orphanRemoval = true)
+        @OneToMany(mappedBy = "volume", cascade = [CascadeType.ALL])
         var entries: MutableSet<MinimaPublicationEntry>
 ) : IdEntity() {
     @ManyToOne
@@ -97,7 +98,7 @@ class MinimaPublicationVolume(
 
     override fun hashCode(): Int {
         var result = name.hashCode()
-        result = 31 * result + year
+        result = 31 * result + (year?.hashCode() ?: 0)
         result = 31 * result + (publication?.hashCode() ?: 0)
         return result
     }
@@ -110,10 +111,10 @@ class MinimaPublicationEntry(
         @Id
         var volume: MinimaPublicationVolume,
         @Id
-        var page: String?
+        var page: String
 ): Serializable {
     @Id
-    @ManyToOne
+    @ManyToOne(cascade = [CascadeType.ALL])
     var minima: StarMinima? = null
 
     override fun equals(other: Any?): Boolean {
@@ -143,9 +144,10 @@ class StarMinima(
         @Column(precision = 15, scale = 7, nullable = true) var julianDate: BigDecimal,
         @ManyToOne
         var method: ObservationMethod,
-        @OneToMany(mappedBy = "minima", cascade = [CascadeType.ALL], orphanRemoval = true)
+        @OneToMany(mappedBy = "minima", cascade = [CascadeType.ALL])
         var publicationEntries: MutableSet<MinimaPublicationEntry>,
-        var observer: String = ""
+        var observer: String = "",
+        var instrument: String
 ) : IdEntity() {
     @ManyToOne
     var element: StarElement? = null
@@ -191,11 +193,11 @@ class StarBrightness(
 @Entity
 @Table(name = "oc_StarElement")
 class StarElement(
-        @Column(precision = 10, scale = 7, nullable = true) var period: BigDecimal,
+        @Column(precision = 15, scale = 7, nullable = true) var period: BigDecimal,
         @Column(precision = 15, scale = 7, nullable = true) var minimum: BigDecimal,
         @ManyToOne
         var kind: ObservationKind,
-        @OneToMany(mappedBy = "element", cascade = [CascadeType.ALL], orphanRemoval = true)
+        @OneToMany(mappedBy = "element", cascade = [CascadeType.ALL])
         var minimas: MutableSet<StarMinima>
 ) : IdEntity() {
     @ManyToOne
@@ -231,7 +233,7 @@ class MinimaImportBatch(
         @ManyToOne
         var createdBy: User
 ) : IdEntity() {
-    @OneToMany(mappedBy = "batch", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "batch", cascade = [CascadeType.ALL])
     var minimas: MutableSet<StarMinima> = mutableSetOf()
 }
 

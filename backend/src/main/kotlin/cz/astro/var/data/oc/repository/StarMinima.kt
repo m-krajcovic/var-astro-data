@@ -21,6 +21,13 @@ class StarMinima(
         @Column(name="OC") var oc: Double,
         @Column(name="OCS", columnDefinition = "char") var ocSign: String,
         @Column(name="COL", columnDefinition = "char") var color: String,
+        @Column(name="INSTRUMENT", columnDefinition = "char") var instrument: String,
+        @Column(name="OBSERVER", columnDefinition = "char") var observer: String,
         @Column(name="KIND", columnDefinition = "char") var kind: String,
-        @Column(name="Q", columnDefinition = "char") var quality: String
+        @Column(name="SOC", columnDefinition = "char") var soc: String,
+        @Column(name="BULLETIN", columnDefinition = "char") var bulletin: String,
+        @Column(name="S2", columnDefinition = "char") var soc2: String,
+        @Column(name="BUL2", columnDefinition = "char") var bulletin2: String,
+        @Column(name="Q", columnDefinition = "char") var quality: String,
+        @Column(name="REMARK", columnDefinition = "char") var remark: String
 )

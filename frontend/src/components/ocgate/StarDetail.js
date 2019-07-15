@@ -224,9 +224,9 @@ export default class StarDetail extends Component {
             let approximation = null;
             if (this.state.regressionFunc) {
                 approximation = [];
-                const minJd = minimaList[0].jd;
-                const maxJd = minimaList[minimaList.length - 1].jd;
-                const jdApproximation = this.state.regressionFunc(minimaList.map(m => [m.jd - minJd + 1, m.oc]));
+                const minJd = minimaList[0].julianDate;
+                const maxJd = minimaList[minimaList.length - 1].julianDate;
+                const jdApproximation = this.state.regressionFunc(minimaList.map(m => [m.julianDate - minJd + 1, m.oc]));
                 const steps = 200;
                 const stepJd = (maxJd - minJd) / steps;
                 for (let i = 0; i <= steps; i++) {

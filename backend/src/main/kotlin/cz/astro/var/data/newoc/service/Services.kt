@@ -6,11 +6,9 @@ import cz.astro.`var`.data.newoc.repository.*
 import cz.astro.`var`.data.security.SecurityService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*
 import javax.transaction.Transactional
-import javax.validation.constraints.Size
 
 /**
  * @author Michal
@@ -76,7 +74,7 @@ class StarsServiceImpl(
         private val starElementRepository: StarElementRepository,
         private val userRepository: UserRepository,
         private val filterBandRepository: FilterBandRepository,
-        private val publicationsRepository: PublicationsRepository,
+        private val publicationsRepository: MinimaPublicationsRepository,
         private val minimaRepository: MinimaRepository,
         private val minimaBatchRepository: MinimaBatchRepository,
         private val starBrightnessRepository: StarBrightnessRepository,
@@ -222,7 +220,8 @@ class StarsServiceImpl(
                         julianDate,
                         obsMethod,
                         minima.publicationEntries.map { MinimaPublicationEntry(volumeRepository.findById(it.volumeId).orElseThrow { ServiceException("Volume doesn't exist") }, it.page) }.toMutableSet(),
-                        minima.observer
+                        minima.observer,
+                        minima.instrument
                 )
                 newMinima.publicationEntries.forEach {
                     it.minima = newMinima
@@ -288,7 +287,7 @@ class StarsServiceImpl(
 @Service
 @Transactional
 class PublicationsServiceImpl(
-        private val publicationsRepository: PublicationsRepository,
+        private val publicationsRepository: MinimaPublicationsRepository,
         private val volumeRepository: MinimaPublicationVolumeRepository
 ) : PublicationsService {
     override fun deleteVolume(id: Long) {

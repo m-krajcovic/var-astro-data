@@ -106,7 +106,7 @@ class MinimaPublicationVolumeTable extends Component {
                     <Table.Column
                         title="Volume"
                         dataIndex="name"
-                        width={150}
+                        width={200}
                     />
                     <Table.Column
                         title="Year"
@@ -233,7 +233,7 @@ export class MinimaPublicationsListPage extends Component {
                                 <Table.Column
                                     title="Name"
                                     dataIndex="name"
-                                    width={100}
+                                    width={200}
                                 />
                                 <Table.Column
                                     title="Link"
