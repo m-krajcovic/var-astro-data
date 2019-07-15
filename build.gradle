@@ -24,11 +24,6 @@ repositories {
 //    }
 }
 
-//task stage(dependsOn: ['frontend.npmInstall','frontend.moveNpmBuildToResources','frontend.npmBuild','build', 'clean'])
-//npmInstall.mustRunAfter clean
-//npmBuild.mustRunAfter npmInstall
-//moveNpmBuildToResources.mustRunAfter npmBuild
-//build.mustRunAfter moveNpmBuildToResources
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-dependencies:2.0.5.RELEASE'
@@ -70,3 +65,9 @@ compileTestKotlin {
         jvmTarget = "1.8"
     }
 }
+
+task prepareFrontend(dependsOn: ['frontend:npmInstall', 'frontend:moveNpmBuildToResources', 'frontend:npmBuild'])
+
+task stage(dependsOn: ['prepareFrontend','clean', 'build'])
+prepareFrontend.mustRunAfter clean
+build.mustRunAfter prepareFrontend

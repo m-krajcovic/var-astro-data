@@ -24,5 +24,11 @@ task npmStart(type: NpmTask) {
 
 task moveNpmBuildToResources(type: Copy) {
     from "${project.projectDir}/build"
-    into "${project.projectDir}/build/resources/main/static"
+    into "${project.projectDir}/../build/resources/main/static"
 }
+
+//task stage(dependsOn: ['frontend.npmInstall','frontend.moveNpmBuildToResources','frontend.npmBuild','build', 'clean'])
+//npmInstall.mustRunAfter clean
+npmBuild.mustRunAfter npmInstall
+moveNpmBuildToResources.mustRunAfter npmBuild
+//build.mustRunAfter moveNpmBuildToResources
