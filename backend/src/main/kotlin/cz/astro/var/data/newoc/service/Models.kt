@@ -74,7 +74,6 @@ class MinimaPublicationSimpleModel(
 
 class MinimaPublicationNewModel(
         var name: String,
-        var year: Int?,
         var link: String?,
         var volumes: List<MinimaPublicationVolumeNewModel>
 )
@@ -87,31 +86,31 @@ class MinimaPublicationUpdateModel(
 class MinimaPublicationVolumeModel(
         var id: Long,
         var name: String,
-        var year: Int,
+        var year: Int?,
         var link: String?
 )
 
 class MinimaPublicationVolumeNewModel(
         var name: String,
-        var year: Int,
+        var year: Int?,
         var link: String?
 )
 
 class MinimaPublicationVolumeUpdateModel(
         var name: String,
-        var year: Int,
+        var year: Int?,
         var link: String?
 )
 
 class MinimaPublicationEntryModel(
         var publication: MinimaPublicationSimpleModel,
         var volume: MinimaPublicationVolumeModel,
-        var page: String?
+        var page: String = ""
 )
 
 class MinimaPublicationEntryNewModel(
         var volumeId: Long,
-        var page: String?
+        var page: String = ""
 )
 
 class MinimaPublicationEntryUpdateModel(
@@ -124,7 +123,8 @@ class StarMinimaModel(
         val julianDate: BigDecimal,
         val method: IdNameModel,
         val publicationEntries: List<MinimaPublicationEntryModel>,
-        val observer: String
+        val observer: String,
+        val instrument: String
 )
 
 class StarMinimaNewModel(
@@ -132,14 +132,16 @@ class StarMinimaNewModel(
         val julianDates: List<BigDecimal>,
         val methodId: Long,
         val publicationEntries: List<MinimaPublicationEntryNewModel>,
-        val observer: String
+        val observer: String,
+        val instrument: String = ""
 )
 
 class StarMinimaUpdateModel(
         val julianDate: BigDecimal,
         val methodId: Long,
         val publicationEntries: List<MinimaPublicationEntryNewModel>,
-        val observer: String
+        val observer: String,
+        val instrument: String = ""
 )
 
 class StarMinimaBulkUpdateModel(
@@ -147,7 +149,8 @@ class StarMinimaBulkUpdateModel(
         val methodId: Long?,
         val publicationEntries: List<MinimaPublicationEntryNewModel>?,
         val observer: String?,
-        val starElementId: Long?
+        val starElementId: Long?,
+        val instrument: String = ""
 )
 
 class StarBrightnessModel(
@@ -264,7 +267,7 @@ fun Star.toDetailsModel(): StarDetailsModel {
 }
 
 fun StarMinima.toModel(): StarMinimaModel {
-    return StarMinimaModel(id, batch.id, julianDate, method.toModel(), publicationEntries.map { it.toModel() }, observer)
+    return StarMinimaModel(id, batch.id, julianDate, method.toModel(), publicationEntries.map { it.toModel() }, observer, instrument)
 }
 
 fun StarBrightness.toModel(): StarBrightnessModel {

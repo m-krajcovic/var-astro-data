@@ -26,7 +26,7 @@ interface StarElementRepository : JpaRepository<StarElement, Long> {
     fun findAllElementMinimaCountsSince(jd: BigDecimal): List<ElementMinimaCount>
 }
 interface StarBrightnessRepository : JpaRepository<StarBrightness, Long>
-interface PublicationsRepository : JpaRepository<MinimaPublication, Long>
+interface MinimaPublicationsRepository : JpaRepository<MinimaPublication, Long>
 interface MinimaRepository : JpaRepository<StarMinima, Long>
 interface ObservationMethodRepository : JpaRepository<ObservationMethod, Long>
 interface ObservationKindRepository : JpaRepository<ObservationKind, Long>

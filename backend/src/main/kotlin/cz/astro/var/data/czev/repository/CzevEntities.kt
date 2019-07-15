@@ -71,7 +71,7 @@ class CzevStar(
     @GeneratedValue(generator = "czev_CzevIdSequence", strategy = GenerationType.SEQUENCE)
     var czevId: Long = -1
 
-    @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL])
     var crossIdentifications: MutableSet<StarIdentification> = HashSet()
         set(value) {
             value.forEach { it.star = this }
@@ -79,7 +79,7 @@ class CzevStar(
         }
 
     @NotAudited
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "star", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "star", cascade = [CascadeType.ALL])
     var files: MutableSet<StarAdditionalFile> = HashSet()
         set(value) {
             value.forEach { it.star = this }
@@ -106,9 +106,9 @@ class CzevStarDraft(
         var amplitude: Double?,
         @Embedded
         var coordinates: CosmicCoordinates,
-        @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
+        @OneToMany(cascade = [CascadeType.ALL])
         var crossIdentifications: MutableSet<StarIdentification>,
-        @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+        @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
         @NotAudited
         var files: MutableSet<StarAdditionalFile>,
         @Column(precision = 15, scale = 7, nullable = true) var m0: BigDecimal?,
@@ -151,7 +151,7 @@ class Constellation(
     var ocStars: MutableSet<Star> = mutableSetOf()
 
     @NotAudited
-    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, mappedBy = "constellation")
+    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "constellation")
     var bounds: MutableSet<ConstellationBoundaryPoint> = mutableSetOf()
 
     override fun equals(other: Any?): Boolean {
