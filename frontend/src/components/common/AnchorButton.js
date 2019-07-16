@@ -12,6 +12,7 @@ export class AnchorButton extends Component {
                 disabled={this.props.disabled}
                 className={this.props.className}
                 style={style}
+                icon={this.props.icon}
                 type={this.props.type || "primary"}
                 ghost
                 size="small"
