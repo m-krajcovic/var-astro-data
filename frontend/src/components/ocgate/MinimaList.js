@@ -1,5 +1,6 @@
 import React, {Component} from "react";
-import {Card, Tabs, Input} from "antd";
+import {Card, Input, Tabs} from "antd";
+import {AnchorButton} from "../common/AnchorButton";
 
 export default class MinimaList extends Component {
     constructor(props) {
@@ -7,9 +8,19 @@ export default class MinimaList extends Component {
         this.state = {tab: "db"}
     }
 
+    handleDownload = () => {
+        const csv = this.props.minimaList.map(m => [m.julianDate.toFixed(5), m.epoch, m.oc.toFixed(5), m.type, m.observer, m.instrument, m.publicationEntries.map(entry => `${entry.publication.name}/${entry.volume.name}`).join(", ")].join(",")).join("\n");
+        const pom = document.createElement('a');
+        const blob = new Blob(["Julian Date, Epoch, O-C, Type, Observer, Instrument, Publications\n" + csv],{type: 'text/csv;charset=utf-8;'});
+        pom.href = URL.createObjectURL(blob);
+        pom.setAttribute('download', (this.props.star ? `${this.props.star.name} ${this.props.star.constellation.name}_OC_export` : 'OC_export' ) +'.csv');
+        pom.click();
+    };
+
     render() {
         return (
             <Card style={{height: 600, maxWidth: 900}} bodyStyle={{height: "100%", paddingTop: 0}}>
+                <AnchorButton disabled={!this.props.minimaList} onClick={this.handleDownload} icon="download" style={{position: "absolute", right: 16, top: 0, padding: "12px 16px", zIndex: 10, height: "auto"}}>Download</AnchorButton>
                 <Tabs defaultActiveKey="1">
                     <Tabs.TabPane tab="Database" key="1" style={{height: 532, overflow: "auto", marginBottom: 8}}>
                         <DatabaseMinimaList minimaList={this.props.minimaList}/>

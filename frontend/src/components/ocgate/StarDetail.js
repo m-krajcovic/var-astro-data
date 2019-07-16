@@ -350,6 +350,7 @@ export default class StarDetail extends Component {
                                 <StarMinimaChart grouppedMinima={grouppedMinima} approximation={approximation}/>
                             </div>
                             <MinimaList
+                                star={star}
                                 onCustomMinimaChange={(customMinima) => this.handleCustomMinimaChange(customMinima)}
                                 minimaList={minimaList}/>
                         </div>
