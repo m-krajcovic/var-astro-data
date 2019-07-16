@@ -33,7 +33,7 @@ class PredictionsPage extends Component {
             width: 200,
             render: (record) => {
                 return (<span>
-                <Link
+                <Link target="_blank"
                     to={"/oc/" + record.constellationId + "/" + record.starId}>{record.name}</Link>
                                             <Popover
                                                 overlayClassName="popover-minima-graph"
