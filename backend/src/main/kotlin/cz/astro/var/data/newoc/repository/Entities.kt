@@ -3,7 +3,6 @@ package cz.astro.`var`.data.newoc.repository
 import cz.astro.`var`.data.czev.repository.*
 import jdk.nashorn.internal.ir.annotations.Immutable
 import org.hibernate.annotations.NaturalId
-import java.io.Serializable
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import javax.persistence.*
@@ -108,12 +107,9 @@ class MinimaPublicationVolume(
 @Table(name = "oc_MinimaPublicationEntry")
 class MinimaPublicationEntry(
         @ManyToOne
-        @Id
         var volume: MinimaPublicationVolume,
-        @Id
         var page: String
-): Serializable {
-    @Id
+): IdEntity() {
     @ManyToOne(cascade = [CascadeType.ALL])
     var minima: StarMinima? = null
 
@@ -270,13 +266,10 @@ class IdNameEntity(
 @Table(name = "oc_ElementMinimaCount")
 class ElementMinimaCount(
         @Id
+        @Column(name = "element_id")
         val elementId: Long,
         val minimaCount: Long,
-        val ccdCount: Long,
-        @OneToOne
-        @JoinColumn(name = "element_id")
-        @MapsId
-        val element: StarElement
+        val ccdCount: Long
 )
 
 @Entity

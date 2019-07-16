@@ -104,7 +104,7 @@ class OcToNewOcMigrator(
 
                     star.elements.forEach {
                         val newMinimas = ogStar.minima.filter { m -> m.kind.toUpperCase() == it.kind.name.toUpperCase() }
-                                .map { m -> StarMinima(batch, (m.julianDatePrefix.toString() + m.julianDate.toString()).toBigDecimal(), getMethod(m.color, methodsByName), getPublicationEntries(socMapper, publicationsByName, m), m.observer, m.instrument) }.toMutableSet()
+                                .map { m -> StarMinima(batch, ((m.julianDatePrefix * 100000.0) + m.julianDate).toBigDecimal(), getMethod(m.color, methodsByName), getPublicationEntries(socMapper, publicationsByName, m), m.observer, m.instrument) }.toMutableSet()
                         newMinimas.forEach { m ->
                             m.publicationEntries.forEach { pe ->
                                 pe.minima = m
