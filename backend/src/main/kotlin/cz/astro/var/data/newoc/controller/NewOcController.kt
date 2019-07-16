@@ -48,12 +48,9 @@ class NewOcController(
     @GetMapping("observations/filters")
     fun getAllObservationFilters(): List<IdNameModel> = observationsService.getAllFilters()
 
-    @GetMapping("stars/{starId}/elements/{id}")
-    fun getElement(@PathVariable starId: Long, @PathVariable id: Long): ResponseEntity<StarElementModel?> {
-        // todo: get directly by element id?
-        return starsService.getById(starId).map {
-            it.elements.firstOrNull { e -> e.id == id }
-        }.toOkOrNotFound()
+    @GetMapping("stars/elements/{id}")
+    fun getElement(@PathVariable id: Long): ResponseEntity<StarElementModel> {
+        return starsService.getStarElementById(id).toOkOrNotFound()
     }
 
     @GetMapping("predictions")

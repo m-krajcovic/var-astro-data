@@ -39,6 +39,7 @@ interface StarsService {
     fun getStarsByConstellation(constellationId: Long): List<StarListModel>
     fun getStarMinimaJulianDates(starId: Long): List<Double>
     fun getElementMinimaJulianDates(elementId: Long): List<Double>
+    fun getStarElementById(id: Long): Optional<StarElementModel>
 
     // TODO: need get/updatePublication/deletePublication based on filter
 }
@@ -259,7 +260,7 @@ class StarsServiceImpl(
 
     @PreAuthorize("permitAll()")
     override fun getById(id: Long): Optional<StarDetailsModel> {
-        return starsRepository.findByIdFetched(id).map { it.toDetailsModel() }
+        return starsRepository.readById(id).map { it.toDetailsModel() }
     }
 
     @PreAuthorize("permitAll()")
@@ -282,6 +283,12 @@ class StarsServiceImpl(
         }
         return result
     }
+
+    @PreAuthorize("permitAll()")
+    override fun getStarElementById(id: Long): Optional<StarElementModel> {
+        return starElementRepository.readById(id).map { it.toModel() }
+    }
+
 }
 
 @Service

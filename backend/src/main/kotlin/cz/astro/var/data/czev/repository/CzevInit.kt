@@ -1,7 +1,6 @@
 package cz.astro.`var`.data.czev.repository
 
 import cz.astro.`var`.data.czev.service.ConstellationServiceImpl
-import cz.astro.`var`.data.czev.service.CosmicCoordinatesModel
 import cz.astro.`var`.data.czev.service.StarTypeValidator
 import cz.astro.`var`.data.czev.service.StarTypeValidatorImpl
 import org.apache.commons.csv.CSVFormat
@@ -553,13 +552,13 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
         output.add(Constellation("Vulpecula", "Vul"))
 
         val constsByName = output.associateBy { it.abbreviation.toUpperCase() }
-        CzevInitData().getConstBoundaries().forEach {
-            constsByName[it.first]?.let { cnst ->
-                val bound = ConstellationBoundaryPoint(cnst.bounds.size, it.second)
-                bound.constellation = cnst
-                cnst.bounds.add(bound)
-            }
-        }
+//        CzevInitData().getConstBoundaries().forEach {
+//            constsByName[it.first]?.let { cnst ->
+//                val bound = ConstellationBoundaryPoint(cnst.bounds.size, it.second)
+//                bound.constellation = cnst
+//                cnst.bounds.add(bound)
+//            }
+//        }
 
         return output
     }
