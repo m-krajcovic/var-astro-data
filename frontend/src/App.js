@@ -63,17 +63,27 @@ const LinkMenu = withRouter(props => {
                             </Menu.Item>
                         </Menu.SubMenu>
                     </OnlyAuth>
-                    <OnlyAdmin>
-                        <Menu.SubMenu title="Admin">
-                            <Menu.Item key="/czev/admin/drafts">
-                                <NavLink to="/czev/admin/drafts">Drafts</NavLink>
-                            </Menu.Item>
-                        </Menu.SubMenu>
-                    </OnlyAdmin>
                 </Menu.SubMenu>
                 <Menu.Item key="/predictions">
                     <NavLink to="/predictions">Predictions</NavLink>
                 </Menu.Item>
+                <OnlyAdmin>
+                    <Menu.SubMenu className="ant-menu-item" title="Administration">
+                        <Menu.SubMenu title="O-C">
+                            <Menu.Item key="/admin/ocgate/stars">
+                                <NavLink to="/admin/ocgate/stars">Stars</NavLink>
+                            </Menu.Item>
+                            <Menu.Item key="/admin/ocgate/publications">
+                                <NavLink to="/admin/ocgate/publications">Publications</NavLink>
+                            </Menu.Item>
+                        </Menu.SubMenu>
+                        <Menu.SubMenu title="CzeV">
+                            <Menu.Item key="/czev/admin/drafts">
+                                <NavLink to="/czev/admin/drafts">Drafts</NavLink>
+                            </Menu.Item>
+                        </Menu.SubMenu>
+                    </Menu.SubMenu>
+                </OnlyAdmin>
             </Menu>
         );
     }

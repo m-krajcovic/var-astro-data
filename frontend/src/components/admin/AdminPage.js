@@ -1,6 +1,7 @@
 import React, {Component} from "react";
 import {Route, Switch} from "react-router-dom";
 import OcGateAdminPage from "../ocgate/admin/OcGateAdminPage";
+import EmptyPage from "../common/EmptyPage";
 
 export default class AdminPage extends Component {
     render() {
@@ -16,9 +17,7 @@ export default class AdminPage extends Component {
 class AdminLandingPage extends Component {
     render() {
         return (
-            <div>
-                Hi at the admin pageee
-            </div>
+            <EmptyPage/>
         );
     }
 }

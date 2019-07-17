@@ -184,11 +184,11 @@ export class MinimaPublicationsListPage extends Component {
                                     }
                                     return values
                                 }}
-                                title="Add new minima publication"
+                                title="Add new o-c gate publication"
                                 url={BASE_URL + "/ocgate/publications"}
                                 onCancel={this.handleCancel}
                                 onOk={() => this.refresh(reload)}
-                                successMessage="New minima publication added"
+                                successMessage="New publication added"
                                 render={form => (
                                     <MyForm layout="vertical" form={form}>
                                         <InputFormItem label="Name" field="name" required={true}/>
@@ -200,11 +200,11 @@ export class MinimaPublicationsListPage extends Component {
                                 <PromiseFormModal
                                     visible={true}
                                     promise={axios.put}
-                                    title="Edit minima publication"
+                                    title="Edit publication"
                                     url={() => BASE_URL + "/ocgate/publications/" + this.state.selectedMinima.id}
                                     onCancel={this.handleCancel}
                                     onOk={() => this.refresh(reload)}
-                                    successMessage="Minima publication edited"
+                                    successMessage="Publication edited"
                                     render={form => (
                                         <MyForm layout="vertical" form={form}>
                                             <InputFormItem initialValue={this.state.selectedMinima.name}
@@ -216,7 +216,7 @@ export class MinimaPublicationsListPage extends Component {
                                 />
                             )}
                             <div style={{marginBottom: "0.5rem", display: "flex", justifyContent: "space-between"}}>
-                                <h2>Minima Publications</h2>
+                                <h2>O-C Gate Publications</h2>
                                 <Button onClick={this.handleAdd} type="primary">Add new publication</Button>
                             </div>
                             <Table

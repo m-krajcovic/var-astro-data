@@ -7,6 +7,7 @@ import {OcGateAdminStarDetailPage} from "./OcGateAdminStarDetailPage";
 import {OcGateAdminStarNewPage} from "./OcGateAdminStarNewPage";
 import {EntitiesProvider} from "../../common/EntitiesContext";
 import {MinimaPublicationsListPage} from "./MinimaPublicationsListPage";
+import EmptyPage from "../../common/EmptyPage";
 
 export default class OcGateAdminPage extends Component {
     render() {
@@ -38,8 +39,7 @@ export default class OcGateAdminPage extends Component {
 class OcGateAdminLandingPage extends Component {
     render() {
         return (
-            <span>Hello from the oc gate admin page
-            </span>
+            <EmptyPage/>
         );
     }
 }

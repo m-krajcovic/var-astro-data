@@ -31,9 +31,12 @@ export class OcGateAdminStarsListPage extends Component {
         return (
             <Layout.Content style={{margin: "24px 24px 0"}}>
                 <Card>
-                    <div style={{marginBottom: "0.5rem", textAlign: "right"}}>
-                        <Button type="primary"><Link
-                            to="/admin/ocgate/stars/new">Add new star</Link></Button>
+                    <div style={{marginBottom: "0.5rem", display: "flex", justifyContent: "space-between"}}>
+                        <h2>O-C Gate Stars</h2>
+                        <div style={{marginBottom: "0.5rem", textAlign: "right"}}>
+                            <Button type="primary"><Link
+                                to="/admin/ocgate/stars/new">Add new star</Link></Button>
+                        </div>
                     </div>
                     <EntitiesConsumer>
                         {({constellations}) => (
