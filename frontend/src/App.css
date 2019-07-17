@@ -80,7 +80,7 @@ body {
     background-color: #1890ff;
 }
 
-.ant-menu-item.ant-menu-submenu.ant-menu-submenu-selected a, .ant-menu-item.ant-menu-submenu.ant-menu-submenu-active a {
+.ant-menu-item.ant-menu-submenu.ant-menu-submenu-selected *, .ant-menu-item.ant-menu-submenu.ant-menu-submenu-active * {
     color: #fff;
 }
 

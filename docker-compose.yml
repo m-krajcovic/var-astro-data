@@ -12,7 +12,7 @@ services:
     volumes:
       - my-datavolume:/var/lib/mysql
   vad-webapp:
-    image: dtpa/var-astro-data
+    image: mkrajcovic/var-astro-webapp
     depends_on:
       - vad-mysql
     ports:
