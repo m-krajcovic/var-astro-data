@@ -12,6 +12,7 @@ import {UserProfileConsumer} from "../common/UserProfileContext";
 import {Link} from "react-router-dom";
 import {PredictionsMinimaGraph} from "./PredictionsMinimaGraph";
 import {CoordinateWrapper} from "../common/CoordinateWrapper";
+import {AnchorButton} from "../common/AnchorButton";
 
 const urlPropsQueryConfig = {
     date: {type: UrlQueryParamTypes.string},
@@ -34,8 +35,9 @@ class PredictionsPage extends Component {
             render: (record) => {
                 return (<span>
                 <Link target="_blank"
-                    to={"/oc/" + record.constellationId + "/" + record.starId}>{record.name}</Link>
+                      to={"/oc/" + record.constellationId + "/" + record.starId}>{record.name}</Link>
                                             <Popover
+                                                key={record.element.id}
                                                 overlayClassName="popover-minima-graph"
                                                 content={(<PredictionsMinimaGraph element={record.element}/>)}
                                             >
@@ -153,6 +155,7 @@ class PredictionsPage extends Component {
             latitude: 50,
             longitude: 15,
             filters: [],
+            filteredPredictions: []
         };
     }
 
@@ -235,7 +238,7 @@ class PredictionsPage extends Component {
                     return a.minimumDateTime.diff(b.minimumDateTime);
                 });
                 this.saveToCache(latitude, longitude, dateString, result.data);
-                this.setState({...this.state, loading: false, predictionsResult: result.data});
+                this.setState({...this.state, loading: false, predictionsResult: result.data, filteredPredictions: this.getFilteredPredictions(result.data.predictions, this.state.filters)});
             });
         }
     }
@@ -244,7 +247,7 @@ class PredictionsPage extends Component {
         if (dateString) {
             const fromCache = this.getFromCache(this.state.latitude, this.state.longitude, dateString);
             if (fromCache != null) {
-                this.setState({...this.state, predictionsResult: fromCache});
+                this.setState({...this.state, predictionsResult: fromCache, filteredPredictions: this.getFilteredPredictions(fromCache.predictions, this.state.filters)});
             } else {
                 // this.setState({...this.state, date: dateString});
                 this.loadPredictions(this.state.latitude, this.state.longitude, dateString);
@@ -256,7 +259,7 @@ class PredictionsPage extends Component {
         if (latitude != null && longitude != null && (this.state.latitude !== latitude || this.state.longitude !== longitude)) {
             const fromCache = this.getFromCache(latitude, longitude, this.props.date);
             if (fromCache != null) {
-                this.setState({...this.state, latitude, longitude, predictionsResult: fromCache});
+                this.setState({...this.state, latitude, longitude, predictionsResult: fromCache, filteredPredictions: this.getFilteredPredictions(fromCache.predictions, this.state.filters)});
             } else {
                 this.setState({...this.state, latitude, longitude});
                 this.loadPredictions(latitude, longitude, this.props.date);
@@ -264,8 +267,56 @@ class PredictionsPage extends Component {
         }
     };
 
+    getFilteredPredictions = (predictions, filters) => {
+        if (filters.name) {
+            filters.name.forEach(value => {
+                predictions = predictions.filter(p => p.name.toLowerCase().indexOf(value.toLowerCase()) !== -1);
+            });
+        }
+        if (filters.points) {
+            filters.points.forEach(value => {
+                predictions = predictions.filter(p => p.points === null || p.points >= value);
+            });
+        }
+        if (filters.altitude) {
+            filters.altitude.forEach(value => {
+                predictions = predictions.filter(p => !(value.max && p.altitude > value.max) && !(value.min && p.altitude < value.min))
+
+            });
+        }
+        if (filters.azimuth) {
+            predictions = predictions.filter(p => filters.azimuth.indexOf(p.azimuth) !== -1);
+        }
+        if (filters.magnitudes) {
+            filters.magnitudes.forEach(value => {
+                predictions = predictions.filter(p => {
+                    for (let i = 0; i < p.magnitudes.length; i++) {
+                        const m = p.magnitudes[i];
+                        if (!(value.max && m.min > value.max) && !(value.min && m.max < value.min)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+            });
+        }
+        return predictions
+    };
+
     handleTableChange = (pagination, filters) => {
-        this.setState({...this.state, filters: filters});
+        this.setState({
+            ...this.state, filters: filters,
+            filteredPredictions: this.getFilteredPredictions(this.state.predictionsResult.predictions, filters)
+        });
+    };
+
+    handleDownload = () => {
+        const csv = this.state.filteredPredictions.map(p => [p.name, p.element.kind.name, p.minimumDateTime, p.minimum, p.points, p.altitude, p.azimuth, p.minimaDuration, p.coordinates.raString, p.coordinates.decString, p.magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", ")].join(",")).join("\n");
+        const pom = document.createElement('a');
+        const blob = new Blob(["Star, P/S, Time, JD, Pts, Altitude, Azimuth, D(h), RA, DEC, Magnitudes\n" + csv], {type: 'text/csv;charset=utf-8;'});
+        pom.href = URL.createObjectURL(blob);
+        pom.setAttribute('download', `Predictions-${this.props.date}.csv`);
+        pom.click();
     };
 
     render() {
@@ -288,11 +339,17 @@ class PredictionsPage extends Component {
                             </Col>
                         </Row>
                         <Row>
-                            {this.state.predictionsResult.nights.map((interval, index) => {
-                                return (
-                                    <span key={index}>Nautical twilights: {interval.sunset} - {interval.sunrise}</span>
-                                )
-                            })}
+                            <Col span={24} sm={{span: 12}}>
+                                {this.state.predictionsResult.nights.map((interval, index) => {
+                                    return (
+                                        <span
+                                            key={index}>Nautical twilights: {interval.sunset} - {interval.sunrise}</span>
+                                    )
+                                })}
+                            </Col>
+                            <Col span={24} sm={{span: 12}}>
+                                <AnchorButton icon="download" onClick={this.handleDownload}>Download</AnchorButton>
+                            </Col>
                         </Row>
                         <div className="predictions-list__outer-wrapper" style={{flex: "1 1 auto", overflow: "auto"}}>
                             <div className="predictions-list__inner-wrapper" style={{flex: "0"}}>
@@ -305,8 +362,7 @@ class PredictionsPage extends Component {
                                 />
                             </div>
                             <div className="predictions-list__inner-wrapper">
-                                <PredictionsVirtualizedList predictions={this.state.predictionsResult.predictions}
-                                                            filters={this.state.filters}
+                                <PredictionsVirtualizedList predictions={this.state.filteredPredictions}
                                                             columns={PredictionsPage.columns}/>
                             </div>
                         </div>
