@@ -6,40 +6,6 @@ export class PredictionsVirtualizedList extends Component {
 // TODO: changing filter doesnt update element id for graph ! so there is wrong graph for the row
     render() {
         let predictions = this.props.predictions;
-        if (this.props.filters) {
-            if (this.props.filters.name) {
-                this.props.filters.name.forEach(value => {
-                    predictions = predictions.filter(p => p.name.toLowerCase().indexOf(value.toLowerCase()) !== -1);
-                });
-            }
-            if (this.props.filters.points) {
-                this.props.filters.points.forEach(value => {
-                    predictions = predictions.filter(p => p.points === null || p.points >= value);
-                });
-            }
-            if (this.props.filters.altitude) {
-                this.props.filters.altitude.forEach(value => {
-                    predictions = predictions.filter(p => !(value.max && p.altitude > value.max) && !(value.min && p.altitude < value.min))
-
-                });
-            }
-            if (this.props.filters.azimuth) {
-                predictions = predictions.filter(p => this.props.filters.azimuth.indexOf(p.azimuth) !== -1);
-            }
-            if (this.props.filters.magnitudes) {
-                this.props.filters.magnitudes.forEach(value => {
-                    predictions = predictions.filter(p => {
-                        for (let i = 0; i < p.magnitudes.length; i++) {
-                            const m = p.magnitudes[i];
-                            if (!(value.max && m.min > value.max) && !(value.min && m.max < value.min)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    });
-                });
-            }
-        }
         return (
             <AutoSizer>
                 {({width, height}) => (
