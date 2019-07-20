@@ -37,24 +37,15 @@ class PredictionsServiceImpl(
         val result = HashSet<PredictionsStarModel>()
         val minimaCounts = starElementRepository.findAllElementMinimaCountsSince(night.minusYears(10).toJulianDay().toBigDecimal()).associateBy { it.elementId }
         val nights = findNights(jdNight, jdNight + 1, latitude, longitude)
-        val noLengthTypes = setOf("EB", "EW")
+        val noMinimaDurationTypes = setOf("EB", "EW")
 
         starsRepository.findAllFetchedForPredictions().forEach { star ->
-            star.elements.asSequence().filter { it.kind.name == "P" || it.kind.name == "S"}.forEach { element ->
+            star.elements.asSequence().filter { it.kind.name == "P" || it.kind.name == "S" }.forEach { element ->
                 val periodDouble = element.period.toDouble()
                 var calculatedMinimum = calculateMinimum(element.minimum.toDouble(), periodDouble, jdNight)
                 val points: Int = getPoints(minimaCounts, element.id)
                 val starName = "${star.name} ${star.constellation.abbreviation}"
-                var minimaDuration = ""
-                if (noLengthTypes.contains(star.type)) {
-                    minimaDuration = star.type
-                } else {
-                    star.minimaDuration?.let { ml ->
-                        if (ml > 0) {
-                            minimaDuration = "%.1f".format((ml / 1000.0) * periodDouble * 24)
-                        }
-                    }
-                }
+
                 while (calculatedMinimum < jdNight + 1) {
                     if (isNight(calculatedMinimum, nights)) {
                         val objHorizontalCoords = transformEquatorialToHorizontalCoordinates(CosmicCoordinatesModel(star.coordinates.rightAscension, star.coordinates.declination), latitude, longitude, calculatedMinimum)
@@ -70,9 +61,20 @@ class PredictionsServiceImpl(
                                     points,
                                     objHorizontalCoords.altitude,
                                     getCardinalDirection(objHorizontalCoords.azimuth),
-                                    star.brightness.map { b -> PredictionMagnitudeModel(b.filter.name, b.maxP, b.minP) },
-                                    "24${element.minimum}+${element.period}*E",
-                                    minimaDuration))
+                                    star.brightness.map { b ->
+                                        var md = ""
+                                        if (noMinimaDurationTypes.contains(star.type)) {
+                                            md = star.type
+                                        } else {
+                                            b.minimaDuration?.let { duration ->
+                                                if (duration > 0) {
+                                                    md = "%.1f".format((duration / 1000.0) * periodDouble * 24)
+                                                }
+                                            }
+                                        }
+                                        PredictionsStarBrightnessModel(b.filter.name, b.maxP, b.minP, md)
+                                    },
+                                    "${element.minimum}+${element.period}*E"))
                         }
                     }
                     calculatedMinimum += periodDouble

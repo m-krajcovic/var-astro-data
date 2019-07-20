@@ -154,6 +154,7 @@ class StarBrightnessItem extends Component {
                             <span style={spanStyle}>MIN S: {this.props.brightness.minS}</span>
                             <span style={spanStyle}>MIN P: {this.props.brightness.minP}</span>
                             <span style={spanStyle}>MAX P: {this.props.brightness.maxP}</span>
+                            <span style={spanStyle}>Minima Duration: {this.props.brightness.minimaDuration}</span>
                             {btns}
                         </Fragment>
                     );
@@ -176,6 +177,9 @@ class StarBrightnessItem extends Component {
                                 <NumberFormItem label="Max P"
                                                 initialValue={this.props.brightness.maxP}
                                                 field="maxP"/>
+                                <NumberFormItem label="Minima Duration"
+                                                initialValue={this.props.brightness.minimaDuration}
+                                                field="minimaDuration"/>
                             </MyForm>
                         )}
                     </ObservationsConsumer>
@@ -211,6 +215,8 @@ class StarBrightnessInfoComponent extends Component {
                                                 field="minP"/>
                                 <NumberFormItem label="Max P"
                                                 field="maxP"/>
+                                <NumberFormItem label="Minima Duration"
+                                                field="minimaDuration"/>
                             </MyForm>
                         )}
                     </ObservationsConsumer>
@@ -295,7 +301,8 @@ const MinimaBulkEdit = Form.create()(
                                         options={methods}
                                         loading={loading}
                                     />
-                                    <InputFormItem field="observer" label="Observer"/>
+                                    <InputFormItem field="observer" label="Observer" initialValue={""}/>
+                                    <InputFormItem field="instrument" label="Instrument" initialValue={""}/>
                                     <PublicationEntriesFormItem/>
                                 </MyForm>
                             )}
@@ -394,8 +401,14 @@ const StarMinimaInfoTableComponent = Form.create()(
                                         loading={loading}
                                     />
                                     <InputFormItem
+                                        initialValue={this.state.minima.observer}
                                         label="Observer"
                                         field="observer"
+                                    />
+                                    <InputFormItem
+                                        initialValue={this.state.minima.instrument}
+                                        label="instrument"
+                                        field="instrument"
                                     />
                                     <PublicationEntriesFormItem
                                         initialValue={this.state.minima.publicationEntries}/>

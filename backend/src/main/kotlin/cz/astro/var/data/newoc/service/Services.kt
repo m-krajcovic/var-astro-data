@@ -1,7 +1,12 @@
 package cz.astro.`var`.data.newoc.service
 
-import cz.astro.`var`.data.czev.repository.*
-import cz.astro.`var`.data.czev.service.*
+import cz.astro.`var`.data.czev.repository.ConstellationRepository
+import cz.astro.`var`.data.czev.repository.FilterBandRepository
+import cz.astro.`var`.data.czev.repository.User
+import cz.astro.`var`.data.czev.repository.UserRepository
+import cz.astro.`var`.data.czev.service.ServiceException
+import cz.astro.`var`.data.czev.service.toEntity
+import cz.astro.`var`.data.czev.service.toIdNameModel
 import cz.astro.`var`.data.newoc.repository.*
 import cz.astro.`var`.data.security.SecurityService
 import org.springframework.security.access.prepost.PreAuthorize
@@ -88,6 +93,7 @@ class StarsServiceImpl(
             minS = model.minS
             maxP = model.maxP
             minP = model.minP
+            minimaDuration = model.minimaDuration
             if (filter.id != model.filterId) {
                 filter = filterBandRepository.findById(model.filterId).orElseThrow { ServiceException("Observations filter doesn't exist") }
             }
@@ -177,14 +183,13 @@ class StarsServiceImpl(
             coordinates = star.coordinates.toEntity()
             name = star.name
             type = star.type
-            minimaDuration = star.minimaDuration
         }
     }
 
     override fun insertStarBrightness(starId: Long, brightness: StarBrightnessNewModel) {
         val star = starsRepository.findById(starId).orElseThrow { ServiceException("Star doesn't exist") }
         val filter = filterBandRepository.findById(brightness.filterId).orElseThrow { ServiceException("Observations filter doesn't exist") }
-        val bright = StarBrightness(brightness.minS, brightness.maxP, brightness.minP, filter)
+        val bright = StarBrightness(brightness.minS, brightness.maxP, brightness.minP, filter, brightness.minimaDuration)
         bright.star = star
         starBrightnessRepository.save(bright)
     }
@@ -241,13 +246,13 @@ class StarsServiceImpl(
         val constellation = constellationRepository.findById(star.constellationId).orElseThrow { ServiceException("Constellation doesn't exist") }
         val brightness = star.brightness.map {
             val filter = filterBandRepository.findById(it.filterId).orElseThrow { ServiceException("Observation filter doesn't exist") }
-            StarBrightness(it.minS, it.maxP, it.minP, filter)
+            StarBrightness(it.minS, it.maxP, it.minP, filter, it.minimaDuration)
         }.toMutableSet()
         val elements = star.elements.map {
             val kind = observationKindRepository.findById(it.kindId).orElseThrow { ServiceException("Observation kind doesn't exist") }
             StarElement(it.period, it.minimum, kind, mutableSetOf())
         }.toMutableSet()
-        val entity = Star(star.name, constellation, star.coordinates.toEntity(), star.comp, star.type, star.minimaDuration, brightness, elements)
+        val entity = Star(star.name, constellation, star.coordinates.toEntity(), star.comp, star.type, brightness, elements)
         brightness.forEach { it.star = entity }
         elements.forEach { it.star = entity }
         return starsRepository.save(entity).toListModel()

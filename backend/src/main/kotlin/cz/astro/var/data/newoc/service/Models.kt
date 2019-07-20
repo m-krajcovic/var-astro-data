@@ -21,7 +21,6 @@ class StarNewModel(
         val coordinates: CosmicCoordinatesModel,
         val comp: String?,
         val type: String,
-        val minimaDuration: Int?,
         @field:Size(min = 1)
         val brightness: List<StarBrightnessNewModel>,
         @field:Size(min = 1)
@@ -33,8 +32,7 @@ class StarUpdateModel(
         val constellationId: Long,
         val coordinates: CosmicCoordinatesModel,
         val comp: String?,
-        val type: String,
-        val minimaDuration: Int?
+        val type: String
 )
 
 class StarListModel(
@@ -53,7 +51,6 @@ class StarDetailsModel(
         val coordinates: CosmicCoordinatesModel,
         val comp: String?,
         val type: String,
-        val minimaDuration: Int?,
         val brightness: List<StarBrightnessModel>,
         val elements: List<StarElementModel>
 )
@@ -158,14 +155,16 @@ class StarBrightnessModel(
         val minS: Double,
         val minP: Double,
         val maxP: Double,
-        val filter: IdNameModel
+        val filter: IdNameModel,
+        val minimaDuration: Int?
 )
 
 class StarBrightnessNewModel(
         val minS: Double,
         val minP: Double,
         val maxP: Double,
-        val filterId: Long
+        val filterId: Long,
+        val minimaDuration: Int?
 )
 
 class StarElementModel(
@@ -187,10 +186,11 @@ class IdNameModel(
         val name: String
 )
 
-data class PredictionMagnitudeModel(
+data class PredictionsStarBrightnessModel(
         val filter: String,
         val max: Double,
-        val min: Double
+        val min: Double,
+        val minimaDuration: String
 )
 
 data class PredictionsResultModel(
@@ -225,9 +225,8 @@ class PredictionsStarModel(
         val points: Int?,
         val altitude: Double,
         val azimuth: String,
-        val magnitudes: List<PredictionMagnitudeModel>,
-        val elements: String,
-        val minimaDuration: String
+        val brightness: List<PredictionsStarBrightnessModel>,
+        val elements: String
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -261,7 +260,7 @@ fun Star.toListModel(): StarListModel {
 }
 
 fun Star.toDetailsModel(): StarDetailsModel {
-    return StarDetailsModel(id, name, constellation.toModel(), coordinates.toModel(), comp, type, minimaDuration,
+    return StarDetailsModel(id, name, constellation.toModel(), coordinates.toModel(), comp, type,
             brightness.asSequence().map { it.toModel() }.toList(),
             elements.asSequence().map { it.toModel() }.toList())
 }
@@ -271,7 +270,7 @@ fun StarMinima.toModel(): StarMinimaModel {
 }
 
 fun StarBrightness.toModel(): StarBrightnessModel {
-    return StarBrightnessModel(id, minS, minP, maxP, filter.toIdNameModel())
+    return StarBrightnessModel(id, minS, minP, maxP, filter.toIdNameModel(), minimaDuration)
 }
 
 fun StarElement.toModel(): StarElementModel {

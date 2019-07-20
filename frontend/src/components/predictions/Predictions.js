@@ -108,8 +108,9 @@ class PredictionsPage extends Component {
         },
         {
             title: 'D(h)',
-            dataIndex: 'minimaDuration',
-            width: 50
+            key: 'minimaDuration',
+            width: 50,
+            render: record => record.brightness.length ? record.brightness[0].minimaDuration : "",
         },
         {
             title: 'Coordinates',
@@ -127,12 +128,12 @@ class PredictionsPage extends Component {
         // },
         {
             title: 'Magnitudes',
-            dataIndex: 'magnitudes',
+            key: 'magnitudes',
             filterDropdown: (actions) => (
                 <TableInputRangeFilter actions={actions}/>
             ),
             noStyle: true,
-            render: record => record.magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", "),
+            render: record => record.brightness.map(m => `${m.max}-${m.min} (${m.filter})`).join(", "),
             className: "predictions-list__magnitude-column"
         }
     ];
@@ -311,7 +312,7 @@ class PredictionsPage extends Component {
     };
 
     handleDownload = () => {
-        const csv = this.state.filteredPredictions.map(p => [p.name, p.element.kind.name, p.minimumDateTime, p.minimum, p.points, p.altitude, p.azimuth, p.minimaDuration, p.coordinates.raString, p.coordinates.decString, p.magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", ")].join(",")).join("\n");
+        const csv = this.state.filteredPredictions.map(p => [p.name, p.element.kind.name, p.minimumDateTime, p.minimum, p.points, p.altitude, p.azimuth, p.brightness.length ? p.brightness[0].minimaDuration : "", p.coordinates.raString, p.coordinates.decString, p.magnitudes.map(m => `${m.max}-${m.min} (${m.filter})`).join(", ")].join(",")).join("\n");
         const pom = document.createElement('a');
         const blob = new Blob(["Star, P/S, Time, JD, Pts, Altitude, Azimuth, D(h), RA, DEC, Magnitudes\n" + csv], {type: 'text/csv;charset=utf-8;'});
         pom.href = URL.createObjectURL(blob);
