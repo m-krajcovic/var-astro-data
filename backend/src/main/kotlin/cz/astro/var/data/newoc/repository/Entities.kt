@@ -21,7 +21,6 @@ class Star(
         @Column(nullable = true)
         var comp: String?,
         var type: String,
-        var minimaDuration: Int?,
         @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL])
         var brightness: MutableSet<StarBrightness>,
         @OneToMany(mappedBy = "star", cascade = [CascadeType.ALL])
@@ -109,7 +108,7 @@ class MinimaPublicationEntry(
         @ManyToOne
         var volume: MinimaPublicationVolume,
         var page: String
-): IdEntity() {
+) : IdEntity() {
     @ManyToOne(cascade = [CascadeType.ALL])
     var minima: StarMinima? = null
 
@@ -180,7 +179,8 @@ class StarBrightness(
         var maxP: Double,
         var minP: Double,
         @ManyToOne
-        var filter: FilterBand
+        var filter: FilterBand,
+        var minimaDuration: Int?
 ) : IdEntity() {
     @ManyToOne
     var star: Star? = null

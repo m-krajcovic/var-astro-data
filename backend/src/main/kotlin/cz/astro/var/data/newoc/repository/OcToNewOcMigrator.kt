@@ -81,9 +81,9 @@ class OcToNewOcMigrator(
                 val const = constellationsByName[ogStar.constellation.toUpperCase()]
                 if (const != null) {
                     var star = Star(ogStar.starName, const, CosmicCoordinates(ogStar.coordinates.raValue(), ogStar.coordinates.decValue()),
-                            if (ogStar.comp == ".") null else ogStar.comp, ogStar.type, null,
+                            if (ogStar.comp == ".") null else ogStar.comp, ogStar.type,
                             ogStar.brightness.map {
-                                StarBrightness(it.minS, it.maxP, it.minP, getFilter(it.col, filtersByName))
+                                StarBrightness(it.minS, it.maxP, it.minP, getFilter(it.col, filtersByName), it.minimaLength.takeIf { l -> l > 0 })
                             }.toMutableSet(), mutableSetOf()
                     )
                     star.brightness.forEach {
