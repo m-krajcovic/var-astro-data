@@ -291,8 +291,8 @@ class PredictionsPage extends Component {
         if (filters.magnitudes) {
             filters.magnitudes.forEach(value => {
                 predictions = predictions.filter(p => {
-                    for (let i = 0; i < p.magnitudes.length; i++) {
-                        const m = p.magnitudes[i];
+                    for (let i = 0; i < p.brightness.length; i++) {
+                        const m = p.brightness[i];
                         if (!(value.max && m.min > value.max) && !(value.min && m.max < value.min)) {
                             return true;
                         }
