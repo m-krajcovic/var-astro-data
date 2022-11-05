@@ -167,7 +167,7 @@ class CzevInit(val czevStarRepository: CzevStarRepository,
 
     fun getUsers(): User {
         // password = "heslo"
-        val user = User("mich.krajcovic@gmail.com", "\$2a\$10\$SL18Zb8wOtLMJx1oaFzhxuUve2poa3POHCvytccdZi4FA.9PVQrn2", mutableSetOf(Role("ROLE_ADMIN"), Role("ROLE_USER")))
+        val user = User("admin@vad.cz", "\$2a\$10\$SL18Zb8wOtLMJx1oaFzhxuUve2poa3POHCvytccdZi4FA.9PVQrn2", mutableSetOf(Role("ROLE_ADMIN"), Role("ROLE_USER")))
         return user
     }
 

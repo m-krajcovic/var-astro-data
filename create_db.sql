@@ -1,6 +1,7 @@
 CREATE DATABASE var_astro_cz;
 CREATE DATABASE var_astro_cz_ocgate;
 CREATE USER 'root'@'localhost' IDENTIFIED BY 'root';
+
 UPDATE identif SET MODIFIED='1970-01-01' WHERE MODIFIED='0000-00-00';
 CREATE INDEX identif_ids_index ON identif(NSTAR, NCONS);
 UPDATE bright SET MODIFIED='1970-01-01' WHERE MODIFIED='0000-00-00';

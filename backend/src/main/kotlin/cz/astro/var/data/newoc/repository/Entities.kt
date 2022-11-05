@@ -1,7 +1,7 @@
 package cz.astro.`var`.data.newoc.repository
 
 import cz.astro.`var`.data.czev.repository.*
-import jdk.nashorn.internal.ir.annotations.Immutable
+import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.NaturalId
 import java.math.BigDecimal
 import java.time.LocalDateTime

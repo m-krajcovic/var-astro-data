@@ -1,3 +1,5 @@
 gradlew stage
-docker build -t mkrajcovic/var-astro-webapp .
+docker build -t mkrajcovic/var-astro-webapp -f Dockerfile .
+docker build -t mkrajcovic/var-astro-mysql -f Dockerfile.db .
 docker push mkrajcovic/var-astro-webapp:latest
+docker push mkrajcovic/var-astro-mysql:latest
