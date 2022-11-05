@@ -1,0 +1,9 @@
+FROM mysql:8.0.19
+
+ENV MYSQL_DATABASE=test
+ENV MYSQL_ROOT_PASSWORD=root
+ENV MYSQL_PASSWORD=root
+
+ADD init_db.sql /docker-entrypoint-initdb.d
+
+EXPOSE 3306
